@@ -1,0 +1,43 @@
+# Dependencias
+node_modules/
+venv/
+__pycache__/
+*.pyc
+
+# Entornos
+.env
+.env.local
+.env.production
+
+# Builds y logs
+dist/
+build/
+.next/
+*.log
+logs/
+
+# Base de datos local
+*.db
+*.sqlite
+
+# IDE y sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Backend Python
+alembic/versions/*.pyc
+*.pyc
+.pytest_cache/
+.coverage
+
+# Frontend React (Vite/Next)
+frontend/.next/
+frontend/dist/
+frontend/build/
+
+# Archivos temporales
+*.tmp
+*.swp
+*~
