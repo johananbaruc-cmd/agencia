@@ -1,3 +1,24 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* RESET BÁSICO */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* BODY GLOBAL */
+body {
+  font-family: 'Inter', sans-serif;
+  background: #020617; /* azul muy oscuro */
+  color: white;
+}
+
+/* LINKS */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* BOTONES */
+button {
+  font-family: inherit;
+}

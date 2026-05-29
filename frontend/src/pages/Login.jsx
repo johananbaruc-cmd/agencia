@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { Mail, Lock, LogIn } from 'lucide-react';
+import './Login.css';  // Importar el CSS específico
 
 export default function Login() {
   const navigate = useNavigate();
@@ -15,11 +16,8 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
     
-    console.log('Intentando login con:', { email, password });
-    
     try {
       const result = await login(email, password);
-      console.log('Resultado:', result);
       
       if (result.success) {
         toast.success('Bienvenido');
@@ -28,7 +26,6 @@ export default function Login() {
         toast.error(result.error);
       }
     } catch (error) {
-      console.error('Error completo:', error);
       toast.error('Error de conexión: ' + error.message);
     }
     
@@ -36,46 +33,41 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-            <LogIn className="w-8 h-8 text-blue-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900">Agencia MX</h1>
-          <p className="text-gray-600 mt-2">Inicia sesión en tu cuenta</p>
+    <div className="login-container">
+      <div className="login-card">
+        <div className="login-icon">
+          <LogIn className="w-8 h-8 text-white" />
         </div>
+        
+        <h1 className="login-title">Agencia MX</h1>
+        <p className="login-subtitle">Inicia sesión en tu cuenta</p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Correo electrónico
-            </label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <form onSubmit={handleSubmit}>
+          <div className="input-group">
+            <label className="input-label">Correo electrónico</label>
+            <div className="input-wrapper">
+              <Mail className="input-icon" />
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-field"
                 placeholder="admin@miagencia.com"
               />
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Contraseña
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <div className="input-group">
+            <label className="input-label">Contraseña</label>
+            <div className="input-wrapper">
+              <Lock className="input-icon" />
               <input
                 type="password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="input-field"
                 placeholder="••••••"
               />
             </div>
@@ -84,15 +76,12 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="login-button"
           >
             {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-600">
-          <p>Demo: admin@web.com / 123456</p>
-        </div>
       </div>
     </div>
   );

@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
-import { FolderOpen, Clock, CheckCircle, DollarSign } from 'lucide-react';
+import { FolderOpen, Clock, CheckCircle, DollarSign, Plus, LayoutGrid, List } from 'lucide-react';
+import './Dashboard.css';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('grid');
 
   useEffect(() => {
     fetchProjects();
@@ -15,7 +17,7 @@ export default function Dashboard() {
 
   const fetchProjects = async () => {
     try {
-      const response = await api.get('/projects');
+      const response = await api.get('/projects/');
       setProjects(response.data);
     } catch (error) {
       console.error('Error:', error);
@@ -31,106 +33,200 @@ export default function Dashboard() {
     totalBudget: projects.reduce((sum, p) => sum + (p.budget || 0), 0),
   };
 
+  const projectsByStatus = {
+    pending: projects.filter(p => p.status === 'pending'),
+    in_progress: projects.filter(p => p.status === 'in_progress'),
+    completed: projects.filter(p => p.status === 'completed'),
+  };
+
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-100">
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-gray-600">Bienvenido, {user?.name}</p>
+
+      <div className="dashboard-container">
+
+        {/* HEADER */}
+        <div className="dashboard-header">
+          <div className="dashboard-header-content">
+            <div className="dashboard-title">
+              <h1>Dashboard</h1>
+              <p>Bienvenido, {user?.name}</p>
+            </div>
+
+         
+          </div>
+        </div>
+
+        {/* STATS */}
+        <div className="stats-grid">
+
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-title">Total Proyectos</span>
+              <FolderOpen size={18} />
+            </div>
+            <div className="stat-card-value">{stats.total}</div>
+            <div className="stat-card-sub">Proyectos registrados</div>
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">Total Proyectos</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                </div>
-                <FolderOpen className="w-10 h-10 text-blue-500" />
-              </div>
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-title">En Progreso</span>
+              <Clock size={18} />
             </div>
-            
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">En Progreso</p>
-                  <p className="text-2xl font-bold text-yellow-600">{stats.inProgress}</p>
-                </div>
-                <Clock className="w-10 h-10 text-yellow-500" />
-              </div>
+            <div className="stat-card-value">{stats.inProgress}</div>
+            <div className="stat-card-sub">Activos actualmente</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-title">Completados</span>
+              <CheckCircle size={18} />
             </div>
-            
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">Completados</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-                </div>
-                <CheckCircle className="w-10 h-10 text-green-500" />
-              </div>
+            <div className="stat-card-value">{stats.completed}</div>
+            <div className="stat-card-sub">Finalizados</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-card-header">
+              <span className="stat-card-title">Presupuesto</span>
+              <DollarSign size={18} />
             </div>
-            
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-500 text-sm">Presupuesto Total</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    ${stats.totalBudget.toLocaleString('es-MX')}
-                  </p>
-                </div>
-                <DollarSign className="w-10 h-10 text-purple-500" />
-              </div>
+            <div className="stat-card-value">
+              ${stats.totalBudget.toLocaleString('es-MX')}
+            </div>
+            <div className="stat-card-sub">MXN</div>
+          </div>
+
+        </div>
+
+        {/* PROYECTOS */}
+        <div className="projects-section">
+
+          <div className="projects-header">
+            <div className="projects-title">
+              Mis Proyectos <span>({projects.length})</span>
+            </div>
+
+            <div className="view-toggle">
+              <button
+                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+              >
+                <LayoutGrid size={16} />
+               
+              </button>
+
+              <button
+                className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+              >
+                <List size={16} />
+              
+              </button>
             </div>
           </div>
 
-          {/* Projects List */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Mis Proyectos</h2>
+          {/* LOADING */}
+          {loading ? (
+            <div className="loading-state">
+              <div className="loading-spinner"></div>
+              <p>Cargando proyectos...</p>
             </div>
-            {loading ? (
-              <div className="p-8 text-center text-gray-500">Cargando proyectos...</div>
-            ) : projects.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                No hay proyectos aún. Crea tu primer proyecto.
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-200">
-                {projects.map((project) => (
-                  <div key={project.id} className="p-6 hover:bg-gray-50">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="text-lg font-medium text-gray-900">{project.name}</h3>
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                        project.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        project.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {project.status === 'completed' ? 'Completado' :
-                         project.status === 'in_progress' ? 'En Progreso' : 'Pendiente'}
-                      </span>
-                    </div>
-                    <p className="text-gray-600 text-sm mb-3">{project.description}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm text-gray-500">
-                          Presupuesto: ${project.budget?.toLocaleString('es-MX')}
+
+          ) : projects.length === 0 ? (
+
+            /* EMPTY */
+            <div className="empty-state">
+              <FolderOpen size={40} />
+              <p className="empty-title">No hay proyectos</p>
+              <p className="empty-subtitle">Crea tu primer proyecto</p>
+            </div>
+
+          ) : viewMode === 'grid' ? (
+
+            /* KANBAN */
+            <div className="kanban-container">
+
+              {[
+                { key: 'pending', title: '📋 Pendiente' },
+                { key: 'in_progress', title: '🔄 En Progreso' },
+                { key: 'completed', title: '✅ Completado' }
+              ].map(col => (
+                <div key={col.key} className="kanban-column">
+
+                  <div className="kanban-column-header">
+                    <span className="kanban-column-title">
+                      {col.title}
+                    </span>
+                    <span className="column-count">
+                      {projectsByStatus[col.key].length}
+                    </span>
+                  </div>
+
+                  {projectsByStatus[col.key].map(project => (
+                    <div 
+                      key={project.id}
+                      className="project-card"
+                      onClick={() => window.location.href = `/projects/${project.id}`}
+                    >
+                      <div className="project-card-title">{project.name}</div>
+
+                      {project.description && (
+                        <div className="project-card-description">
+                          {project.description}
+                        </div>
+                      )}
+
+                      {col.key !== 'completed' && (
+                        <div className="progress-bar-container">
+                          <div
+                            className="progress-bar-fill"
+                            style={{ width: `${project.progress || 0}%` }}
+                          />
+                        </div>
+                      )}
+
+                      <div className="project-card-footer">
+                        <span>
+                          ${project.budget?.toLocaleString('es-MX')}
                         </span>
-                        <span className="text-sm text-gray-500">Progreso: {project.progress}%</span>
+                        {col.key !== 'completed' && (
+                          <span>{project.progress || 0}%</span>
+                        )}
                       </div>
-                      <div className="w-32 bg-gray-200 rounded-full h-2">
-                        <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${project.progress}%` }} />
-                      </div>
+                    </div>
+                  ))}
+
+                </div>
+              ))}
+
+            </div>
+
+          ) : (
+
+            /* LISTA */
+            <div className="projects-list">
+              {projects.map(project => (
+                <div 
+                  key={project.id}
+                  className="project-list-item"
+                  onClick={() => window.location.href = `/projects/${project.id}`}
+                >
+                  <div>
+                    <div className="project-name">{project.name}</div>
+                    <div className="project-meta">
+                      ${project.budget?.toLocaleString('es-MX')} • {project.progress || 0}%
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </main>
+                </div>
+              ))}
+            </div>
+
+          )}
+
+        </div>
+
       </div>
     </>
   );

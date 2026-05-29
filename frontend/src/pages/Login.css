@@ -1,0 +1,153 @@
+/* CONTENEDOR PRINCIPAL */
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: #0f172a; /* azul marino */
+}
+
+/* FIGURAS GEOMÉTRICAS ANIMADAS */
+.login-container::before,
+.login-container::after {
+  content: "";
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(59,130,246,0.25), transparent 70%);
+  animation: moveShapes 12s infinite alternate ease-in-out;
+}
+
+.login-container::before {
+  top: -100px;
+  left: -100px;
+}
+
+.login-container::after {
+  bottom: -100px;
+  right: -100px;
+  animation-delay: 4s;
+}
+
+@keyframes moveShapes {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(100px, 80px) scale(1.2);
+  }
+}
+
+/* TARJETA */
+.login-card {
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 1.5rem;
+  width: 100%;
+  max-width: 380px;
+  padding: 2rem;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+  text-align: center;
+}
+
+/* ICONO */
+.login-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: -60px auto 10px auto;
+  color: white;
+  font-size: 20px;
+}
+
+/* TITULOS */
+.login-title {
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.login-subtitle {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+/* INPUTS */
+.input-group {
+  text-align: left;
+  margin-bottom: 1rem;
+
+}
+
+.input-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  display: block;
+   color: #1f2937;
+}
+
+.input-wrapper {
+  position: relative;
+}
+
+.input-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.6rem 0.6rem 0.6rem 2.2rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  font-size: 0.85rem;
+  transition: 0.2s;
+  box-sizing: border-box; /* 🔥 IMPORTANTE (arregla el desborde) */
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+}
+
+/* BOTÓN */
+.login-button {
+  width: 100%;
+  padding: 0.7rem;
+  margin-top: 0.8rem;
+  border: none;
+  border-radius: 0.6rem;
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(37,99,235,0.3);
+}
+
+/* TEXTO FINAL */
+.demo-text {
+  font-size: 0.7rem;
+  color: #6b7280;
+  margin-top: 1rem;
+}

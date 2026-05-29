@@ -1,0 +1,263 @@
+/* CONTENEDOR */
+.employees-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #020617, #0f172a);
+  color: white;
+}
+
+/* HEADER */
+.employees-header {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.employees-header-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.employees-title h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+.employees-title p {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+/* BOTÓN */
+.btn-invite {
+  background: rgba(255,255,255,0.08);
+  color: white;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.7rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: 0.25s;
+}
+
+.btn-invite:hover {
+  background: rgba(59,130,246,0.2);
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+}
+
+/* MAIN */
+.employees-main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* GRID */
+.employees-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+/* CARD */
+.employee-card {
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+  border-radius: 1rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  transition: 0.25s;
+  overflow: hidden;
+}
+
+.employee-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+  border-color: rgba(59,130,246,0.5);
+}
+
+/* HEADER CARD */
+.employee-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.employee-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: rgba(59,130,246,0.2);
+  border-radius: 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+  font-weight: bold;
+}
+
+.employee-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: white;
+}
+
+.employee-email {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* DROPDOWN */
+.dropdown-trigger {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 0.4rem;
+}
+
+.dropdown-trigger:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: rgba(15,23,42,0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  display: none;
+}
+
+.dropdown:hover .dropdown-menu {
+  display: block;
+}
+
+.dropdown-item {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  color: #cbd5e1;
+}
+
+.dropdown-item:hover {
+  background: rgba(255,255,255,0.08);
+}
+
+.dropdown-item.danger {
+  color: #ef4444;
+}
+
+/* FOOTER */
+.employee-card-footer {
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.03);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* BADGES */
+.role-badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+  font-size: 0.6rem;
+  font-weight: 500;
+}
+
+/* COLORES SUAVES */
+.role-badge-developer { background: rgba(16,185,129,0.2); color: #10b981; }
+.role-badge-designer { background: rgba(168,85,247,0.2); color: #a855f7; }
+.role-badge-admin { background: rgba(239,68,68,0.2); color: #ef4444; }
+.role-badge-manager { background: rgba(59,130,246,0.2); color: #3b82f6; }
+
+/* STATUS */
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-dot.active {
+  background: #10b981;
+}
+
+/* EMPTY / LOADING */
+.empty-state,
+.loading-state {
+  background: rgba(255,255,255,0.05);
+  border-radius: 1rem;
+  padding: 3rem;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.empty-title {
+  color: white;
+}
+
+.empty-subtitle {
+  color: #94a3b8;
+}
+
+/* SPINNER */
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* MODAL */
+.modal-overlay {
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+}
+
+.modal-container {
+  background: rgba(15,23,42,0.95);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+}
+
+.modal-header h2 {
+  color: white;
+}
+
+.modal-form-input {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: white;
+}
+
+.modal-form-input:focus {
+  border-color: #3b82f6;
+}
+
+/* BOTONES MODAL */
+.btn-modal-primary {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+}
+
+.btn-modal-secondary {
+  background: rgba(255,255,255,0.08);
+  color: white;
+}

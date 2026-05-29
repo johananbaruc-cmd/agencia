@@ -1,0 +1,326 @@
+/* CONTENEDOR */
+.detail-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #020617, #0f172a);
+  padding: 1.5rem;
+  color: white;
+}
+
+.detail-content {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* BOTÓN VOLVER */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  transition: color 0.2s;
+}
+
+.back-btn:hover {
+  color: #3b82f6;
+}
+
+/* CARD */
+.detail-card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(15px);
+  border-radius: 1.5rem;
+  padding: 1.75rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+}
+
+/* HEADER */
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.detail-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+}
+
+/* INPUT EDITAR TITULO */
+.edit-title-input {
+  font-size: 1.75rem;
+  font-weight: 700;
+  padding: 0.5rem;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 400px;
+  background: rgba(255,255,255,0.05);
+  color: white;
+}
+
+/* BOTONES */
+.detail-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.edit-btn, .delete-btn, .save-btn, .cancel-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.6rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+/* BOTONES INDIVIDUALES */
+.edit-btn {
+  background: rgba(59,130,246,0.15);
+  color: #60a5fa;
+}
+
+.edit-btn:hover {
+  background: rgba(59,130,246,0.25);
+}
+
+.delete-btn {
+  background: rgba(239,68,68,0.15);
+  color: #f87171;
+}
+
+.delete-btn:hover {
+  background: rgba(239,68,68,0.25);
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #10b981, #047857);
+  color: white;
+}
+
+.save-btn:hover {
+  box-shadow: 0 8px 20px rgba(16,185,129,0.4);
+}
+
+.cancel-btn {
+  background: rgba(255,255,255,0.08);
+  color: #cbd5e1;
+}
+
+.cancel-btn:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+/* BADGES */
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+.status-pending {
+  background: rgba(245,158,11,0.2);
+  color: #fbbf24;
+}
+
+.status-progress {
+  background: rgba(59,130,246,0.2);
+  color: #60a5fa;
+}
+
+.status-completed {
+  background: rgba(16,185,129,0.2);
+  color: #34d399;
+}
+
+.status-paused {
+  background: rgba(148,163,184,0.2);
+  color: #94a3b8;
+}
+
+/* GRID INFO */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: rgba(255,255,255,0.05);
+  border-radius: 1rem;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.info-card svg {
+  color: #94a3b8;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.info-card label {
+  display: block;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.info-card span, .info-card .edit-input {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+}
+
+/* INPUTS */
+.edit-input, .edit-select {
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  background: rgba(255,255,255,0.05);
+  color: white;
+}
+
+.edit-input:focus, .edit-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+/* PROGRESO */
+.progress-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 9999px;
+  overflow: hidden;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2563eb, #1d4ed8);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* DESCRIPCIÓN */
+.description-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.description-section h3 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 0.5rem;
+}
+
+.description-section p {
+  font-size: 0.875rem;
+  color: #94a3b8;
+  line-height: 1.5;
+}
+
+.edit-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  resize: vertical;
+  background: rgba(255,255,255,0.05);
+  color: white;
+}
+
+.edit-textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+/* LOADING */
+.detail-loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  .detail-container {
+    padding: 1rem;
+  }
+  
+  .detail-card {
+    padding: 1.25rem;
+  }
+  
+  .detail-header h1 {
+    font-size: 1.25rem;
+  }
+  
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .detail-actions {
+    width: 100%;
+  }
+  
+  .edit-btn, .delete-btn, .save-btn, .cancel-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
