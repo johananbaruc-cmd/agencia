@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
-import { Plus, Building2, Mail, Phone, Users, Trash2, Edit, X, Check } from 'lucide-react';
+import { Plus, Building2, Mail, Phone, Users, Trash2, Edit, X } from 'lucide-react';
 import './Clients.css';
 
 export default function Clients() {
@@ -63,11 +63,9 @@ export default function Clients() {
     
     try {
       if (editingClient) {
-        // Actualizar cliente
         await api.put(`/clients/${editingClient.id}`, formData);
         setSuccessMessage('Cliente actualizado exitosamente');
       } else {
-        // Crear cliente
         await api.post('/clients/', formData);
         setSuccessMessage('Cliente creado exitosamente');
       }
@@ -88,9 +86,6 @@ export default function Clients() {
     }
     
     setDeletingId(clientId);
-    setErrorMessage('');
-    setSuccessMessage('');
-    
     try {
       await api.delete(`/clients/${clientId}`);
       setSuccessMessage(`Cliente "${clientName}" eliminado exitosamente`);
@@ -98,12 +93,7 @@ export default function Clients() {
       fetchClients();
     } catch (error) {
       const errorDetail = error.response?.data?.detail;
-      
-      if (errorDetail && errorDetail.includes("proyecto(s) asociado(s)")) {
-        setErrorMessage(errorDetail);
-      } else {
-        setErrorMessage(errorDetail || 'Error al eliminar el cliente');
-      }
+      setErrorMessage(errorDetail || 'Error al eliminar el cliente');
       setTimeout(() => setErrorMessage(''), 5000);
     } finally {
       setDeletingId(null);
@@ -112,36 +102,23 @@ export default function Clients() {
 
   return (
     <>
-    <Navbar />
-    <div className="clients-container">
-      <div className="clients-header">
-        <div className="clients-header-content">
-          <div className="clients-title">
-            <h1>Clientes</h1>
-            <p>Gestiona tus clientes y empresas</p>
+      <Navbar />
+      <div className="clients-container">
+        <div className="clients-header">
+          <div className="clients-header-content">
+            <div className="clients-title">
+              <h1>Clientes</h1>
+              <p>Gestiona tus clientes y empresas</p>
+            </div>
+            <button onClick={() => handleOpenModal()} className="btn-new-client">
+              <Plus className="w-4 h-4" />
+              Nuevo Cliente
+            </button>
           </div>
-
-          <button
-            onClick={() => handleOpenModal()}
-            className="btn-new-client"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo Cliente
-          </button>
         </div>
-      </div>
-        {/* Mensajes de éxito y error */}
-        {successMessage && (
-          <div className="success-message">
-            ✅ {successMessage}
-          </div>
-        )}
-        
-        {errorMessage && (
-          <div className="error-message">
-            ❌ {errorMessage}
-          </div>
-        )}
+
+        {successMessage && <div className="success-message">✅ {successMessage}</div>}
+        {errorMessage && <div className="error-message">❌ {errorMessage}</div>}
 
         <main className="clients-main">
           {loading ? (
@@ -161,60 +138,31 @@ export default function Clients() {
             <div className="clients-grid">
               {clients.map((client) => (
                 <div key={client.id} className="client-card">
-                  {/* Botones de acción */}
                   <div className="client-actions">
-                    <button
-                      className="client-edit-btn"
-                      onClick={() => handleOpenModal(client)}
-                      title="Editar cliente"
-                    >
+                    <button className="client-edit-btn" onClick={() => handleOpenModal(client)}>
                       <Edit className="w-4 h-4" />
                     </button>
-                    <button
-                      className="client-delete-btn"
+                    <button 
+                      className="client-delete-btn" 
                       onClick={() => handleDelete(client.id, client.name)}
                       disabled={deletingId === client.id}
-                      title="Eliminar cliente"
                     >
-                      {deletingId === client.id ? (
-                        <div className="delete-spinner-small"></div>
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
-                      )}
+                      {deletingId === client.id ? <div className="delete-spinner-small"></div> : <Trash2 className="w-4 h-4" />}
                     </button>
                   </div>
-                  
                   <div className="client-header">
                     <div className="client-avatar">
                       <Building2 className="w-6 h-6" />
                     </div>
                     <div className="client-info">
                       <div className="client-name">{client.name}</div>
-                      {client.company && (
-                        <div className="client-company">
-                          <Building2 className="w-3 h-3" />
-                          {client.company}
-                        </div>
-                      )}
+                      {client.company && <div className="client-company">{client.company}</div>}
                     </div>
                   </div>
-                  
                   <div className="client-details">
-                    <div className="client-detail">
-                      <Mail className="w-3 h-3" />
-                      {client.email}
-                    </div>
-                    {client.phone && (
-                      <div className="client-detail">
-                        <Phone className="w-3 h-3" />
-                        {client.phone}
-                      </div>
-                    )}
-                    {client.rfc && (
-                      <div className="client-rfc">
-                        RFC: {client.rfc}
-                      </div>
-                    )}
+                    <div className="client-detail"><Mail className="w-3 h-3" /> {client.email}</div>
+                    {client.phone && <div className="client-detail"><Phone className="w-3 h-3" /> {client.phone}</div>}
+                    {client.rfc && <div className="client-rfc">RFC: {client.rfc}</div>}
                   </div>
                 </div>
               ))}
@@ -223,7 +171,7 @@ export default function Clients() {
         </main>
       </div>
 
-      {/* Modal para crear/editar cliente */}
+      {/* Modal flotante para crear/editar cliente */}
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
@@ -237,73 +185,28 @@ export default function Clients() {
               <div className="modal-body">
                 <div className="modal-form-group">
                   <label className="modal-form-label">Nombre *</label>
-                  <input
-                    type="text"
-                    required
-                    className="modal-form-input"
-                    placeholder="Ej: Juan Pérez"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
+                  <input type="text" required className="modal-form-input" placeholder="Ej: Juan Pérez" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                 </div>
-                
                 <div className="modal-form-group">
                   <label className="modal-form-label">Email *</label>
-                  <input
-                    type="email"
-                    required
-                    className="modal-form-input"
-                    placeholder="cliente@empresa.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
+                  <input type="email" required className="modal-form-input" placeholder="cliente@empresa.com" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                 </div>
-                
                 <div className="modal-form-group">
                   <label className="modal-form-label">Empresa</label>
-                  <input
-                    type="text"
-                    className="modal-form-input"
-                    placeholder="Nombre de la empresa"
-                    value={formData.company}
-                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  />
+                  <input type="text" className="modal-form-input" placeholder="Nombre de la empresa" value={formData.company} onChange={(e) => setFormData({ ...formData, company: e.target.value })} />
                 </div>
-                
                 <div className="modal-form-group">
                   <label className="modal-form-label">Teléfono</label>
-                  <input
-                    type="tel"
-                    className="modal-form-input"
-                    placeholder="555-123-4567"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
+                  <input type="tel" className="modal-form-input" placeholder="555-123-4567" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
                 </div>
-                
                 <div className="modal-form-group">
                   <label className="modal-form-label">RFC</label>
-                  <input
-                    type="text"
-                    className="modal-form-input"
-                    placeholder="XAXX010101000"
-                    value={formData.rfc}
-                    onChange={(e) => setFormData({ ...formData, rfc: e.target.value })}
-                  />
+                  <input type="text" className="modal-form-input" placeholder="XAXX010101000" value={formData.rfc} onChange={(e) => setFormData({ ...formData, rfc: e.target.value })} />
                 </div>
               </div>
-              
               <div className="modal-footer">
-                <button type="submit" className="btn-modal-primary">
-                  {editingClient ? 'Actualizar' : 'Guardar'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="btn-modal-secondary"
-                >
-                  Cancelar
-                </button>
+                <button type="submit" className="btn-modal-primary">{editingClient ? 'Actualizar' : 'Guardar'}</button>
+                <button type="button" onClick={() => setShowModal(false)} className="btn-modal-secondary">Cancelar</button>
               </div>
             </form>
           </div>
