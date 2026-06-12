@@ -2,327 +2,370 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
-import { 
-  Users, 
-  Plus, 
-  Mail, 
-  UserPlus, 
-  Shield, 
-  UserCheck,
-  MoreVertical,
-  UserCog,
-  Trash2,
-  Send,
-  Briefcase,
-  Camera,
-  Wrench,
-  Monitor,
-  PenTool,
-  Star
-} from 'lucide-react';
+import { Users, Mail, UserPlus, Trash2, Briefcase, X, Edit, Eye, EyeOff, Copy, Check } from 'lucide-react';
 import './Employees.css';
-
-// Roles personalizados para agencias digitales
-const AVAILABLE_ROLES = [
-  { value: 'photographer', label: '📸 Fotógrafo', icon: Camera },
-  { value: 'mechanic', label: '🔧 Mecánico', icon: Wrench },
-  { value: 'manager', label: '📊 Manager', icon: Briefcase },
-  { value: 'developer', label: '💻 Desarrollador', icon: Monitor },
-  { value: 'designer', label: '🎨 Diseñador', icon: PenTool },
-  { value: 'editor', label: '✏️ Editor', icon: PenTool },
-  { value: 'coordinator', label: '📋 Coordinador', icon: Star },
-  { value: 'employee', label: '👤 Empleado', icon: UserCheck },
-];
-
-const getRoleIcon = (role) => {
-  const found = AVAILABLE_ROLES.find(r => r.value === role);
-  if (found) return found.icon;
-  return UserCheck;
-};
-
-const getRoleLabel = (role) => {
-  const found = AVAILABLE_ROLES.find(r => r.value === role);
-  return found ? found.label : role;
-};
 
 export default function Employees() {
   const { user } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [inviteLoading, setInviteLoading] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState(null);
   const [formData, setFormData] = useState({
-    email: '',
     name: '',
-    role: 'employee'
+    email: '',
+    profession: ''
   });
+  const [message, setMessage] = useState({ text: '', type: '' });
+
+  // PASSWORD
+  const [tempPassword, setTempPassword] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+
+  // Modal de confirmación personalizado para eliminar
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState(null);
 
   useEffect(() => {
     fetchEmployees();
   }, []);
 
+  // Bloquear scroll cuando modal está abierto
+  useEffect(() => {
+    document.body.style.overflow = (showPasswordModal || showConfirmModal) ? 'hidden' : 'auto';
+  }, [showPasswordModal, showConfirmModal]);
+
+  // Ocultar password si cambian de ventana
+  useEffect(() => {
+    const handleBlur = () => setShowPassword(false);
+    window.addEventListener('blur', handleBlur);
+    return () => window.removeEventListener('blur', handleBlur);
+  }, []);
+
   const fetchEmployees = async () => {
     try {
-      const response = await api.get('/users/');
-      const filtered = response.data.filter(u => u.id !== user?.id);
+      const response = await api.get('/employees/');
+      const filtered = response.data.filter(emp => emp.role === 'employee');
       setEmployees(filtered);
     } catch (error) {
-      console.error('Error fetching employees:', error);
-      if (error.response?.status === 404) {
-        // Endpoint no existe aún, mostrar datos mock para desarrollo
-        setEmployees([]);
-      }
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInvite = async (e) => {
+  const handleOpenCreateModal = () => {
+    setEditingEmployee(null);
+    setFormData({ name: '', email: '', profession: '' });
+    setShowModal(true);
+  };
+
+  const handleOpenEditModal = (emp) => {
+    setEditingEmployee(emp);
+    setFormData({
+      name: emp.name,
+      email: emp.email,
+      profession: emp.profession || ''
+    });
+    setShowModal(true);
+  };
+
+  const handleCopyPassword = async () => {
+    if (tempPassword) {
+      await navigator.clipboard.writeText(tempPassword);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setInviteLoading(true);
+
+    try {
+      if (editingEmployee) {
+        await api.put(`/employees/${editingEmployee.id}`, {
+          name: formData.name,
+          profession: formData.profession.trim()
+        });
+
+        setMessage({ text: `Empleado actualizado`, type: 'success' });
+        setShowModal(false);
+      } else {
+        const response = await api.post('/employees/', {
+          name: formData.name,
+          email: formData.email,
+          role: 'employee',
+          profession: formData.profession.trim()
+        });
+
+        setTempPassword(response.data.temporary_password);
+        setShowPassword(false);
+        setShowPasswordModal(true);
+      }
+
+      setFormData({ name: '', email: '', profession: '' });
+      fetchEmployees();
+
+    } catch (error) {
+      setMessage({
+        text: error.response?.data?.detail || 'Error',
+        type: 'error'
+      });
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingEmployee(null);
+  };
+
+  const handleClosePasswordModal = () => {
+    setShowPasswordModal(false);
+    setTempPassword(null);
+    setShowPassword(false);
+    setCopied(false);
+  };
+
+  // Abre el modal de confirmación para eliminar
+  const handleDeleteClick = (id, name) => {
+    setEmployeeToDelete({ id, name });
+    setShowConfirmModal(true);
+  };
+
+  // Elimina después de confirmar
+  const confirmDelete = async () => {
+    if (!employeeToDelete) return;
     
     try {
-      // Guardar empleado en backend
-      await api.post('/users/invite', {
-        email: formData.email,
-        name: formData.name,
-        role: formData.role
-      });
-      
-      alert(`✅ ${formData.name} ha sido registrado como ${getRoleLabel(formData.role)}`);
-      setShowModal(false);
-      setFormData({ email: '', name: '', role: 'employee' });
+      await api.delete(`/employees/${employeeToDelete.id}`);
+      setMessage({ text: `Empleado ${employeeToDelete.name} eliminado`, type: 'success' });
       fetchEmployees();
     } catch (error) {
-      console.error('Error saving employee:', error);
-      alert(error.response?.data?.detail || 'Error al registrar empleado');
+      setMessage({ text: error.response?.data?.detail || 'Error al eliminar', type: 'error' });
     } finally {
-      setInviteLoading(false);
+      setShowConfirmModal(false);
+      setEmployeeToDelete(null);
+      setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     }
-  };
-
-  const handleRemoveEmployee = async (employeeId) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este empleado?')) {
-      try {
-        await api.delete(`/users/${employeeId}`);
-        alert('Empleado eliminado');
-        fetchEmployees();
-      } catch (error) {
-        alert(error.response?.data?.detail || 'Error al eliminar empleado');
-      }
-    }
-  };
-
-  const handleChangeRole = async (employeeId, newRole) => {
-    try {
-      await api.patch(`/users/${employeeId}`, { role: newRole });
-      alert(`Rol actualizado a ${getRoleLabel(newRole)}`);
-      fetchEmployees();
-    } catch (error) {
-      alert(error.response?.data?.detail || 'Error al cambiar rol');
-    }
-  };
-
-  const getRoleBadgeClass = (role) => {
-    const roleMap = {
-      photographer: 'role-badge-photographer',
-      mechanic: 'role-badge-mechanic',
-      manager: 'role-badge-manager',
-      developer: 'role-badge-developer',
-      designer: 'role-badge-designer',
-      editor: 'role-badge-editor',
-      coordinator: 'role-badge-coordinator',
-      admin: 'role-badge-admin',
-      employee: 'role-badge-employee'
-    };
-    return roleMap[role] || 'role-badge-employee';
   };
 
   return (
     <>
       <Navbar />
+
       <div className="employees-container">
+
+        {/* HEADER */}
         <div className="employees-header">
           <div className="employees-header-content">
-            <div className="employees-title">
+            <div>
               <h1>Equipo</h1>
-              <p>Gestiona los miembros de tu agencia</p>
+              <p>Gestiona los empleados</p>
             </div>
-            <button
-              onClick={() => setShowModal(true)}
-              className="btn-invite"
-            >
-              <UserPlus className="w-4 h-4" />
-              Registrar Empleado
+
+            <button onClick={handleOpenCreateModal} className="btn-invite">
+              <UserPlus size={16} />
+              Registrar
             </button>
           </div>
         </div>
 
+        {/* MENSAJE */}
+        {message.text && (
+          <div className={`message-floating ${message.type}`}>
+            {message.text}
+          </div>
+        )}
+
+        {/* MAIN */}
         <main className="employees-main">
           {loading ? (
             <div className="loading-state">
               <div className="loading-spinner"></div>
-              <p>Cargando equipo...</p>
             </div>
           ) : employees.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-icon">
-                <Users className="w-8 h-8" />
-              </div>
-              <p className="empty-title">No hay miembros en el equipo</p>
-              <p className="empty-subtitle">Registra a tus primeros empleados</p>
+              <Users size={40} />
+              <p>No hay empleados</p>
             </div>
           ) : (
             <div className="employees-grid">
-              {employees.map((employee) => {
-                const RoleIcon = getRoleIcon(employee.role);
-                const roleLabel = getRoleLabel(employee.role);
-                const badgeClass = getRoleBadgeClass(employee.role);
-                
-                return (
-                  <div key={employee.id} className="employee-card">
-                    <div className="employee-card-header">
-                      <div className="employee-avatar">
-                        {employee.name.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="employee-info">
-                        <div className="employee-name">{employee.name}</div>
-                        <div className="employee-email">
-                          <Mail className="w-3 h-3" />
-                          {employee.email}
-                        </div>
-                      </div>
-                      <div className="employee-actions">
-                        <div className="dropdown">
-                          <button className="dropdown-trigger">
-                            <MoreVertical className="w-4 h-4" />
-                          </button>
-                          <div className="dropdown-menu">
-                            <button 
-                              className="dropdown-item"
-                              onClick={() => handleChangeRole(
-                                employee.id, 
-                                employee.role === 'admin' ? 'employee' : 'admin'
-                              )}
-                            >
-                              <UserCog className="w-4 h-4" />
-                              Cambiar Rol
-                            </button>
-                            <button 
-                              className="dropdown-item danger"
-                              onClick={() => handleRemoveEmployee(employee.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              Eliminar
-                            </button>
-                          </div>
-                        </div>
+              {employees.map((emp) => (
+                <div key={emp.id} className="employee-card">
+
+                  <div className="employee-card-header">
+                    <div className="employee-avatar">
+                      {emp.name.charAt(0)}
+                    </div>
+
+                    <div>
+                      <div className="employee-name">{emp.name}</div>
+                      <div className="employee-email">
+                        <Mail size={12} />
+                        {emp.email}
                       </div>
                     </div>
-                    <div className="employee-card-footer">
-                      <div className={`role-badge ${badgeClass}`}>
-                        <RoleIcon className="w-3 h-3" />
-                        {roleLabel}
-                      </div>
-                      <div className="employee-status">
-                        <span className="status-dot active"></span>
-                        Activo
-                      </div>
+
+                    <div className="employee-actions">
+                      <button className="edit-btn" onClick={() => handleOpenEditModal(emp)}>
+                        <Edit size={14} />
+                      </button>
+                      <button className="delete-btn" onClick={() => handleDeleteClick(emp.id, emp.name)}>
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </div>
-                );
-              })}
+
+                  <div className="employee-card-footer">
+                    <div className="role-badge">
+                      <Briefcase size={12} />
+                      {emp.profession || 'Sin profesión'}
+                    </div>
+
+                    <div className="employee-status">
+                      <span className="status-dot active"></span>
+                      Activo
+                    </div>
+                  </div>
+
+                </div>
+              ))}
             </div>
           )}
         </main>
       </div>
 
-      {/* Modal de registro */}
+      {/* MODAL FORM */}
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="modal-container">
+
             <div className="modal-header">
-              <h2>Registrar Nuevo Miembro</h2>
-              <p className="modal-subtitle">Completa los datos del empleado</p>
+              <h2>{editingEmployee ? 'Editar' : 'Registrar'}</h2>
+              <button onClick={handleCloseModal}>
+                <X size={18} />
+              </button>
             </div>
-            <form onSubmit={handleInvite}>
+
+            <form onSubmit={handleSubmit}>
               <div className="modal-body">
-                <div className="modal-form-group">
-                  <label className="modal-form-label">Nombre completo *</label>
-                  <input
-                    type="text"
-                    required
-                    className="modal-form-input"
-                    placeholder="Ej: Ana García"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                </div>
-                
-                <div className="modal-form-group">
-                  <label className="modal-form-label">Correo electrónico *</label>
+
+                <input
+                  type="text"
+                  required
+                  className="modal-form-input"
+                  placeholder="Nombre"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+
+                {!editingEmployee && (
                   <input
                     type="email"
                     required
                     className="modal-form-input"
-                    placeholder="ana@tuagencia.com"
+                    placeholder="Correo"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   />
-                  <p className="form-hint">
-                    ⚠️ El empleado recibirá un link de acceso (próximamente)
-                  </p>
-                </div>
-                
-                <div className="modal-form-group">
-                  <label className="modal-form-label">Rol / Puesto</label>
-                  <select
-                    className="modal-form-input"
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  >
-                    {AVAILABLE_ROLES.map((role) => (
-                      <option key={role.value} value={role.value}>
-                        {role.label}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="form-hint">
-                    Define qué tipo de acceso tendrá el empleado
-                  </p>
-                </div>
+                )}
+
+                <input
+                  type="text"
+                  required
+                  className="modal-form-input"
+                  placeholder="Profesión"
+                  value={formData.profession}
+                  onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                />
+
               </div>
-              
+
               <div className="modal-footer">
-                <button 
-                  type="submit" 
-                  className="btn-modal-primary"
-                  disabled={inviteLoading}
-                >
-                  {inviteLoading ? (
-                    <>
-                      <div className="spinner-small"></div>
-                      Registrando...
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="w-4 h-4" />
-                      Registrar Empleado
-                    </>
-                  )}
+                <button type="submit" className="btn-modal-primary">
+                  Guardar
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="btn-modal-secondary"
-                >
+                <button type="button" onClick={handleCloseModal} className="btn-modal-secondary">
                   Cancelar
                 </button>
               </div>
+
             </form>
           </div>
         </div>
       )}
+
+      {/* PASSWORD MODAL */}
+      {showPasswordModal && (
+        <div className="password-overlay">
+
+          <div className="password-modal">
+
+            <div className="password-modal-header">
+              <h3>Empleado creado</h3>
+            </div>
+
+            <div className="password-modal-body">
+
+              <p>Contraseña temporal:</p>
+
+              <div className="password-box">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={tempPassword || ''}
+                  readOnly
+                  className="password-input-modal"
+                  onCopy={(e) => e.preventDefault()}
+                />
+
+                <button onClick={() => setShowPassword(!showPassword)}>
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+
+                <button onClick={handleCopyPassword}>
+                  {copied ? <Check size={16} /> : <Copy size={16} />}
+                </button>
+              </div>
+
+              {copied && <span className="copied-text">Copiado</span>}
+
+              <p className="password-warning">
+                Guarda esta contraseña
+              </p>
+
+            </div>
+
+            <div className="password-modal-footer">
+              <button onClick={handleClosePasswordModal} className="password-ok-btn">
+                Entendido
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {/* MODAL DE CONFIRMACIÓN PARA ELIMINAR */}
+      {showConfirmModal && (
+        <div className="confirm-overlay">
+          <div className="confirm-modal">
+            <h3>Confirmar eliminación</h3>
+            <p>¿Estás seguro de que deseas eliminar a <strong>{employeeToDelete?.name}</strong>?</p>
+            <div className="confirm-buttons">
+              <button className="confirm-btn-delete" onClick={confirmDelete}>
+                Eliminar
+              </button>
+              <button className="confirm-btn-cancel" onClick={() => setShowConfirmModal(false)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </>
   );
 }

@@ -18,35 +18,39 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, [token]);
 
-  const login = async (email, password) => {
-    try {
-      console.log('Llamando a API:', `${import.meta.env.VITE_API_URL}/auth/login`);
-      
-      const response = await api.post('/auth/login', { email, password });
-      console.log('Respuesta API:', response.data);
-      
-      const { access_token, user_id, user_name, user_role, agency_id } = response.data;
-      
-      localStorage.setItem('token', access_token);
-      localStorage.setItem('user', JSON.stringify({
-        id: user_id,
-        name: user_name,
-        role: user_role,
-        agency_id
-      }));
-      
-      setToken(access_token);
-      setUser({ id: user_id, name: user_name, role: user_role, agency_id });
-      
-      return { success: true };
-    } catch (error) {
-      console.error('Error en login:', error.response?.data || error.message);
-      return { 
-        success: false, 
-        error: error.response?.data?.detail || 'Error al iniciar sesión' 
-      };
-    }
-  };
+ const login = async (email, password) => {
+  try {
+    console.log('Llamando a API:', `${import.meta.env.VITE_API_URL}/auth/login`);
+    const response = await api.post('/auth/login', { email, password });
+    console.log('Respuesta API:', response.data);
+
+    const { access_token, user_id, user_name, user_role, agency_id, must_change_password } = response.data;
+
+    // Guardar token con AMBAS keys para compatibilidad
+    localStorage.setItem('token', access_token);
+    localStorage.setItem('access_token', access_token); // ← AGREGAR esta línea
+
+    localStorage.setItem('user', JSON.stringify({
+      id: user_id,
+      name: user_name,
+      role: user_role,
+      agency_id
+    }));
+
+    setToken(access_token);
+    setUser({ id: user_id, name: user_name, role: user_role, agency_id });
+
+    // ← AGREGAR: retornar must_change_password
+    return { success: true, must_change_password: must_change_password || false };
+
+  } catch (error) {
+    console.error('Error en login:', error.response?.data || error.message);
+    return {
+      success: false,
+      error: error.response?.data?.detail || 'Error al iniciar sesión'
+    };
+  }
+};
 
   const logout = () => {
     localStorage.removeItem('token');

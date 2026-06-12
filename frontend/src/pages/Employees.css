@@ -22,13 +22,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
 }
 
+/* TITULOS */
 .employees-title h1 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: white;
 }
 
 .employees-title p {
@@ -38,12 +37,15 @@
 
 /* BOTÓN */
 .btn-invite {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
   background: rgba(255,255,255,0.08);
   color: white;
   padding: 0.6rem 1.2rem;
   border-radius: 0.7rem;
   border: 1px solid rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
   cursor: pointer;
   transition: 0.25s;
 }
@@ -88,11 +90,18 @@
 .employee-card-header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: space-between;
   padding: 1rem;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
+/* IZQUIERDA (avatar + info) */
+.employee-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* AVATAR */
 .employee-avatar {
   width: 2.5rem;
   height: 2.5rem;
@@ -105,18 +114,33 @@
   font-weight: bold;
 }
 
+/* TEXTO */
 .employee-name {
   font-weight: 600;
   font-size: 0.9rem;
-  color: white;
 }
 
 .employee-email {
   font-size: 0.75rem;
   color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
-/* DROPDOWN */
+/* HEADER FLEX FIX */
+.employee-card-header > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* ACCIONES */
+.employee-actions {
+  display: flex;
+  align-items: center;
+}
+
 .dropdown-trigger {
   background: transparent;
   border: none;
@@ -130,35 +154,6 @@
   background: rgba(255,255,255,0.1);
 }
 
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: rgba(15,23,42,0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 0.5rem;
-  border: 1px solid rgba(255,255,255,0.08);
-  display: none;
-}
-
-.dropdown:hover .dropdown-menu {
-  display: block;
-}
-
-.dropdown-item {
-  padding: 0.5rem 0.75rem;
-  font-size: 0.75rem;
-  color: #cbd5e1;
-}
-
-.dropdown-item:hover {
-  background: rgba(255,255,255,0.08);
-}
-
-.dropdown-item.danger {
-  color: #ef4444;
-}
-
 /* FOOTER */
 .employee-card-footer {
   padding: 0.75rem 1rem;
@@ -168,21 +163,31 @@
   align-items: center;
 }
 
-/* BADGES */
+/* BADGE */
 .role-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
   padding: 0.2rem 0.5rem;
   border-radius: 0.4rem;
-  font-size: 0.6rem;
-  font-weight: 500;
+  font-size: 0.65rem;
 }
 
-/* COLORES SUAVES */
+/* COLORES */
 .role-badge-developer { background: rgba(16,185,129,0.2); color: #10b981; }
 .role-badge-designer { background: rgba(168,85,247,0.2); color: #a855f7; }
 .role-badge-admin { background: rgba(239,68,68,0.2); color: #ef4444; }
 .role-badge-manager { background: rgba(59,130,246,0.2); color: #3b82f6; }
 
 /* STATUS */
+.employee-status {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
 .status-dot {
   width: 6px;
   height: 6px;
@@ -201,14 +206,6 @@
   padding: 3rem;
   text-align: center;
   border: 1px solid rgba(255,255,255,0.08);
-}
-
-.empty-title {
-  color: white;
-}
-
-.empty-subtitle {
-  color: #94a3b8;
 }
 
 /* SPINNER */
@@ -260,4 +257,400 @@
 .btn-modal-secondary {
   background: rgba(255,255,255,0.08);
   color: white;
+}
+
+/* ================= PASSWORD MODAL CORRECTO ================= */
+
+.password-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+
+  z-index: 100;
+}
+
+/* CONTENEDOR */
+.password-modal {
+  width: 100%;
+  max-width: 420px;
+
+  background: rgba(15,23,42,0.95);
+  backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 1rem;
+
+  overflow: hidden;
+  animation: slideUp 0.25s ease;
+}
+
+/* HEADER */
+.password-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+}
+
+.password-modal-header h3 {
+  color: white;
+  font-size: 1rem;
+}
+
+/* BOTÓN CERRAR */
+.password-modal-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.3rem;
+  border-radius: 0.4rem;
+  transition: 0.2s;
+}
+
+.password-modal-close:hover {
+  background: rgba(255,255,255,0.1);
+  color: white;
+}
+
+/* BODY */
+.password-modal-body {
+  padding: 1rem;
+  text-align: center;
+}
+
+.password-modal-body p {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+/* BOX */
+.password-box {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+
+  background: rgba(0,0,0,0.35);
+  border: 1px solid rgba(59,130,246,0.4);
+  border-radius: 0.6rem;
+  padding: 0.4rem;
+}
+
+/* INPUT */
+.password-input-modal {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+
+  color: #34d399;
+  font-family: monospace;
+  font-size: 0.95rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* BOTONES */
+.password-eye-btn,
+.password-copy-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.4rem;
+  padding: 0.35rem;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-eye-btn:hover,
+.password-copy-btn:hover {
+  background: rgba(59,130,246,0.2);
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+/* TEXTO */
+.copied-text {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 0.7rem;
+  color: #10b981;
+}
+
+.password-warning {
+  margin-top: 0.6rem;
+  font-size: 0.7rem;
+  color: #f59e0b;
+}
+
+/* FOOTER */
+.password-modal-footer {
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* BOTÓN */
+.password-ok-btn {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1.4rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: 0.2s;
+}
+
+.password-ok-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+}
+
+/* ================= BOTONES ACCIONES (EDIT / DELETE) ================= */
+
+.employee-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.edit-btn,
+.delete-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.4rem;
+  padding: 0.3rem;
+  cursor: pointer;
+  color: #94a3b8;
+  transition: 0.2s;
+}
+
+.edit-btn:hover {
+  background: rgba(59,130,246,0.2);
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.delete-btn:hover {
+  background: rgba(239,68,68,0.2);
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+/* ================= EMPLOYEE INFO FIX ================= */
+
+.employee-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+/* ================= ROLE BADGE (MEJORADO) ================= */
+
+.role-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.4rem;
+  font-size: 0.65rem;
+  background: rgba(59,130,246,0.15);
+  color: #3b82f6;
+}
+
+/* ================= STATUS ================= */
+
+.employee-status {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.status-dot.active {
+  background: #10b981;
+}
+
+/* ================= MODAL MEJORADO ================= */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal-container {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 1rem;
+  overflow: hidden;
+  animation: slideUp 0.25s ease;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1rem;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+/* INPUTS */
+.modal-form-input {
+  padding: 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* ================= MENSAJES ================= */
+
+.message-floating {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  padding: 0.7rem 1rem;
+  border-radius: 0.6rem;
+  font-size: 0.8rem;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.message-floating.success {
+  background: rgba(16,185,129,0.2);
+  color: #34d399;
+}
+
+.message-floating.error {
+  background: rgba(239,68,68,0.2);
+  color: #ef4444;
+}
+
+/* ================= ANIMACIONES ================= */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95);}
+  to { opacity: 1; transform: scale(1);}
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px);}
+  to { opacity: 1; transform: translateY(0);}
+}
+
+/* =========================
+   MODAL DE CONFIRMACIÓN PERSONALIZADO
+========================= */
+.confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  animation: fadeIn 0.2s ease;
+}
+
+.confirm-modal {
+  background: #1e293b;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.2s ease;
+}
+
+.confirm-modal h3 {
+  color: white;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.confirm-modal p {
+  color: #cbd5e1;
+  margin-bottom: 1.5rem;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.confirm-btn-delete {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.confirm-btn-delete:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.confirm-btn-cancel {
+  background: #334155;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.confirm-btn-cancel:hover {
+  background: #475569;
 }
