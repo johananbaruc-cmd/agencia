@@ -1,15 +1,38 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
-import { FolderOpen, Clock, CheckCircle, DollarSign, Plus, LayoutGrid, List } from 'lucide-react';
+import KanbanBoard from '../components/KanbanBoard';
+import ProjectModal from '../components/ProjectModal';
+import { FolderOpen, Clock, CheckCircle, DollarSign, LayoutGrid, List } from 'lucide-react';
 import './Dashboard.css';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewParam = searchParams.get('view');
+  
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('grid');
+  const [viewMode, setViewMode] = useState(viewParam === 'kanban' ? 'kanban' : 'grid');
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    description: '',
+    budget: '',
+  });
+
+  useEffect(() => {
+    if (viewParam === 'kanban') {
+      setViewMode('kanban');
+    } else if (viewParam === 'scrum') {
+      setViewMode('grid');
+    }
+  }, [viewParam]);
 
   useEffect(() => {
     fetchProjects();
@@ -26,6 +49,15 @@ export default function Dashboard() {
     }
   };
 
+  const refreshProjects = async () => {
+    try {
+      const response = await api.get('/projects/');
+      setProjects(response.data);
+    } catch (error) {
+      console.error('Error refrescando proyectos:', error);
+    }
+  };
+
   const stats = {
     total: projects.length,
     inProgress: projects.filter(p => p.status === 'in_progress').length,
@@ -33,33 +65,83 @@ export default function Dashboard() {
     totalBudget: projects.reduce((sum, p) => sum + (p.budget || 0), 0),
   };
 
-  const projectsByStatus = {
-    pending: projects.filter(p => p.status === 'pending'),
-    in_progress: projects.filter(p => p.status === 'in_progress'),
-    completed: projects.filter(p => p.status === 'completed'),
+  const handleProjectClick = (project) => {
+    setSelectedProject(project);
+    setShowModal(true);
+  };
+
+  const handleEditClick = (project) => {
+    setEditingProject(project);
+    setEditFormData({
+      name: project.name,
+      description: project.description || '',
+      budget: project.budget,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api.put(`/projects/${editingProject.id}`, {
+        name: editFormData.name,
+        description: editFormData.description,
+        budget: parseFloat(editFormData.budget),
+      });
+      setShowEditModal(false);
+      setEditingProject(null);
+      fetchProjects();
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
+
+  const handleDeleteProject = async (projectId, projectName) => {
+    if (window.confirm(`¿Estás seguro de que deseas eliminar el proyecto "${projectName}"?`)) {
+      try {
+        await api.delete(`/projects/${projectId}`);
+        fetchProjects();
+      } catch (error) {
+        console.error('Error:', error);
+      }
+    }
+  };
+
+  const toggleView = (view) => {
+    setViewMode(view);
+    setSearchParams({ view });
   };
 
   return (
     <>
       <Navbar />
-
       <div className="dashboard-container">
-
-        {/* HEADER */}
         <div className="dashboard-header">
           <div className="dashboard-header-content">
             <div className="dashboard-title">
               <h1>Dashboard</h1>
               <p>Bienvenido, {user?.name}</p>
             </div>
-
-         
+            <div className="view-toggle">
+              <button
+                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => toggleView('grid')}
+              >
+                <List size={16} />
+                Lista
+              </button>
+              <button
+                className={`view-btn ${viewMode === 'kanban' ? 'active' : ''}`}
+                onClick={() => toggleView('kanban')}
+              >
+                <LayoutGrid size={16} />
+                Kanban
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* STATS */}
         <div className="stats-grid">
-
           <div className="stat-card">
             <div className="stat-card-header">
               <span className="stat-card-title">Total Proyectos</span>
@@ -97,137 +179,132 @@ export default function Dashboard() {
             </div>
             <div className="stat-card-sub">MXN</div>
           </div>
-
         </div>
 
-        {/* PROYECTOS */}
         <div className="projects-section">
-
           <div className="projects-header">
             <div className="projects-title">
               Mis Proyectos <span>({projects.length})</span>
             </div>
-
-            <div className="view-toggle">
-              <button
-                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => setViewMode('grid')}
-              >
-                <LayoutGrid size={16} />
-               
-              </button>
-
-              <button
-                className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
-              >
-                <List size={16} />
-              
-              </button>
-            </div>
           </div>
 
-          {/* LOADING */}
           {loading ? (
             <div className="loading-state">
               <div className="loading-spinner"></div>
               <p>Cargando proyectos...</p>
             </div>
-
           ) : projects.length === 0 ? (
-
-            /* EMPTY */
             <div className="empty-state">
               <FolderOpen size={40} />
               <p className="empty-title">No hay proyectos</p>
               <p className="empty-subtitle">Crea tu primer proyecto</p>
             </div>
-
-          ) : viewMode === 'grid' ? (
-
-            /* KANBAN */
-            <div className="kanban-container">
-
-              {[
-                { key: 'pending', title: '📋 Pendiente' },
-                { key: 'in_progress', title: '🔄 En Progreso' },
-                { key: 'completed', title: '✅ Completado' }
-              ].map(col => (
-                <div key={col.key} className="kanban-column">
-
-                  <div className="kanban-column-header">
-                    <span className="kanban-column-title">
-                      {col.title}
-                    </span>
-                    <span className="column-count">
-                      {projectsByStatus[col.key].length}
-                    </span>
-                  </div>
-
-                  {projectsByStatus[col.key].map(project => (
-                    <div 
-                      key={project.id}
-                      className="project-card"
-                      onClick={() => window.location.href = `/projects/${project.id}`}
-                    >
-                      <div className="project-card-title">{project.name}</div>
-
-                      {project.description && (
-                        <div className="project-card-description">
-                          {project.description}
-                        </div>
-                      )}
-
-                      {col.key !== 'completed' && (
-                        <div className="progress-bar-container">
-                          <div
-                            className="progress-bar-fill"
-                            style={{ width: `${project.progress || 0}%` }}
-                          />
-                        </div>
-                      )}
-
-                      <div className="project-card-footer">
-                        <span>
-                          ${project.budget?.toLocaleString('es-MX')}
-                        </span>
-                        {col.key !== 'completed' && (
-                          <span>{project.progress || 0}%</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-
-                </div>
-              ))}
-
-            </div>
-
+          ) : viewMode === 'kanban' ? (
+            <KanbanBoard 
+              projects={projects} 
+              onProjectClick={handleProjectClick}
+              onProjectUpdate={refreshProjects}
+            />
           ) : (
-
-            /* LISTA */
             <div className="projects-list">
-              {projects.map(project => (
+              {projects.map((project) => (
                 <div 
-                  key={project.id}
+                  key={project.id} 
                   className="project-list-item"
-                  onClick={() => window.location.href = `/projects/${project.id}`}
+                  onClick={() => handleProjectClick(project)}
                 >
-                  <div>
-                    <div className="project-name">{project.name}</div>
-                    <div className="project-meta">
-                      ${project.budget?.toLocaleString('es-MX')} • {project.progress || 0}%
-                    </div>
+                  <div className="project-name">{project.name}</div>
+                  <div className="project-meta">
+                    Cliente: {project.client_name || 'Sin cliente'} • 
+                    ${project.budget?.toLocaleString('es-MX')} • {project.progress || 0}%
                   </div>
                 </div>
               ))}
             </div>
-
           )}
-
         </div>
-
       </div>
+
+      <ProjectModal
+        project={selectedProject}
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onEdit={(project) => {
+          setEditingProject(project);
+          setEditFormData({
+            name: project.name,
+            description: project.description || '',
+            budget: project.budget,
+          });
+          setShowEditModal(true);
+        }}
+        onDelete={(projectId, projectName) => {
+          handleDeleteProject(projectId, projectName);
+        }}
+      />
+
+      {showEditModal && editingProject && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Editar Proyecto</h2>
+              <button className="modal-close" onClick={() => setShowEditModal(false)}>
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleEditSubmit}>
+              <div className="modal-body">
+                <div className="modal-form-group">
+                  <label className="modal-form-label">Nombre del proyecto</label>
+                  <input
+                    type="text"
+                    required
+                    className="modal-form-input"
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  />
+                </div>
+
+                <div className="modal-form-group">
+                  <label className="modal-form-label">Descripción</label>
+                  <textarea
+                    className="modal-form-input"
+                    rows="3"
+                    value={editFormData.description}
+                    onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  />
+                </div>
+
+                <div className="modal-form-group">
+                  <label className="modal-form-label">Presupuesto (MXN)</label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="1000"
+                    className="modal-form-input"
+                    value={editFormData.budget}
+                    onChange={(e) => setEditFormData({ ...editFormData, budget: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="submit" className="btn-modal-primary">
+                  Guardar Cambios
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="btn-modal-secondary"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -3,6 +3,9 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import EmployeeDashboard from './pages/EmployeeDashboard';
+import EmployeeTasks from './pages/EmployeeTasks';      // <-- IMPORTAR
+import EmployeeKanban from './pages/EmployeeKanban';    // <-- IMPORTAR
 import ProjectsNew from './pages/ProjectsNew';
 import ProjectDetail from './pages/ProjectDetail';
 import Clients from './pages/Clients';
@@ -20,6 +23,27 @@ function App() {
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          } />
+          
+          {/* Employee Dashboard - solo empleados */}
+          <Route path="/employee-dashboard" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <EmployeeDashboard />
+            </ProtectedRoute>
+          } />
+
+          {/* Employee Tasks - solo empleados */}
+          <Route path="/employee-tasks" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <EmployeeTasks />
+            </ProtectedRoute>
+          } />
+
+          {/* Employee Kanban - solo empleados */}
+          <Route path="/employee-kanban" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <EmployeeKanban />
             </ProtectedRoute>
           } />
           

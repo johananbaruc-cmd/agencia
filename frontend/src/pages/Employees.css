@@ -654,3 +654,30 @@
 .confirm-btn-cancel:hover {
   background: #475569;
 }
+
+/* Botón de asignar proyectos */
+.assign-btn {
+  background: rgba(59,130,246,0.15);
+  border: 1px solid rgba(59,130,246,0.2);
+  border-radius: 0.4rem;
+  padding: 0.3rem;
+  cursor: pointer;
+  color: #60a5fa;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.assign-btn:hover {
+  background: rgba(59,130,246,0.3);
+  border-color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+/* Ajustar el orden de los botones */
+.employee-actions {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+}

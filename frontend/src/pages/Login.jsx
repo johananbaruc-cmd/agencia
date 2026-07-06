@@ -9,8 +9,8 @@ import './Login.css';
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [email, setEmail] = useState('admin@web.com');
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
 
@@ -23,10 +23,19 @@ export default function Login() {
         if (result.must_change_password) {
           localStorage.setItem('temp_password', password);
           setShowChangePassword(true);
-          // sin toast aquí, el modal ya es suficiente aviso
         } else {
           toast.success('Bienvenido');
-          navigate('/dashboard');
+          
+          // 🔥 REDIRECCIÓN SEGÚN EL ROL 🔥
+          const userRole = result.user?.role || localStorage.getItem('userRole');
+          
+          if (userRole === 'admin') {
+            navigate('/dashboard');
+          } else if (userRole === 'employee') {
+            navigate('/employee-dashboard');
+          } else {
+            navigate('/dashboard');
+          }
         }
       } else {
         toast.error(result.error);
@@ -94,11 +103,21 @@ export default function Login() {
         forced={true}
         onClose={() => {
           setShowChangePassword(false);
-          navigate('/dashboard');
+          const userRole = localStorage.getItem('userRole');
+          if (userRole === 'employee') {
+            navigate('/employee-dashboard');
+          } else {
+            navigate('/dashboard');
+          }
         }}
         onSuccess={() => {
           toast.success('Contraseña actualizada');
-          navigate('/dashboard');
+          const userRole = localStorage.getItem('userRole');
+          if (userRole === 'employee') {
+            navigate('/employee-dashboard');
+          } else {
+            navigate('/dashboard');
+          }
         }}
       />
     </>

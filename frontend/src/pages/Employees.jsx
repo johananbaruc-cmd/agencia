@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
-import { Users, Mail, UserPlus, Trash2, Briefcase, X, Edit, Eye, EyeOff, Copy, Check } from 'lucide-react';
+import AssignProjectModal from '../components/AssignProjectModal';
+import { Users, Mail, UserPlus, Trash2, Briefcase, X, Edit, Eye, EyeOff, Copy, Check, FolderOpen } from 'lucide-react';
 import './Employees.css';
 
 export default function Employees() {
@@ -28,14 +29,18 @@ export default function Employees() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
 
+  // Modal de asignación de proyectos
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
   useEffect(() => {
     fetchEmployees();
   }, []);
 
   // Bloquear scroll cuando modal está abierto
   useEffect(() => {
-    document.body.style.overflow = (showPasswordModal || showConfirmModal) ? 'hidden' : 'auto';
-  }, [showPasswordModal, showConfirmModal]);
+    document.body.style.overflow = (showPasswordModal || showConfirmModal || showAssignModal) ? 'hidden' : 'auto';
+  }, [showPasswordModal, showConfirmModal, showAssignModal]);
 
   // Ocultar password si cambian de ventana
   useEffect(() => {
@@ -151,6 +156,19 @@ export default function Employees() {
     }
   };
 
+  // Abrir modal de asignación de proyectos
+  const handleAssignProjects = (employee) => {
+    setSelectedEmployee(employee);
+    setShowAssignModal(true);
+  };
+
+  // Manejar asignación exitosa
+  const handleAssignSuccess = () => {
+    setMessage({ text: `Proyectos asignados exitosamente`, type: 'success' });
+    setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+    fetchEmployees();
+  };
+
   return (
     <>
       <Navbar />
@@ -209,6 +227,13 @@ export default function Employees() {
                     </div>
 
                     <div className="employee-actions">
+                      <button 
+                        className="assign-btn"
+                        onClick={() => handleAssignProjects(emp)}
+                        title="Asignar proyectos"
+                      >
+                        <FolderOpen size={14} />
+                      </button>
                       <button className="edit-btn" onClick={() => handleOpenEditModal(emp)}>
                         <Edit size={14} />
                       </button>
@@ -366,6 +391,18 @@ export default function Employees() {
         </div>
       )}
 
+      {/* MODAL DE ASIGNACIÓN DE PROYECTOS */}
+      {showAssignModal && selectedEmployee && (
+        <AssignProjectModal
+          isOpen={showAssignModal}
+          onClose={() => {
+            setShowAssignModal(false);
+            setSelectedEmployee(null);
+          }}
+          employee={selectedEmployee}
+          onAssign={handleAssignSuccess}
+        />
+      )}
     </>
   );
 }
