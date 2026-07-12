@@ -41,3 +41,7 @@ frontend/build/
 *.tmp
 *.swp
 *~
+
+# Ignorar archivos subidos
+uploads/
+*.upload

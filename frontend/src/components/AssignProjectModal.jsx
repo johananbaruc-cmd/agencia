@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Check, FolderOpen, Plus, Clock, CheckCircle, AlertCircle, Trash2, Edit, Save } from 'lucide-react';
+import { X, Check, FolderOpen, Plus, Clock, CheckCircle, AlertCircle, Trash2, Save, Users, FileText, Calendar } from 'lucide-react';
 import api from '../services/api';
 
 export default function AssignProjectModal({ 
@@ -14,19 +14,22 @@ export default function AssignProjectModal({
   const [selectedProjects, setSelectedProjects] = useState([]);
   const [assignedProjects, setAssignedProjects] = useState([]);
   const [message, setMessage] = useState({ text: '', type: '' });
+  
+  // Estado para tareas en proyectos asignados
   const [expandedProject, setExpandedProject] = useState(null);
   const [projectTasks, setProjectTasks] = useState({});
   const [loadingTasks, setLoadingTasks] = useState({});
-  
-  // Estado para crear tarea
-  const [showTaskForm, setShowTaskForm] = useState(null); // projectId o null
+  const [showTaskForm, setShowTaskForm] = useState(null);
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
     priority: 'medium',
-    status: 'pending'
+    due_date: ''
   });
   const [creatingTask, setCreatingTask] = useState(false);
+  
+  // Pestaña activa: 'assign' o 'tasks'
+  const [activeTab, setActiveTab] = useState('assign');
 
   useEffect(() => {
     if (isOpen && employee) {
@@ -76,14 +79,15 @@ export default function AssignProjectModal({
     }
   };
 
+  // ✅ CORREGIDO: Muestra TODAS las tareas del proyecto, no solo las del empleado
   const fetchProjectTasks = async (projectId) => {
     if (projectTasks[projectId]) return;
     
     setLoadingTasks(prev => ({ ...prev, [projectId]: true }));
     try {
       const response = await api.get(`/tasks/projects/${projectId}/tasks`);
-      const employeeTasks = response.data.filter(task => task.assigned_to === employee.id);
-      setProjectTasks(prev => ({ ...prev, [projectId]: employeeTasks }));
+      // ✅ Todas las tareas del proyecto (sin filtrar por empleado)
+      setProjectTasks(prev => ({ ...prev, [projectId]: response.data }));
     } catch (error) {
       console.error('Error cargando tareas:', error);
       setProjectTasks(prev => ({ ...prev, [projectId]: [] }));
@@ -101,22 +105,21 @@ export default function AssignProjectModal({
     setCreatingTask(true);
     try {
       const response = await api.post('/tasks/', {
-        title: newTask.title,
-        description: newTask.description,
+        title: newTask.title.trim(),
+        description: newTask.description?.trim() || '',
         priority: newTask.priority,
         status: 'pending',
         project_id: projectId,
-        assigned_to: employee.id
+        assigned_to: employee.id,
+        due_date: newTask.due_date || null
       });
 
-      // Actualizar la lista de tareas
       setProjectTasks(prev => ({
         ...prev,
         [projectId]: [...(prev[projectId] || []), response.data]
       }));
 
-      // Limpiar formulario
-      setNewTask({ title: '', description: '', priority: 'medium', status: 'pending' });
+      setNewTask({ title: '', description: '', priority: 'medium', due_date: '' });
       setShowTaskForm(null);
       setMessage({ text: '✅ Tarea creada exitosamente', type: 'success' });
       setTimeout(() => setMessage({ text: '', type: '' }), 3000);
@@ -186,6 +189,9 @@ export default function AssignProjectModal({
         await api.delete(`/projects/${projectId}/members/${employee.id}`);
       }
 
+      const updatedAssigned = projects.filter(p => selectedProjects.includes(p.id));
+      setAssignedProjects(updatedAssigned);
+
       setMessage({ 
         text: `✅ Proyectos asignados exitosamente a ${employee.name}`, 
         type: 'success' 
@@ -205,6 +211,16 @@ export default function AssignProjectModal({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   if (!isOpen || !employee) return null;
@@ -270,7 +286,7 @@ export default function AssignProjectModal({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '750px' }}>
+      <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px' }}>
         <div className="modal-header">
           <h2>Gestionar Proyectos de {employee?.name}</h2>
           <button className="modal-close" onClick={onClose}>
@@ -325,122 +341,170 @@ export default function AssignProjectModal({
             </div>
           )}
 
-          {/* Contador */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            marginBottom: '12px',
-            padding: '0 4px'
+          {/* Pestañas */}
+          <div style={{
+            display: 'flex',
+            gap: '4px',
+            marginBottom: '16px',
+            background: 'rgba(255,255,255,0.05)',
+            padding: '4px',
+            borderRadius: '8px',
+            border: '1px solid rgba(255,255,255,0.06)'
           }}>
-            <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
-              Proyectos disponibles ({projects.length})
-            </span>
-            <span style={{ color: '#60a5fa', fontSize: '0.8rem' }}>
-              Seleccionados: {selectedProjects.length}
-            </span>
+            <button
+              onClick={() => setActiveTab('assign')}
+              style={{
+                flex: 1,
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: 'none',
+                background: activeTab === 'assign' ? 'rgba(59,130,246,0.2)' : 'transparent',
+                color: activeTab === 'assign' ? '#60a5fa' : '#94a3b8',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                fontSize: '0.85rem',
+                transition: 'all 0.2s'
+              }}
+            >
+              <Users size={16} />
+              Asignar Proyectos
+              <span style={{
+                background: 'rgba(255,255,255,0.1)',
+                padding: '1px 8px',
+                borderRadius: '12px',
+                fontSize: '0.7rem'
+              }}>
+                {projects.length}
+              </span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('tasks');
+                assignedProjects.forEach(p => fetchProjectTasks(p.id));
+              }}
+              style={{
+                flex: 1,
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: 'none',
+                background: activeTab === 'tasks' ? 'rgba(59,130,246,0.2)' : 'transparent',
+                color: activeTab === 'tasks' ? '#60a5fa' : '#94a3b8',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                fontSize: '0.85rem',
+                transition: 'all 0.2s'
+              }}
+            >
+              <FileText size={16} />
+              Gestionar Tareas
+              <span style={{
+                background: 'rgba(255,255,255,0.1)',
+                padding: '1px 8px',
+                borderRadius: '12px',
+                fontSize: '0.7rem'
+              }}>
+                {assignedProjects.length}
+              </span>
+            </button>
           </div>
 
-          {/* Lista de proyectos */}
-          {loading ? (
-            <div className="loading-state">
-              <div className="loading-spinner"></div>
-            </div>
-          ) : projects.length === 0 ? (
-            <div style={{ 
-              textAlign: 'center', 
-              padding: '40px 0',
-              color: '#94a3b8'
-            }}>
-              <FolderOpen size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
-              <p>No hay proyectos disponibles</p>
-            </div>
-          ) : (
-            <div style={{ maxHeight: '450px', overflowY: 'auto', paddingRight: '4px' }}>
-              {projects.map((project) => {
-                const isSelected = selectedProjects.includes(project.id);
-                const isAssigned = assignedProjects.some(p => p.id === project.id);
-                const isExpanded = expandedProject === project.id;
-                const tasks = projectTasks[project.id] || [];
-                const loadingTasksForProject = loadingTasks[project.id];
-                const isTaskFormVisible = showTaskForm === project.id;
-                
-                return (
-                  <div key={project.id} style={{ marginBottom: '8px' }}>
-                    {/* Proyecto */}
-                    <div
-                      onClick={() => handleToggleProject(project.id)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '10px 14px',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        background: isSelected ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)',
-                        border: `1px solid ${isSelected ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.06)'}`
-                      }}
-                    >
-                      <div style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '8px',
-                        background: 'rgba(59,130,246,0.1)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#3b82f6',
-                        flexShrink: 0
-                      }}>
-                        <FolderOpen size={16} />
-                      </div>
+          {/* Contenido de la pestaña "Asignar Proyectos" */}
+          {activeTab === 'assign' && (
+            <>
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                marginBottom: '12px',
+                padding: '0 4px'
+              }}>
+                <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                  Proyectos disponibles
+                </span>
+                <span style={{ color: '#60a5fa', fontSize: '0.8rem' }}>
+                  Seleccionados: {selectedProjects.length}
+                </span>
+              </div>
 
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ 
-                          color: 'white', 
-                          fontSize: '0.9rem', 
-                          fontWeight: 500,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
+              {loading ? (
+                <div className="loading-state">
+                  <div className="loading-spinner"></div>
+                </div>
+              ) : projects.length === 0 ? (
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '40px 0',
+                  color: '#94a3b8'
+                }}>
+                  <FolderOpen size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
+                  <p>No hay proyectos disponibles</p>
+                </div>
+              ) : (
+                <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {projects.map((project) => {
+                    const isSelected = selectedProjects.includes(project.id);
+                    
+                    return (
+                      <div
+                        key={project.id}
+                        onClick={() => handleToggleProject(project.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '10px 14px',
+                          marginBottom: '6px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          background: isSelected ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)',
+                          border: `1px solid ${isSelected ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.06)'}`
+                        }}
+                      >
+                        <div style={{
+                          width: '36px',
+                          height: '36px',
+                          borderRadius: '8px',
+                          background: 'rgba(59,130,246,0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#3b82f6',
+                          flexShrink: 0
                         }}>
-                          {project.name}
+                          <FolderOpen size={16} />
                         </div>
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: '8px',
-                          fontSize: '0.7rem',
-                          color: '#94a3b8',
-                          flexWrap: 'wrap'
-                        }}>
-                          <span>Cliente: {project.client_name || 'Sin cliente'}</span>
-                          <span>•</span>
-                          <span style={{ color: getStatusColor(project.status) }}>
-                            {getStatusText(project.status)}
-                          </span>
-                          {project.budget && (
-                            <>
-                              <span>•</span>
-                              <span>${project.budget.toLocaleString('es-MX')}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                        {isAssigned && (
-                          <span style={{
-                            fontSize: '0.6rem',
-                            color: '#10b981',
-                            background: 'rgba(16,185,129,0.15)',
-                            padding: '2px 8px',
-                            borderRadius: '4px'
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ 
+                            color: 'white', 
+                            fontSize: '0.9rem', 
+                            fontWeight: 500
                           }}>
-                            Asignado
-                          </span>
-                        )}
+                            {project.name}
+                          </div>
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '8px',
+                            fontSize: '0.7rem',
+                            color: '#94a3b8',
+                            flexWrap: 'wrap'
+                          }}>
+                            <span>Cliente: {project.client_name || 'Sin cliente'}</span>
+                            <span>•</span>
+                            <span style={{ color: getStatusColor(project.status) }}>
+                              {getStatusText(project.status)}
+                            </span>
+                          </div>
+                        </div>
+
                         <div style={{
                           width: '22px',
                           height: '22px',
@@ -456,50 +520,95 @@ export default function AssignProjectModal({
                           {isSelected && <Check size={14} color="white" />}
                         </div>
                       </div>
-                    </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
 
-                    {/* Sección de tareas (solo si está seleccionado) */}
-                    {isSelected && (
-                      <div style={{ paddingLeft: '50px', marginTop: '4px' }}>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleExpandProject(project.id);
-                          }}
+          {/* Contenido de la pestaña "Gestionar Tareas" */}
+          {activeTab === 'tasks' && (
+            <>
+              {assignedProjects.length === 0 ? (
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '40px 0',
+                  color: '#94a3b8'
+                }}>
+                  <FileText size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
+                  <p>No hay proyectos asignados</p>
+                  <p style={{ fontSize: '0.8rem', marginTop: '4px' }}>
+                    Asigna proyectos primero en la pestaña "Asignar Proyectos"
+                  </p>
+                </div>
+              ) : (
+                <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '4px' }}>
+                  {assignedProjects.map((project) => {
+                    const isExpanded = expandedProject === project.id;
+                    const tasks = projectTasks[project.id] || [];
+                    const loadingTasksForProject = loadingTasks[project.id];
+                    const isTaskFormVisible = showTaskForm === project.id;
+                    
+                    return (
+                      <div key={project.id} style={{ marginBottom: '12px' }}>
+                        {/* Proyecto asignado */}
+                        <div
+                          onClick={() => handleExpandProject(project.id)}
                           style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#94a3b8',
-                            fontSize: '0.75rem',
-                            cursor: 'pointer',
-                            padding: '4px 8px',
-                            borderRadius: '4px',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px',
-                            transition: 'all 0.2s'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.color = '#60a5fa';
-                            e.currentTarget.style.background = 'rgba(59,130,246,0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.color = '#94a3b8';
-                            e.currentTarget.style.background = 'transparent';
+                            gap: '12px',
+                            padding: '10px 14px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            background: isExpanded ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.03)',
+                            border: `1px solid ${isExpanded ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.06)'}`
                           }}
                         >
-                          {isExpanded ? (
-                            <>🔼 Ocultar tareas</>
-                          ) : (
-                            <>📋 Ver tareas ({tasks.length})</>
-                          )}
-                        </button>
+                          <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '8px',
+                            background: 'rgba(59,130,246,0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#3b82f6',
+                            flexShrink: 0
+                          }}>
+                            <FolderOpen size={16} />
+                          </div>
 
-                        {/* Tareas expandidas */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ color: 'white', fontSize: '0.9rem', fontWeight: 500 }}>
+                              {project.name}
+                            </div>
+                            <div style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '8px',
+                              fontSize: '0.7rem',
+                              color: '#94a3b8'
+                            }}>
+                              <span>Cliente: {project.client_name || 'Sin cliente'}</span>
+                              <span>•</span>
+                              <span>Tareas: {tasks.length}</span>
+                            </div>
+                          </div>
+
+                          <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                            {isExpanded ? '▲' : '▼'}
+                          </div>
+                        </div>
+
+                        {/* Tareas del proyecto */}
                         {isExpanded && (
                           <div style={{
                             marginTop: '8px',
                             padding: '8px 12px',
+                            marginLeft: '48px',
                             background: 'rgba(255,255,255,0.03)',
                             borderRadius: '6px',
                             border: '1px solid rgba(255,255,255,0.06)'
@@ -509,7 +618,7 @@ export default function AssignProjectModal({
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setShowTaskForm(isTaskFormVisible ? null : project.id);
-                                setNewTask({ title: '', description: '', priority: 'medium', status: 'pending' });
+                                setNewTask({ title: '', description: '', priority: 'medium', due_date: '' });
                               }}
                               style={{
                                 display: 'flex',
@@ -579,7 +688,7 @@ export default function AssignProjectModal({
                                   }}
                                   rows="2"
                                 />
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                                   <select
                                     value={newTask.priority}
                                     onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
@@ -590,7 +699,8 @@ export default function AssignProjectModal({
                                       border: '1px solid rgba(255,255,255,0.1)',
                                       color: 'white',
                                       fontSize: '0.8rem',
-                                      flex: 1
+                                      flex: 1,
+                                      minWidth: '100px'
                                     }}
                                   >
                                     <option value="low">🟢 Baja</option>
@@ -598,12 +708,42 @@ export default function AssignProjectModal({
                                     <option value="high">🟠 Alta</option>
                                     <option value="urgent">🔴 Urgente</option>
                                   </select>
+
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    flex: 1,
+                                    minWidth: '150px',
+                                    background: 'rgba(255,255,255,0.05)',
+                                    borderRadius: '4px',
+                                    padding: '0 8px',
+                                    border: '1px solid rgba(255,255,255,0.1)'
+                                  }}>
+                                    <Calendar size={16} style={{ color: '#94a3b8' }} />
+                                    <input
+                                      type="date"
+                                      value={newTask.due_date}
+                                      onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
+                                      style={{
+                                        width: '100%',
+                                        padding: '6px 0',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        outline: 'none',
+                                        color: 'white',
+                                        fontSize: '0.85rem'
+                                      }}
+                                    />
+                                  </div>
+
                                   <span style={{ 
                                     fontSize: '0.7rem', 
                                     color: '#94a3b8',
                                     padding: '4px 8px',
                                     background: 'rgba(255,255,255,0.05)',
-                                    borderRadius: '4px'
+                                    borderRadius: '4px',
+                                    whiteSpace: 'nowrap'
                                   }}>
                                     Estado: Pendiente
                                   </span>
@@ -664,7 +804,7 @@ export default function AssignProjectModal({
                                 color: '#64748b',
                                 fontSize: '0.8rem'
                               }}>
-                                No hay tareas asignadas a este empleado
+                                No hay tareas en este proyecto
                               </div>
                             ) : (
                               tasks.map((task) => (
@@ -690,6 +830,21 @@ export default function AssignProjectModal({
                                   }}>
                                     {task.title}
                                   </span>
+                                  {task.due_date && (
+                                    <span style={{
+                                      fontSize: '0.6rem',
+                                      color: '#94a3b8',
+                                      padding: '1px 6px',
+                                      background: 'rgba(255,255,255,0.05)',
+                                      borderRadius: '3px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '3px'
+                                    }}>
+                                      <Calendar size={10} />
+                                      {formatDate(task.due_date)}
+                                    </span>
+                                  )}
                                   <span style={{
                                     fontSize: '0.6rem',
                                     color: getPriorityColor(task.priority),
@@ -737,23 +892,34 @@ export default function AssignProjectModal({
                           </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           )}
         </div>
 
         <div className="modal-footer">
-          <button
-            onClick={handleSubmit}
-            disabled={submitting || loading}
-            className="btn-modal-primary"
-            style={{ flex: 1 }}
-          >
-            {submitting ? 'Guardando...' : 'Guardar Asignaciones'}
-          </button>
+          {activeTab === 'assign' && (
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || loading}
+              className="btn-modal-primary"
+              style={{ flex: 1 }}
+            >
+              {submitting ? 'Guardando...' : 'Guardar Asignaciones'}
+            </button>
+          )}
+          {activeTab === 'tasks' && (
+            <button
+              onClick={onClose}
+              className="btn-modal-primary"
+              style={{ flex: 1 }}
+            >
+              Cerrar
+            </button>
+          )}
           <button
             onClick={onClose}
             className="btn-modal-secondary"
