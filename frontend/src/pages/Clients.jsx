@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
-import { Plus, Building2, Mail, Phone, Users, Trash2, Edit, X, Check } from 'lucide-react';
+import { Users, Mail, UserPlus, Trash2, Briefcase, X, Edit, Building2, Phone } from 'lucide-react';
 import './Clients.css';
 
 export default function Clients() {
@@ -18,204 +18,202 @@ export default function Clients() {
     company: '',
     rfc: ''
   });
-  const [deletingId, setDeletingId] = useState(null);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [message, setMessage] = useState({ text: '', type: '' });
+
+  // Modal de confirmación personalizado para eliminar
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState(null);
 
   useEffect(() => {
     fetchClients();
   }, []);
+
+  // Bloquear scroll cuando modal está abierto
+  useEffect(() => {
+    document.body.style.overflow = showConfirmModal ? 'hidden' : 'auto';
+  }, [showConfirmModal]);
 
   const fetchClients = async () => {
     try {
       const response = await api.get('/clients/');
       setClients(response.data);
     } catch (error) {
-      console.error('Error:', error);
+      console.error(error);
+      setMessage({ text: 'Error al cargar clientes', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setFormData({ name: '', email: '', phone: '', company: '', rfc: '' });
+  const handleOpenCreateModal = () => {
     setEditingClient(null);
+    setFormData({ name: '', email: '', phone: '', company: '', rfc: '' });
+    setShowModal(true);
   };
 
-  const handleOpenModal = (client = null) => {
-    if (client) {
-      setEditingClient(client);
-      setFormData({
-        name: client.name,
-        email: client.email,
-        phone: client.phone || '',
-        company: client.company || '',
-        rfc: client.rfc || ''
-      });
-    } else {
-      resetForm();
-    }
+  const handleOpenEditModal = (client) => {
+    setEditingClient(client);
+    setFormData({
+      name: client.name,
+      email: client.email,
+      phone: client.phone || '',
+      company: client.company || '',
+      rfc: client.rfc || ''
+    });
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       if (editingClient) {
-        // Actualizar cliente
         await api.put(`/clients/${editingClient.id}`, formData);
-        setSuccessMessage('Cliente actualizado exitosamente');
+        setMessage({ text: `Cliente actualizado`, type: 'success' });
+        setShowModal(false);
       } else {
-        // Crear cliente
         await api.post('/clients/', formData);
-        setSuccessMessage('Cliente creado exitosamente');
+        setMessage({ text: `Cliente creado`, type: 'success' });
+        setShowModal(false);
       }
-      
-      setTimeout(() => setSuccessMessage(''), 3000);
-      setShowModal(false);
-      resetForm();
+
+      setFormData({ name: '', email: '', phone: '', company: '', rfc: '' });
       fetchClients();
+
     } catch (error) {
-      setErrorMessage(error.response?.data?.detail || 'Error al guardar cliente');
-      setTimeout(() => setErrorMessage(''), 3000);
+      setMessage({
+        text: error.response?.data?.detail || 'Error',
+        type: 'error'
+      });
     }
   };
 
-  const handleDelete = async (clientId, clientName) => {
-    if (!window.confirm(`¿Estás seguro de que deseas eliminar al cliente "${clientName}"?`)) {
-      return;
-    }
-    
-    setDeletingId(clientId);
-    setErrorMessage('');
-    setSuccessMessage('');
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditingClient(null);
+  };
+
+  // Abre el modal de confirmación para eliminar
+  const handleDeleteClick = (id, name) => {
+    setClientToDelete({ id, name });
+    setShowConfirmModal(true);
+  };
+
+  // Elimina después de confirmar
+  const confirmDelete = async () => {
+    if (!clientToDelete) return;
     
     try {
-      await api.delete(`/clients/${clientId}`);
-      setSuccessMessage(`Cliente "${clientName}" eliminado exitosamente`);
-      setTimeout(() => setSuccessMessage(''), 3000);
+      await api.delete(`/clients/${clientToDelete.id}`);
+      setMessage({ text: `Cliente ${clientToDelete.name} eliminado`, type: 'success' });
       fetchClients();
     } catch (error) {
       const errorDetail = error.response?.data?.detail;
       
       if (errorDetail && errorDetail.includes("proyecto(s) asociado(s)")) {
-        setErrorMessage(errorDetail);
+        setMessage({ text: errorDetail, type: 'error' });
       } else {
-        setErrorMessage(errorDetail || 'Error al eliminar el cliente');
+        setMessage({ text: errorDetail || 'Error al eliminar', type: 'error' });
       }
-      setTimeout(() => setErrorMessage(''), 5000);
     } finally {
-      setDeletingId(null);
+      setShowConfirmModal(false);
+      setClientToDelete(null);
+      setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     }
   };
 
   return (
     <>
-    <Navbar />
-    <div className="clients-container">
-      <div className="clients-header">
-        <div className="clients-header-content">
-          <div className="clients-title">
-            <h1>Clientes</h1>
-            <p>Gestiona tus clientes y empresas</p>
-          </div>
+      <Navbar />
 
-          <button
-            onClick={() => handleOpenModal()}
-            className="btn-new-client"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo Cliente
-          </button>
+      <div className="clients-container">
+
+        {/* HEADER */}
+        <div className="clients-header">
+          <div className="clients-header-content">
+            <div>
+              <h1>Clientes</h1>
+              <p>Gestiona tus clientes y empresas</p>
+            </div>
+
+            <button onClick={handleOpenCreateModal} className="btn-new-client">
+              <UserPlus size={16} />
+              Registrar
+            </button>
+          </div>
         </div>
-      </div>
-        {/* Mensajes de éxito y error */}
-        {successMessage && (
-          <div className="success-message">
-            ✅ {successMessage}
-          </div>
-        )}
-        
-        {errorMessage && (
-          <div className="error-message">
-            ❌ {errorMessage}
+
+        {/* MENSAJE */}
+        {message.text && (
+          <div className={`message-floating ${message.type}`}>
+            {message.text}
           </div>
         )}
 
+        {/* MAIN */}
         <main className="clients-main">
           {loading ? (
             <div className="loading-state">
               <div className="loading-spinner"></div>
-              <p>Cargando clientes...</p>
             </div>
           ) : clients.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-icon">
-                <Users className="w-8 h-8" />
-              </div>
-              <p className="empty-title">No hay clientes registrados</p>
-              <p className="empty-subtitle">Crea tu primer cliente para comenzar</p>
+              <Users size={40} />
+              <p>No hay clientes</p>
             </div>
           ) : (
             <div className="clients-grid">
               {clients.map((client) => (
                 <div key={client.id} className="client-card">
-                  {/* Botones de acción */}
-                  <div className="client-actions">
-                    <button
-                      className="client-edit-btn"
-                      onClick={() => handleOpenModal(client)}
-                      title="Editar cliente"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      className="client-delete-btn"
-                      onClick={() => handleDelete(client.id, client.name)}
-                      disabled={deletingId === client.id}
-                      title="Eliminar cliente"
-                    >
-                      {deletingId === client.id ? (
-                        <div className="delete-spinner-small"></div>
-                      ) : (
-                        <Trash2 className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-                  
-                  <div className="client-header">
+
+                  <div className="client-card-header">
                     <div className="client-avatar">
-                      <Building2 className="w-6 h-6" />
+                      {client.name.charAt(0)}
                     </div>
-                    <div className="client-info">
+
+                    <div>
                       <div className="client-name">{client.name}</div>
-                      {client.company && (
-                        <div className="client-company">
-                          <Building2 className="w-3 h-3" />
-                          {client.company}
-                        </div>
+                      <div className="client-email">
+                        <Mail size={12} />
+                        {client.email}
+                      </div>
+                    </div>
+
+                    <div className="client-actions">
+                      <button className="edit-btn" onClick={() => handleOpenEditModal(client)}>
+                        <Edit size={14} />
+                      </button>
+                      <button className="delete-btn" onClick={() => handleDeleteClick(client.id, client.name)}>
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="client-card-footer">
+                    <div className="client-badge">
+                      <Building2 size={12} />
+                      {client.company || 'Sin empresa'}
+                    </div>
+
+                    <div className="client-status">
+                      {client.phone && (
+                        <span className="flex items-center gap-1">
+                          <Phone size={12} />
+                          {client.phone}
+                        </span>
+                      )}
+                      {!client.phone && (
+                        <span className="text-gray-500">Sin teléfono</span>
                       )}
                     </div>
                   </div>
-                  
-                  <div className="client-details">
-                    <div className="client-detail">
-                      <Mail className="w-3 h-3" />
-                      {client.email}
+
+                  {client.rfc && (
+                    <div className="client-rfc-wrapper">
+                      <span className="client-rfc">RFC: {client.rfc}</span>
                     </div>
-                    {client.phone && (
-                      <div className="client-detail">
-                        <Phone className="w-3 h-3" />
-                        {client.phone}
-                      </div>
-                    )}
-                    {client.rfc && (
-                      <div className="client-rfc">
-                        RFC: {client.rfc}
-                      </div>
-                    )}
-                  </div>
+                  )}
+
                 </div>
               ))}
             </div>
@@ -223,92 +221,97 @@ export default function Clients() {
         </main>
       </div>
 
-      {/* Modal para crear/editar cliente */}
+      {/* MODAL FORM */}
       {showModal && (
-        <div className="modal-overlay" onClick={() => setShowModal(false)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="modal-container">
+
             <div className="modal-header">
-              <h2>{editingClient ? 'Editar Cliente' : 'Nuevo Cliente'}</h2>
-              <button className="modal-close" onClick={() => setShowModal(false)}>
-                <X className="w-5 h-5" />
+              <h2>{editingClient ? 'Editar' : 'Registrar'}</h2>
+              <button onClick={handleCloseModal}>
+                <X size={18} />
               </button>
             </div>
+
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
-                <div className="modal-form-group">
-                  <label className="modal-form-label">Nombre *</label>
-                  <input
-                    type="text"
-                    required
-                    className="modal-form-input"
-                    placeholder="Ej: Juan Pérez"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  />
-                </div>
-                
-                <div className="modal-form-group">
-                  <label className="modal-form-label">Email *</label>
-                  <input
-                    type="email"
-                    required
-                    className="modal-form-input"
-                    placeholder="cliente@empresa.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
-                
-                <div className="modal-form-group">
-                  <label className="modal-form-label">Empresa</label>
-                  <input
-                    type="text"
-                    className="modal-form-input"
-                    placeholder="Nombre de la empresa"
-                    value={formData.company}
-                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                  />
-                </div>
-                
-                <div className="modal-form-group">
-                  <label className="modal-form-label">Teléfono</label>
-                  <input
-                    type="tel"
-                    className="modal-form-input"
-                    placeholder="555-123-4567"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  />
-                </div>
-                
-                <div className="modal-form-group">
-                  <label className="modal-form-label">RFC</label>
-                  <input
-                    type="text"
-                    className="modal-form-input"
-                    placeholder="XAXX010101000"
-                    value={formData.rfc}
-                    onChange={(e) => setFormData({ ...formData, rfc: e.target.value })}
-                  />
-                </div>
+
+                <input
+                  type="text"
+                  required
+                  className="modal-form-input"
+                  placeholder="Nombre *"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+
+                <input
+                  type="email"
+                  required
+                  className="modal-form-input"
+                  placeholder="Correo *"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                />
+
+                <input
+                  type="text"
+                  className="modal-form-input"
+                  placeholder="Empresa"
+                  value={formData.company}
+                  onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                />
+
+                <input
+                  type="text"
+                  className="modal-form-input"
+                  placeholder="Teléfono"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                />
+
+                <input
+                  type="text"
+                  className="modal-form-input"
+                  placeholder="RFC"
+                  value={formData.rfc}
+                  onChange={(e) => setFormData({ ...formData, rfc: e.target.value })}
+                />
+
               </div>
-              
+
               <div className="modal-footer">
                 <button type="submit" className="btn-modal-primary">
-                  {editingClient ? 'Actualizar' : 'Guardar'}
+                  Guardar
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="btn-modal-secondary"
-                >
+                <button type="button" onClick={handleCloseModal} className="btn-modal-secondary">
                   Cancelar
                 </button>
               </div>
+
             </form>
           </div>
         </div>
       )}
+
+      {/* MODAL DE CONFIRMACIÓN PARA ELIMINAR */}
+      {showConfirmModal && (
+        <div className="confirm-overlay">
+          <div className="confirm-modal">
+            <h3>Confirmar eliminación</h3>
+            <p>¿Estás seguro de que deseas eliminar a <strong>{clientToDelete?.name}</strong>?</p>
+            <div className="confirm-buttons">
+              <button className="confirm-btn-delete" onClick={confirmDelete}>
+                Eliminar
+              </button>
+              <button className="confirm-btn-cancel" onClick={() => setShowConfirmModal(false)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </>
   );
 }

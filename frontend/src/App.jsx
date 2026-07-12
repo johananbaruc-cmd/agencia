@@ -3,6 +3,13 @@ import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import EmployeeDashboard from './pages/EmployeeDashboard';
+import EmployeeTasks from './pages/EmployeeTasks';
+import EmployeeKanban from './pages/EmployeeKanban';
+import EmployeeEvidence from './pages/EmployeeEvidence';
+import EmployeeCalendar from './pages/EmployeeCalendar';
+import AdminEvidence from './pages/AdminEvidence';
+import AdminCalendar from './pages/AdminCalendar'; // ✅ NUEVO: Calendario de admin
 import ProjectsNew from './pages/ProjectsNew';
 import ProjectDetail from './pages/ProjectDetail';
 import Clients from './pages/Clients';
@@ -20,6 +27,55 @@ function App() {
           <Route path="/dashboard" element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          } />
+          
+          {/* Employee Dashboard - solo empleados */}
+          <Route path="/employee-dashboard" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <EmployeeDashboard />
+            </ProtectedRoute>
+          } />
+
+          {/* Employee Tasks - solo empleados */}
+          <Route path="/employee-tasks" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <EmployeeTasks />
+            </ProtectedRoute>
+          } />
+
+          {/* Employee Kanban - solo empleados */}
+          <Route path="/employee-kanban" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <EmployeeKanban />
+            </ProtectedRoute>
+          } />
+
+          {/* Employee Evidence - solo empleados (ver sus propias evidencias) */}
+          <Route path="/employee-evidence" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <EmployeeEvidence />
+            </ProtectedRoute>
+          } />
+
+          {/* Employee Calendar - solo empleados (calendario de tareas) */}
+          <Route path="/employee-calendar" element={
+            <ProtectedRoute allowedRoles={['employee']}>
+              <EmployeeCalendar />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Evidence - solo admin (gestionar evidencias) */}
+          <Route path="/admin-evidence" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminEvidence />
+            </ProtectedRoute>
+          } />
+
+          {/* Admin Calendar - solo admin (calendario de tareas por empleado/proyecto) */}
+          <Route path="/admin-calendar" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminCalendar />
             </ProtectedRoute>
           } />
           

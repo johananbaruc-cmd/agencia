@@ -1,15 +1,11 @@
-/* =========================
-   CONTENEDOR
-========================= */
+/* CONTENEDOR */
 .clients-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #020617, #0f172a);
   color: white;
 }
 
-/* =========================
-   HEADER (igual a employees)
-========================= */
+/* HEADER */
 .clients-header {
   background: rgba(255,255,255,0.05);
   backdrop-filter: blur(10px);
@@ -19,7 +15,6 @@
   z-index: 10;
 }
 
-/* CONTENIDO HEADER */
 .clients-header-content {
   max-width: 1280px;
   margin: 0 auto;
@@ -27,38 +22,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
 }
 
-/* =========================
-   TITULOS
-========================= */
-.clients-title h1 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: white;
-}
-
-.clients-title p {
-  font-size: 0.85rem;
-  color: #94a3b8;
-}
-
-/* =========================
-   BOTÓN (glass igual employees)
-========================= */
+/* BOTÓN */
 .btn-new-client {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   background: rgba(255,255,255,0.08);
   color: white;
   padding: 0.6rem 1.2rem;
   border-radius: 0.7rem;
   border: 1px solid rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
   cursor: pointer;
   transition: 0.25s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 .btn-new-client:hover {
@@ -67,36 +44,28 @@
   transform: translateY(-2px);
 }
 
-/* =========================
-   MAIN (contenido centrado)
-========================= */
+/* MAIN */
 .clients-main {
   max-width: 1280px;
   margin: 0 auto;
   padding: 1.5rem;
 }
 
-/* =========================
-   GRID
-========================= */
+/* GRID */
 .clients-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 1rem;
 }
 
-/* =========================
-   TARJETAS
-========================= */
+/* CARD */
 .client-card {
-  position: relative;
   background: rgba(255,255,255,0.06);
   backdrop-filter: blur(12px);
   border-radius: 1rem;
   border: 1px solid rgba(255,255,255,0.08);
   transition: 0.25s;
   overflow: hidden;
-  padding: 1rem;
 }
 
 .client-card:hover {
@@ -105,15 +74,21 @@
   border-color: rgba(59,130,246,0.5);
 }
 
-/* =========================
-   HEADER CARD
-========================= */
-.client-header {
+/* HEADER CARD */
+.client-card-header {
   display: flex;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
 }
 
+.client-card-header > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* AVATAR */
 .client-avatar {
   width: 2.5rem;
   height: 2.5rem;
@@ -126,108 +101,95 @@
   font-weight: bold;
 }
 
-/* =========================
-   TEXTOS
-========================= */
+/* TEXTO */
 .client-name {
   font-weight: 600;
   font-size: 0.9rem;
 }
 
-.client-company {
+.client-email {
   font-size: 0.75rem;
   color: #94a3b8;
-}
-
-.client-detail {
-  font-size: 0.75rem;
-  color: #cbd5e1;
-}
-
-/* =========================
-   DETALLES
-========================= */
-.client-details {
-  margin-top: 0.75rem;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(255,255,255,0.06);
-}
-
-/* RFC */
-.client-rfc {
-  display: inline-block;
-  margin-top: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  background: rgba(255,255,255,0.08);
-  border-radius: 0.4rem;
-  font-size: 0.65rem;
-  color: #cbd5e1;
-}
-
-/* =========================
-   ACCIONES (editar / eliminar)
-========================= */
-.client-actions {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  display: flex;
-  gap: 0.4rem;
-}
-
-.client-edit-btn,
-.client-delete-btn {
-  width: 1.7rem;
-  height: 1.7rem;
-  border-radius: 0.45rem;
-  border: none;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 0.3rem;
+}
+
+/* ACCIONES */
+.client-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.edit-btn,
+.delete-btn {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.4rem;
+  padding: 0.3rem;
   cursor: pointer;
+  color: #94a3b8;
   transition: 0.2s;
 }
 
-.client-edit-btn {
+.edit-btn:hover {
+  background: rgba(59,130,246,0.2);
+  color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+.delete-btn:hover {
+  background: rgba(239,68,68,0.2);
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+/* FOOTER */
+.client-card-footer {
+  padding: 0.75rem 1rem;
+  background: rgba(255,255,255,0.03);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* BADGE */
+.client-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+  font-size: 0.65rem;
   background: rgba(59,130,246,0.15);
-  color: #60a5fa;
+  color: #3b82f6;
 }
 
-.client-edit-btn:hover {
-  background: rgba(59,130,246,0.3);
-  transform: scale(1.05);
+/* RFC */
+.client-rfc-wrapper {
+  padding: 0 1rem 0.75rem 1rem;
 }
 
-.client-delete-btn {
-  background: rgba(239,68,68,0.15);
-  color: #f87171;
+.client-rfc {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background: rgba(255,255,255,0.05);
+  border-radius: 0.3rem;
+  font-size: 0.65rem;
+  color: #94a3b8;
 }
 
-.client-delete-btn:hover:not(:disabled) {
-  background: rgba(239,68,68,0.3);
-  transform: scale(1.05);
+/* STATUS */
+.client-status {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  color: #94a3b8;
 }
 
-.client-delete-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* =========================
-   SPINNER
-========================= */
-.delete-spinner-small {
-  width: 0.75rem;
-  height: 0.75rem;
-  border: 2px solid #f87171;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-}
-
-/* =========================
-   EMPTY / LOADING
-========================= */
+/* EMPTY / LOADING */
 .empty-state,
 .loading-state {
   background: rgba(255,255,255,0.05);
@@ -237,65 +199,54 @@
   border: 1px solid rgba(255,255,255,0.08);
 }
 
-/* =========================
-   MENSAJES
-========================= */
-.success-message,
-.error-message {
-  max-width: 1280px;
-  margin: 1rem auto 0;
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  text-align: center;
-  font-size: 0.875rem;
+.empty-state p {
+  margin-top: 1rem;
+  color: #94a3b8;
 }
 
-.success-message {
-  background: rgba(16,185,129,0.15);
-  color: #34d399;
+/* SPINNER */
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: auto;
 }
 
-.error-message {
-  background: rgba(239,68,68,0.15);
-  color: #f87171;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-/* =========================
-   MODAL
-========================= */
+/* MODAL */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(4px);
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  animation: fadeIn 0.2s ease;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  z-index: 50;
 }
 
 .modal-container {
+  width: 100%;
+  max-width: 420px;
   background: rgba(15,23,42,0.95);
-  border-radius: 1.5rem;
-  width: 90%;
-  max-width: 28rem;
-  max-height: 90vh;
-  overflow-y: auto;
   border: 1px solid rgba(255,255,255,0.08);
-  animation: slideUp 0.3s ease;
+  backdrop-filter: blur(12px);
+  border-radius: 1rem;
+  overflow: hidden;
+  animation: slideUp 0.25s ease;
 }
 
-/* HEADER MODAL */
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  padding: 1rem;
 }
 
 .modal-header h2 {
@@ -303,90 +254,164 @@
 }
 
 .modal-close {
-  background: none;
+  background: transparent;
   border: none;
   color: #94a3b8;
   cursor: pointer;
 }
 
-.modal-close:hover {
-  color: white;
-}
-
-/* BODY */
 .modal-body {
-  padding: 1.5rem;
-}
-
-/* FOOTER */
-.modal-footer {
-  padding: 1rem 1.5rem;
   display: flex;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1rem;
 }
 
-/* INPUTS */
 .modal-form-input {
-  width: 100%;
-  padding: 0.6rem 0.75rem;
-  border-radius: 0.7rem;
   background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.08);
   color: white;
-}
-
-.modal-form-input::placeholder {
-  color: #94a3b8;
+  padding: 0.6rem;
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
 }
 
 .modal-form-input:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59,130,246,0.25);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 1rem;
 }
 
 /* BOTONES MODAL */
 .btn-modal-primary {
-  flex: 1;
-  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
   color: white;
-  border-radius: 0.7rem;
-  padding: 0.6rem;
   border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
   cursor: pointer;
 }
 
 .btn-modal-secondary {
-  flex: 1;
   background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #cbd5e1;
-  border-radius: 0.7rem;
-  padding: 0.6rem;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.5rem;
   cursor: pointer;
 }
 
-/* =========================
-   ANIMACIONES
-========================= */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+/* MENSAJES */
+.message-floating {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  padding: 0.7rem 1rem;
+  border-radius: 0.6rem;
+  font-size: 0.8rem;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.message-floating.success {
+  background: rgba(16,185,129,0.2);
+  color: #34d399;
+}
+
+.message-floating.error {
+  background: rgba(239,68,68,0.2);
+  color: #ef4444;
+}
+
+/* ANIMACIONES */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* MODAL DE CONFIRMACIÓN */
+.confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  animation: fadeIn 0.2s ease;
+}
+
+.confirm-modal {
+  background: #1e293b;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.2s ease;
+}
+
+.confirm-modal h3 {
+  color: white;
+  margin-bottom: 0.5rem;
+  font-size: 1.2rem;
+}
+
+.confirm-modal p {
+  color: #cbd5e1;
+  margin-bottom: 1.5rem;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.confirm-btn-delete {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.confirm-btn-delete:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.confirm-btn-cancel {
+  background: #334155;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.confirm-btn-cancel:hover {
+  background: #475569;
 }
 
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
 }
