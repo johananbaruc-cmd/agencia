@@ -1,23 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import KanbanBoard from '../components/KanbanBoard';
-import ProjectModal from '../components/ProjectModal';
-import { FolderOpen, Clock, CheckCircle, DollarSign, LayoutGrid, List } from 'lucide-react';
+import { FolderOpen, Clock, CheckCircle, DollarSign, LayoutGrid, List, X, AlertTriangle, Eye } from 'lucide-react';
 import './Dashboard.css';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const viewParam = searchParams.get('view');
   
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState(viewParam === 'kanban' ? 'kanban' : 'grid');
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [editFormData, setEditFormData] = useState({
@@ -65,11 +66,12 @@ export default function Dashboard() {
     totalBudget: projects.reduce((sum, p) => sum + (p.budget || 0), 0),
   };
 
+  // ✅ Al hacer clic en un proyecto, navega a ProjectDetail
   const handleProjectClick = (project) => {
-    setSelectedProject(project);
-    setShowModal(true);
+    navigate(`/projects/${project.id}`);
   };
 
+  // ✅ Funciones para editar desde el dashboard (se mantienen)
   const handleEditClick = (project) => {
     setEditingProject(project);
     setEditFormData({
@@ -93,17 +95,34 @@ export default function Dashboard() {
       fetchProjects();
     } catch (error) {
       console.error('Error:', error);
+      alert('Error al actualizar el proyecto');
     }
   };
 
-  const handleDeleteProject = async (projectId, projectName) => {
-    if (window.confirm(`¿Estás seguro de que deseas eliminar el proyecto "${projectName}"?`)) {
-      try {
-        await api.delete(`/projects/${projectId}`);
-        fetchProjects();
-      } catch (error) {
-        console.error('Error:', error);
-      }
+  // ✅ Funciones para eliminar desde el dashboard
+  const openDeleteModal = (projectId, projectName) => {
+    setProjectToDelete({ id: projectId, name: projectName });
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setProjectToDelete(null);
+    setDeleting(false);
+  };
+
+  const confirmDelete = async () => {
+    if (!projectToDelete) return;
+    
+    setDeleting(true);
+    try {
+      await api.delete(`/projects/${projectToDelete.id}`);
+      closeDeleteModal();
+      fetchProjects();
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error al eliminar el proyecto');
+      setDeleting(false);
     }
   };
 
@@ -225,31 +244,14 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <ProjectModal
-        project={selectedProject}
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-        onEdit={(project) => {
-          setEditingProject(project);
-          setEditFormData({
-            name: project.name,
-            description: project.description || '',
-            budget: project.budget,
-          });
-          setShowEditModal(true);
-        }}
-        onDelete={(projectId, projectName) => {
-          handleDeleteProject(projectId, projectName);
-        }}
-      />
-
+      {/* ✅ Modal de Edición */}
       {showEditModal && editingProject && (
         <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Editar Proyecto</h2>
               <button className="modal-close" onClick={() => setShowEditModal(false)}>
-                ✕
+                <X size={20} />
               </button>
             </div>
             <form onSubmit={handleEditSubmit}>
@@ -290,9 +292,6 @@ export default function Dashboard() {
               </div>
 
               <div className="modal-footer">
-                <button type="submit" className="btn-modal-primary">
-                  Guardar Cambios
-                </button>
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
@@ -300,8 +299,62 @@ export default function Dashboard() {
                 >
                   Cancelar
                 </button>
+                <button type="submit" className="btn-modal-primary">
+                  Guardar Cambios
+                </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ✅ Modal de confirmación de eliminación */}
+      {showDeleteModal && projectToDelete && (
+        <div className="modal-eliminar-overlay" onClick={closeDeleteModal}>
+          <div className="modal-eliminar-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-eliminar-close" onClick={closeDeleteModal}>
+              <X size={20} />
+            </button>
+            
+            <div className="modal-eliminar-icon">
+              <AlertTriangle size={48} />
+            </div>
+            
+            <h2>¿Eliminar proyecto?</h2>
+            
+            <p className="modal-eliminar-mensaje">
+              Estás a punto de eliminar el proyecto <strong>"{projectToDelete.name}"</strong>.
+              <span className="texto-advertencia"> ⚠️ Esta acción eliminará todas las tareas y evidencias asociadas a este proyecto.</span>
+              <br />
+              <span className="texto-importante">Esta acción no se puede deshacer.</span>
+            </p>
+            
+            <div className="modal-eliminar-actions">
+              <button 
+                onClick={closeDeleteModal}
+                className="btn-eliminar-cancelar"
+                disabled={deleting}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={confirmDelete}
+                className="btn-eliminar-confirmar"
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <>
+                    <span className="spinner-small"></span>
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle size={16} />
+                    Sí, eliminar
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -336,4 +336,18 @@
   }
 }
 
+.navbar-dropdown-btn .lucide-file-text {
+  color: #8b5cf6; /* Color morado para diferenciar */
+}
+
+/* Estilos para el ícono de reportes en el dropdown */
+.navbar-dropdown-menu .dropdown-item .lucide-file-text {
+  color: #8b5cf6;
+}
+
+/* Opcional: efecto hover diferenciado */
+.navbar-dropdown-btn:hover .lucide-file-text {
+  color: #7c3aed;
+}
+
 

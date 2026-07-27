@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
@@ -13,25 +13,28 @@ import {
   DollarSign,
   User,
   FileText,
-  Clock,
-  CheckCircle
+  AlertTriangle
 } from 'lucide-react';
 import './ProjectDetail.css';
 
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     budget: '',
-    status: '',
-    progress: 0
   });
+
+  // ✅ Verificar si viene desde ReportesGestion
+  const fromReports = location.state?.from === 'reports';
 
   useEffect(() => {
     fetchProject();
@@ -45,8 +48,6 @@ export default function ProjectDetail() {
         name: response.data.name,
         description: response.data.description || '',
         budget: response.data.budget,
-        status: response.data.status,
-        progress: response.data.progress || 0
       });
     } catch (error) {
       console.error('Error:', error);
@@ -63,8 +64,6 @@ export default function ProjectDetail() {
         name: formData.name,
         description: formData.description,
         budget: parseFloat(formData.budget),
-        status: formData.status,
-        progress: parseInt(formData.progress)
       });
       alert('✅ Proyecto actualizado');
       setIsEditing(false);
@@ -75,14 +74,15 @@ export default function ProjectDetail() {
   };
 
   const handleDelete = async () => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este proyecto?')) {
-      try {
-        await api.delete(`/projects/${id}`);
-        alert('✅ Proyecto eliminado');
-        navigate('/dashboard');
-      } catch (error) {
-        alert(error.response?.data?.detail || 'Error al eliminar');
-      }
+    setDeleting(true);
+    try {
+      await api.delete(`/projects/${id}`);
+      alert('✅ Proyecto eliminado');
+      // ✅ Volver a la página anterior después de eliminar
+      goBack();
+    } catch (error) {
+      alert(error.response?.data?.detail || 'Error al eliminar');
+      setDeleting(false);
     }
   };
 
@@ -106,6 +106,15 @@ export default function ProjectDetail() {
     return classMap[status] || 'status-pending';
   };
 
+  // ✅ Función para volver a la página anterior
+  const goBack = () => {
+    if (fromReports) {
+      navigate('/reportes/gestion');
+    } else {
+      navigate(-1); // ✅ Vuelve a la página anterior
+    }
+  };
+
   if (loading) {
     return (
       <>
@@ -126,9 +135,9 @@ export default function ProjectDetail() {
       <div className="detail-container">
         <div className="detail-content">
           {/* Botón volver */}
-          <button className="back-btn" onClick={() => navigate('/dashboard')}>
+          <button className="back-btn" onClick={goBack}>
             <ArrowLeft size={18} />
-            Volver al Dashboard
+            {fromReports ? 'Volver a Gestión de Reportes' : 'Volver atrás'}
           </button>
 
           {/* Tarjeta principal */}
@@ -146,31 +155,34 @@ export default function ProjectDetail() {
                 <h1>{project.name}</h1>
               )}
               
-              <div className="detail-actions">
-                {isEditing ? (
-                  <>
-                    <button className="save-btn" onClick={handleUpdate}>
-                      <Save size={16} />
-                      Guardar
-                    </button>
-                    <button className="cancel-btn" onClick={() => setIsEditing(false)}>
-                      <X size={16} />
-                      Cancelar
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button className="edit-btn" onClick={() => setIsEditing(true)}>
-                      <Edit size={16} />
-                      Editar
-                    </button>
-                    <button className="delete-btn" onClick={handleDelete}>
-                      <Trash2 size={16} />
-                      Eliminar
-                    </button>
-                  </>
-                )}
-              </div>
+              {/* ✅ Ocultar botones de edición/eliminación si viene desde ReportesGestion */}
+              {!fromReports && (
+                <div className="detail-actions">
+                  {isEditing ? (
+                    <>
+                      <button className="save-btn" onClick={handleUpdate}>
+                        <Save size={16} />
+                        Guardar
+                      </button>
+                      <button className="cancel-btn" onClick={() => setIsEditing(false)}>
+                        <X size={16} />
+                        Cancelar
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button className="edit-btn" onClick={() => setIsEditing(true)}>
+                        <Edit size={16} />
+                        Editar
+                      </button>
+                      <button className="delete-btn" onClick={() => setShowDeleteModal(true)}>
+                        <Trash2 size={16} />
+                        Eliminar
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Badge de estado */}
@@ -178,7 +190,7 @@ export default function ProjectDetail() {
               {getStatusText(project.status)}
             </div>
 
-            {/* Grid de información */}
+            {/* Grid de información - SOLO LECTURA */}
             <div className="info-grid">
               <div className="info-card">
                 <DollarSign size={18} />
@@ -214,49 +226,10 @@ export default function ProjectDetail() {
               </div>
 
               <div className="info-card">
-                <Clock size={18} />
-                <div>
-                  <label>Progreso</label>
-                  {isEditing ? (
-                    <div className="progress-edit">
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        value={formData.progress}
-                        onChange={(e) => setFormData({ ...formData, progress: e.target.value })}
-                      />
-                      <span>{formData.progress}%</span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="progress-bar-container">
-                        <div className="progress-bar-fill" style={{ width: `${project.progress}%` }} />
-                      </div>
-                      <span className="progress-text">{project.progress}%</span>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="info-card">
                 <FileText size={18} />
                 <div>
                   <label>Estado</label>
-                  {isEditing ? (
-                    <select
-                      className="edit-select"
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    >
-                      <option value="pending">Pendiente</option>
-                      <option value="in_progress">En Progreso</option>
-                      <option value="completed">Completado</option>
-                      <option value="paused">Pausado</option>
-                    </select>
-                  ) : (
-                    <span>{getStatusText(project.status)}</span>
-                  )}
+                  <span>{getStatusText(project.status)}</span>
                 </div>
               </div>
             </div>
@@ -279,6 +252,72 @@ export default function ProjectDetail() {
           </div>
         </div>
       </div>
+
+      {/* ✅ Modal de confirmación de eliminación - solo si viene del dashboard */}
+      {showDeleteModal && !fromReports && (
+        <div className="modal-eliminar-overlay" onClick={() => setShowDeleteModal(false)}>
+          <div className="modal-eliminar-content" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-eliminar-close" onClick={() => setShowDeleteModal(false)}>
+              <X size={20} />
+            </button>
+            
+            <div className="modal-eliminar-icon">
+              <AlertTriangle size={48} />
+            </div>
+            
+            <h2>¿Eliminar proyecto?</h2>
+            
+            <p className="modal-eliminar-mensaje">
+              Estás a punto de eliminar el proyecto <strong>"{project.name}"</strong>.
+              <span className="texto-advertencia"> ⚠️ Esta acción eliminará todas las tareas y evidencias asociadas.</span>
+              <br />
+              <span className="texto-importante">Esta acción no se puede deshacer.</span>
+            </p>
+            
+            <div className="modal-eliminar-info">
+              <div className="modal-eliminar-info-item">
+                <span className="modal-eliminar-info-label">Estado</span>
+                <span className="modal-eliminar-info-value">{getStatusText(project.status)}</span>
+              </div>
+              <div className="modal-eliminar-info-item">
+                <span className="modal-eliminar-info-label">Presupuesto</span>
+                <span className="modal-eliminar-info-value">${project.budget?.toLocaleString('es-MX')} MXN</span>
+              </div>
+              <div className="modal-eliminar-info-item">
+                <span className="modal-eliminar-info-label">Cliente</span>
+                <span className="modal-eliminar-info-value">{project.client_name || 'Sin cliente'}</span>
+              </div>
+            </div>
+            
+            <div className="modal-eliminar-actions">
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                className="btn-eliminar-cancelar"
+                disabled={deleting}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleDelete}
+                className="btn-eliminar-confirmar"
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <>
+                    <span className="spinner-small"></span>
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} />
+                    Sí, eliminar
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -1,6 +1,19 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Home, FolderPlus, LogOut, User, Users, LayoutGrid, CheckSquare, FileImage, ChevronDown, Calendar } from 'lucide-react';
+import { 
+  Home, 
+  FolderPlus, 
+  LogOut, 
+  User, 
+  Users, 
+  LayoutGrid, 
+  CheckSquare, 
+  FileImage, 
+  ChevronDown, 
+  Calendar,
+  FileText,
+  Settings
+} from 'lucide-react';
 import { useState } from 'react';
 import './Navbar.css';
 
@@ -10,6 +23,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEmployeesOpen, setIsEmployeesOpen] = useState(false);
   const [isTasksOpen, setIsTasksOpen] = useState(false);
+  const [isReportsOpen, setIsReportsOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -27,6 +41,10 @@ export default function Navbar() {
     setIsTasksOpen(!isTasksOpen);
   };
 
+  const toggleReportsDropdown = () => {
+    setIsReportsOpen(!isReportsOpen);
+  };
+
   return (
     <nav className="navbar">
       <div className="navbar-inner">
@@ -36,7 +54,6 @@ export default function Navbar() {
         </Link>
 
         <div className="navbar-links">
-          {/* Empleado: Dashboard y dropdown de Tareas/Evidencias */}
           {isEmployee && (
             <>
               <Link to="/employee-dashboard" className="navbar-link">
@@ -49,7 +66,6 @@ export default function Navbar() {
                 Calendario
               </Link>
 
-              {/* Dropdown de Tareas, Kanban y Evidencias */}
               <div className="navbar-dropdown">
                 <button 
                   className="navbar-dropdown-btn"
@@ -79,7 +95,6 @@ export default function Navbar() {
             </>
           )}
 
-          {/* Admin: opciones de admin con dropdown */}
           {isAdmin && (
             <>
               <Link to="/dashboard" className="navbar-link">
@@ -101,7 +116,6 @@ export default function Navbar() {
                 Calendario
               </Link>
 
-              {/* Dropdown de Empleados */}
               <div className="navbar-dropdown">
                 <button 
                   className="navbar-dropdown-btn"
@@ -120,6 +134,34 @@ export default function Navbar() {
                     <Link to="/admin-evidence" className="dropdown-item">
                       <FileImage size={14} />
                       Evidencias
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Dropdown de Reportes */}
+              <div className="navbar-dropdown">
+                <button 
+                  className="navbar-dropdown-btn"
+                  onClick={toggleReportsDropdown}
+                >
+                  <FileText size={16} />
+                  Reportes
+                  <ChevronDown size={14} className={`dropdown-arrow ${isReportsOpen ? 'open' : ''}`} />
+                </button>
+                {isReportsOpen && (
+                  <div className="navbar-dropdown-menu">
+                    <Link to="/reportes/proyectos" className="dropdown-item">
+                      <FileText size={14} />
+                      Reportes por Proyecto
+                    </Link>
+                    <Link to="/reportes/crear" className="dropdown-item">
+                      <FileText size={14} />
+                      Crear Reporte
+                    </Link>
+                    <Link to="/reportes/gestion" className="dropdown-item">
+                      <Settings size={14} />
+                      Gestionar Reportes
                     </Link>
                   </div>
                 )}
@@ -172,10 +214,17 @@ export default function Navbar() {
                 <Link to="/employees" onClick={() => setIsMenuOpen(false)}>• Empleados</Link>
                 <Link to="/admin-evidence" onClick={() => setIsMenuOpen(false)}>• Evidencias</Link>
               </div>
+
+              <div className="navbar-mobile-submenu">
+                <div className="navbar-mobile-submenu-title">Reportes</div>
+                <Link to="/reportes/proyectos" onClick={() => setIsMenuOpen(false)}>• Reportes por Proyecto</Link>
+                <Link to="/reportes/crear" onClick={() => setIsMenuOpen(false)}>• Crear Reporte</Link>
+                <Link to="/reportes/gestion" onClick={() => setIsMenuOpen(false)}>• Gestionar Reportes</Link>
+              </div>
             </>
           )}
 
-          <button onClick={handleLogout}>Salir</button>
+          <button onClick={handleLogout} className="mobile-logout">Salir</button>
         </div>
       )}
     </nav>

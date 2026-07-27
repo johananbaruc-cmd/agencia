@@ -29,8 +29,7 @@ export default function EmployeeEvidence() {
   const [newComment, setNewComment] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const STATIC_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
+  // ✅ Usar STATIC_URL de api.js (SIN /api/v1)
   const getFullUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;

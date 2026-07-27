@@ -1,13 +1,18 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from app.core.database import get_db
 from app.core.security import verify_token
 from app.models.user import User
 from app.models.client import Client
 
 security = HTTPBearer()
+
+
+# =============================================
+# AUTENTICACIÓN BÁSICA
+# =============================================
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -46,6 +51,7 @@ def get_current_user(
     
     return user
 
+
 def get_current_client_from_magic_link(
     token: str,
     db: Session = Depends(get_db)
@@ -76,8 +82,9 @@ def get_current_client_from_magic_link(
     
     return client
 
+
 # =============================================
-# DEPENDENCIAS PARA VERIFICAR ROLES
+# VERIFICACIÓN DE ROLES
 # =============================================
 
 def require_admin(current_user: User = Depends(get_current_user)) -> User:
@@ -89,6 +96,7 @@ def require_admin(current_user: User = Depends(get_current_user)) -> User:
         )
     return current_user
 
+
 def require_employee_or_admin(current_user: User = Depends(get_current_user)) -> User:
     """Verifica que el usuario sea admin o empleado"""
     if current_user.role not in ["admin", "employee"]:
@@ -98,6 +106,7 @@ def require_employee_or_admin(current_user: User = Depends(get_current_user)) ->
         )
     return current_user
 
+
 def require_employee(current_user: User = Depends(get_current_user)) -> User:
     """Verifica que el usuario sea empleado (excluye admin)"""
     if current_user.role != "employee":
@@ -106,6 +115,7 @@ def require_employee(current_user: User = Depends(get_current_user)) -> User:
             detail="Este recurso es solo para empleados"
         )
     return current_user
+
 
 def require_specific_role(allowed_roles: List[str]):
     """
@@ -120,3 +130,39 @@ def require_specific_role(allowed_roles: List[str]):
             )
         return current_user
     return role_checker
+
+
+# =============================================
+# ALIAS PARA COMPATIBILIDAD (NUEVOS ENDPOINTS)
+# =============================================
+
+def get_current_admin(current_user: User = Depends(require_admin)) -> User:
+    """
+    Alias de require_admin para compatibilidad con endpoints nuevos.
+    Útil para mantener consistencia en los endpoints de reportes.
+    """
+    return current_user
+
+
+def get_current_active_user(
+    current_user: User = Depends(get_current_user)
+) -> User:
+    """Alias para obtener usuario activo"""
+    return current_user
+
+
+# =============================================
+# DEPENDENCIAS PARA REPORTES PÚBLICOS
+# =============================================
+
+def get_client_ip(request) -> str:
+    """Obtiene la IP del cliente desde el request"""
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def get_user_agent(request) -> str:
+    """Obtiene el User-Agent del cliente"""
+    return request.headers.get("user-agent", "unknown")

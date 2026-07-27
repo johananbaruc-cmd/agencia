@@ -33,11 +33,22 @@ export default function EmployeeTasks() {
   const [evidenceToDelete, setEvidenceToDelete] = useState(null);
 
   // ✅ Usar STATIC_URL importado (SIN /api/v1)
+  // ✅ CORREGIDO: Elimina /api/v1 si está presente en la URL
   const getFullUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    if (url.startsWith('/')) return `${STATIC_URL}${url}`;
-    return `${STATIC_URL}/${url}`;
+    // ✅ Limpiar /api/v1 si existe
+    let cleanUrl = url;
+    if (cleanUrl.includes('/api/v1')) {
+      cleanUrl = cleanUrl.replace('/api/v1', '');
+    }
+    if (!cleanUrl.startsWith('/')) {
+      cleanUrl = '/' + cleanUrl;
+    }
+    console.log('📸 URL original:', url);
+    console.log('📸 URL limpia:', cleanUrl);
+    console.log('📸 URL final:', `${STATIC_URL}${cleanUrl}`);
+    return `${STATIC_URL}${cleanUrl}`;
   };
 
   // ✅ Formatear fecha

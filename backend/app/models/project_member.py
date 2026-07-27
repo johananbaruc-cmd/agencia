@@ -3,6 +3,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
+
 class ProjectMember(Base):
     __tablename__ = "project_members"
     

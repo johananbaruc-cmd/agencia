@@ -11,13 +11,12 @@ class Project(Base):
     name = Column(String(200), nullable=False)
     description = Column(Text, nullable=True)
     budget = Column(Float, nullable=True, default=0)
-    status = Column(String(50), nullable=False, default='pending')  # pending, in_progress, completed, cancelled
+    status = Column(String(50), nullable=False, default='pending')  
     progress = Column(Integer, nullable=False, default=0)
     start_date = Column(DateTime(timezone=True), nullable=True)
     end_date = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    # ❌ ELIMINADO: is_active = Column(Boolean, default=True)
     
     # Relaciones
     agency_id = Column(Integer, ForeignKey("agencies.id"), nullable=False)
@@ -28,3 +27,6 @@ class Project(Base):
     members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
     tasks = relationship("Task", back_populates="project", cascade="all, delete-orphan")
     time_entries = relationship("TimeEntry", back_populates="project", cascade="all, delete-orphan")
+
+    reportes = relationship("ReporteProyecto", back_populates="project", cascade="all, delete-orphan")
+    metricas = relationship("MetricaProyecto", back_populates="project", cascade="all, delete-orphan")

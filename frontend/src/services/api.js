@@ -4,10 +4,10 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
 // ✅ STATIC_URL para archivos estáticos (SIN /api/v1)
-const STATIC_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const STATIC_URL = import.meta.env.VITE_STATIC_URL || 'http://localhost:8000';
 
-console.log('API URL configurada:', API_URL);
-console.log('STATIC URL configurada:', STATIC_URL);
+console.log('🔗 API URL configurada:', API_URL);
+console.log('📁 STATIC URL configurada:', STATIC_URL);
 
 const api = axios.create({
   baseURL: API_URL,

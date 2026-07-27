@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import api, { STATIC_URL } from '../services/api';
+import api, { STATIC_URL } from '../services/api'; // ✅ STATIC_URL viene de api.js
 import Navbar from '../components/Navbar';
 import { 
   FolderOpen, FileImage, Users, Eye, ExternalLink, 
@@ -24,25 +24,21 @@ export default function AdminEvidence() {
   const [showMembers, setShowMembers] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('pending'); // ✅ CAMBIADO: por defecto solo pendientes
+  const [filterStatus, setFilterStatus] = useState('pending');
 
-  // ✅ Estado para el modal de rechazo
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [evidenceToReject, setEvidenceToReject] = useState(null);
   const [rejectDeliveryDate, setRejectDeliveryDate] = useState('');
 
-  // ✅ Estado para el modal de confirmación de aprobación
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [evidenceToApprove, setEvidenceToApprove] = useState(null);
 
-  // ✅ Estado para editar fecha de entrega
   const [showEditDateModal, setShowEditDateModal] = useState(false);
   const [evidenceToEditDate, setEvidenceToEditDate] = useState(null);
   const [newDeliveryDate, setNewDeliveryDate] = useState('');
 
-  const STATIC_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
+  // ✅ Usar STATIC_URL de api.js (SIN /api/v1)
   const getFullUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
@@ -117,7 +113,7 @@ export default function AdminEvidence() {
       }
       
       setEvidence(allEvidence);
-      applyFilters(allEvidence, searchTerm, filterType, 'pending'); // ✅ Solo pendientes por defecto
+      applyFilters(allEvidence, searchTerm, filterType, 'pending');
     } catch (error) {
       console.error('Error cargando evidencia:', error);
       setMessage({ text: 'Error al cargar evidencia', type: 'error' });
@@ -142,7 +138,7 @@ export default function AdminEvidence() {
     await fetchMembers(projectId);
     setSearchTerm('');
     setFilterType('all');
-    setFilterStatus('pending'); // ✅ Resetear a pendientes
+    setFilterStatus('pending');
   };
 
   const applyFilters = (data, search, type, status) => {
@@ -239,7 +235,7 @@ export default function AdminEvidence() {
           : e
       );
       setEvidence(updatedEvidence);
-      applyFilters(updatedEvidence, searchTerm, filterType, 'pending'); // ✅ Solo pendientes
+      applyFilters(updatedEvidence, searchTerm, filterType, 'pending');
       
       setMessage({ text: '✅ Evidencia aprobada exitosamente', type: 'success' });
       setTimeout(() => setMessage({ text: '', type: '' }), 3000);
@@ -583,7 +579,7 @@ export default function AdminEvidence() {
         </main>
       </div>
 
-      {/* Modales (sin cambios) */}
+      {/* Todos los modales sin cambios */}
       {showEvidenceModal && selectedEvidence && (
         <div className="modal-overlay" onClick={() => setShowEvidenceModal(false)}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>

@@ -69,7 +69,6 @@ export default function AdminCalendar() {
       const response = await api.get(`/tasks/projects/${projectId}/tasks`);
       let tasksData = response.data;
       
-      // Si hay un empleado seleccionado, filtrar por él
       if (employeeId) {
         tasksData = tasksData.filter(task => task.assigned_to === employeeId);
       }
@@ -102,7 +101,6 @@ export default function AdminCalendar() {
     const project = projects.find(p => p.id === projectId);
     setSelectedProject(project);
     setSelectedDate(null);
-    // Si el empleado seleccionado no existe en el nuevo proyecto, resetear a "Todos"
     if (selectedEmployee) {
       fetchTasks(projectId, selectedEmployee.id);
     } else {
@@ -119,15 +117,23 @@ export default function AdminCalendar() {
     }
   };
 
+  // ✅ Función corregida para obtener los días del mes
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
+    
+    // Primer día del mes
     const firstDay = new Date(year, month, 1);
+    // Último día del mes
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
+    
+    // Día de la semana del primer día (0 = Domingo, 1 = Lunes, ...)
     const startingDayOfWeek = firstDay.getDay();
     
     const days = [];
+    
+    // Días del mes anterior (para completar la primera semana)
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startingDayOfWeek - 1; i >= 0; i--) {
       days.push({
@@ -137,6 +143,7 @@ export default function AdminCalendar() {
       });
     }
     
+    // Días del mes actual
     for (let i = 1; i <= daysInMonth; i++) {
       days.push({
         day: i,
@@ -145,6 +152,7 @@ export default function AdminCalendar() {
       });
     }
     
+    // Días del mes siguiente (para completar la última semana)
     const remainingDays = 42 - days.length;
     for (let i = 1; i <= remainingDays; i++) {
       days.push({

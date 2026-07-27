@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
-import { Mail, Lock, LogIn } from 'lucide-react';
+import { Mail, Lock, LogIn, UserPlus, KeyRound, ArrowLeft, CheckCircle, Eye, EyeOff, Building2, User, Hash } from 'lucide-react';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import './Login.css';
 
@@ -14,6 +14,38 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
 
+  // Estado para formularios adicionales
+  const [showRegister, setShowRegister] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  
+  // Datos de registro (AGENCIA + ADMIN)
+  const [registerData, setRegisterData] = useState({
+    agency_name: '',
+    agency_email: '',
+    agency_rfc: '',
+    admin_name: '',
+    admin_email: '',
+    admin_password: '',
+    confirmPassword: ''
+  });
+  
+  // Estado de recuperación
+  const [forgotEmail, setForgotEmail] = useState('');
+  
+  // Estados de carga y éxito
+  const [registerLoading, setRegisterLoading] = useState(false);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [registerSuccess, setRegisterSuccess] = useState(false);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+  
+  // Mostrar/ocultar contraseñas en registro
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showRegConfirm, setShowRegConfirm] = useState(false);
+
+  // ✅ URL base de la API (YA INCLUYE /api/v1)
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+
+  // ==================== LOGIN ====================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -26,7 +58,6 @@ export default function Login() {
         } else {
           toast.success('Bienvenido');
           
-          // 🔥 REDIRECCIÓN SEGÚN EL ROL 🔥
           const userRole = result.user?.role || localStorage.getItem('userRole');
           
           if (userRole === 'admin') {
@@ -46,80 +77,467 @@ export default function Login() {
     setLoading(false);
   };
 
-  return (
-    <>
+  // ==================== REGISTRO (AGENCIA + ADMIN) ====================
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    
+    // Validaciones
+    if (registerData.admin_password.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+    if (registerData.admin_password !== registerData.confirmPassword) {
+      toast.error('Las contraseñas no coinciden');
+      return;
+    }
+
+    setRegisterLoading(true);
+    try {
+      // ✅ URL CORRECTA - El endpoint es /register (no /register-agency)
+      const url = `${API_URL}/auth/register`;
+      console.log('📤 Enviando registro a:', url);
+      console.log('📦 Datos:', {
+        agency_name: registerData.agency_name,
+        agency_email: registerData.agency_email,
+        agency_rfc: registerData.agency_rfc,
+        admin_name: registerData.admin_name,
+        admin_email: registerData.admin_email,
+        admin_password: '******'
+      });
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          agency_name: registerData.agency_name.trim(),
+          agency_email: registerData.agency_email.trim().toLowerCase(),
+          agency_rfc: registerData.agency_rfc.trim().toUpperCase(),
+          admin_name: registerData.admin_name.trim(),
+          admin_email: registerData.admin_email.trim().toLowerCase(),
+          admin_password: registerData.admin_password,
+        }),
+      });
+
+      const data = await response.json();
+      console.log('📥 Respuesta:', response.status, data);
+
+      if (!response.ok) {
+        const errorMsg = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
+        toast.error(errorMsg || 'Error al crear la agencia');
+        setRegisterLoading(false);
+        return;
+      }
+
+      setRegisterSuccess(true);
+      toast.success('¡Agencia y administrador creados exitosamente!');
+      
+      setTimeout(() => {
+        setShowRegister(false);
+        setRegisterSuccess(false);
+        setRegisterData({
+          agency_name: '',
+          agency_email: '',
+          agency_rfc: '',
+          admin_name: '',
+          admin_email: '',
+          admin_password: '',
+          confirmPassword: ''
+        });
+        setEmail(registerData.admin_email);
+      }, 2500);
+      
+    } catch (error) {
+      console.error('❌ Error en registro:', error);
+      toast.error('Error de conexión: ' + error.message);
+    }
+    setRegisterLoading(false);
+  };
+
+  // ==================== RECUPERAR CONTRASEÑA ====================
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.detail || 'Error al enviar solicitud');
+        setForgotLoading(false);
+        return;
+      }
+
+      setForgotSuccess(true);
+      toast.success('Revisa tu correo para restablecer tu contraseña');
+      
+      setTimeout(() => {
+        setShowForgotPassword(false);
+        setForgotSuccess(false);
+        setForgotEmail('');
+      }, 3000);
+      
+    } catch (error) {
+      toast.error('Error de conexión: ' + error.message);
+    }
+    setForgotLoading(false);
+  };
+
+  // ==================== VOLVER AL LOGIN ====================
+  const goBackToLogin = () => {
+    setShowRegister(false);
+    setShowForgotPassword(false);
+    setRegisterSuccess(false);
+    setForgotSuccess(false);
+    setRegisterData({
+      agency_name: '',
+      agency_email: '',
+      agency_rfc: '',
+      admin_name: '',
+      admin_email: '',
+      admin_password: '',
+      confirmPassword: ''
+    });
+    setForgotEmail('');
+  };
+
+  // ============================================================
+  // FORMULARIO DE LOGIN
+  // ============================================================
+  if (!showRegister && !showForgotPassword) {
+    return (
+      <>
+        <div className="login-container">
+          <div className="login-card">
+            <div className="login-icon">
+              <LogIn size={24} />
+            </div>
+            <h1 className="login-title">Agencia MX</h1>
+            <p className="login-subtitle">Inicia sesión en tu cuenta</p>
+
+            <form onSubmit={handleSubmit}>
+              <div className="input-group">
+                <label className="input-label">Correo electrónico</label>
+                <div className="input-wrapper">
+                  <Mail className="input-icon" size={18} />
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="input-field"
+                    placeholder="admin@miagencia.com"
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Contraseña</label>
+                <div className="input-wrapper">
+                  <Lock className="input-icon" size={18} />
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="input-field"
+                    placeholder="••••••"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="login-button"
+              >
+                {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              </button>
+
+              <div className="login-links">
+                <button
+                  type="button"
+                  onClick={() => setShowRegister(true)}
+                  className="login-link-btn"
+                >
+                  <UserPlus size={16} />
+                  Crear agencia
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowForgotPassword(true)}
+                  className="login-link-btn"
+                >
+                  <KeyRound size={16} />
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <ChangePasswordModal
+          isOpen={showChangePassword}
+          forced={true}
+          onClose={() => {
+            setShowChangePassword(false);
+            const userRole = localStorage.getItem('userRole');
+            if (userRole === 'employee') {
+              navigate('/employee-dashboard');
+            } else {
+              navigate('/dashboard');
+            }
+          }}
+          onSuccess={() => {
+            toast.success('Contraseña actualizada');
+            const userRole = localStorage.getItem('userRole');
+            if (userRole === 'employee') {
+              navigate('/employee-dashboard');
+            } else {
+              navigate('/dashboard');
+            }
+          }}
+        />
+      </>
+    );
+  }
+
+  // ============================================================
+  // FORMULARIO DE REGISTRO (AGENCIA + ADMIN)
+  // ============================================================
+  if (showRegister) {
+    return (
       <div className="login-container">
         <div className="login-card">
+          <button onClick={goBackToLogin} className="login-back-btn">
+            <ArrowLeft size={18} />
+            Volver al login
+          </button>
+
           <div className="login-icon">
-            <LogIn className="w-8 h-8 text-white" />
+            <Building2 size={24} />
           </div>
-          <h1 className="login-title">Agencia MX</h1>
-          <p className="login-subtitle">Inicia sesión en tu cuenta</p>
+          <h1 className="login-title">Crear Agencia</h1>
+          <p className="login-subtitle">Registra tu agencia y administrador</p>
 
-          <form onSubmit={handleSubmit}>
-            <div className="input-group">
-              <label className="input-label">Correo electrónico</label>
-              <div className="input-wrapper">
-                <Mail className="input-icon" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="input-field"
-                  placeholder="admin@miagencia.com"
-                />
-              </div>
+          {registerSuccess ? (
+            <div className="register-success">
+              <CheckCircle size={48} className="text-green-500" />
+              <p>¡Agencia creada exitosamente!</p>
+              <p className="text-sm text-gray-400">Redirigiendo al login...</p>
             </div>
-
-            <div className="input-group">
-              <label className="input-label">Contraseña</label>
-              <div className="input-wrapper">
-                <Lock className="input-icon" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="input-field"
-                  placeholder="••••••"
-                />
+          ) : (
+            <form onSubmit={handleRegister}>
+              <div className="form-divider">
+                <span className="form-divider-text">Datos de la agencia</span>
               </div>
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="login-button"
-            >
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-            </button>
-          </form>
+              <div className="input-group">
+                <label className="input-label">Nombre de la agencia</label>
+                <div className="input-wrapper">
+                  <Building2 className="input-icon" size={18} />
+                  <input
+                    type="text"
+                    required
+                    value={registerData.agency_name}
+                    onChange={(e) => setRegisterData({ ...registerData, agency_name: e.target.value })}
+                    className="input-field"
+                    placeholder="Nombre de tu agencia"
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Correo de la agencia</label>
+                <div className="input-wrapper">
+                  <Mail className="input-icon" size={18} />
+                  <input
+                    type="email"
+                    required
+                    value={registerData.agency_email}
+                    onChange={(e) => setRegisterData({ ...registerData, agency_email: e.target.value })}
+                    className="input-field"
+                    placeholder="agencia@email.com"
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">RFC</label>
+                <div className="input-wrapper">
+                  <Hash className="input-icon" size={18} />
+                  <input
+                    type="text"
+                    required
+                    value={registerData.agency_rfc}
+                    onChange={(e) => setRegisterData({ ...registerData, agency_rfc: e.target.value.toUpperCase() })}
+                    className="input-field"
+                    placeholder="XAXX010101000"
+                    maxLength={13}
+                  />
+                </div>
+                <p className="input-hint">RFC de persona física (13 caracteres) o moral (12 caracteres)</p>
+              </div>
+
+              <div className="form-divider">
+                <span className="form-divider-text">Datos del administrador</span>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Nombre del administrador</label>
+                <div className="input-wrapper">
+                  <User className="input-icon" size={18} />
+                  <input
+                    type="text"
+                    required
+                    value={registerData.admin_name}
+                    onChange={(e) => setRegisterData({ ...registerData, admin_name: e.target.value })}
+                    className="input-field"
+                    placeholder="Nombre del administrador"
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Correo del administrador</label>
+                <div className="input-wrapper">
+                  <Mail className="input-icon" size={18} />
+                  <input
+                    type="email"
+                    required
+                    value={registerData.admin_email}
+                    onChange={(e) => setRegisterData({ ...registerData, admin_email: e.target.value })}
+                    className="input-field"
+                    placeholder="admin@email.com"
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Contraseña</label>
+                <div className="input-wrapper">
+                  <Lock className="input-icon" size={18} />
+                  <input
+                    type={showRegPassword ? 'text' : 'password'}
+                    required
+                    value={registerData.admin_password}
+                    onChange={(e) => setRegisterData({ ...registerData, admin_password: e.target.value })}
+                    className="input-field"
+                    placeholder="Mínimo 6 caracteres"
+                  />
+                  <button
+                    type="button"
+                    className="login-eye-btn"
+                    onClick={() => setShowRegPassword(!showRegPassword)}
+                  >
+                    {showRegPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="input-group">
+                <label className="input-label">Confirmar contraseña</label>
+                <div className="input-wrapper">
+                  <Lock className="input-icon" size={18} />
+                  <input
+                    type={showRegConfirm ? 'text' : 'password'}
+                    required
+                    value={registerData.confirmPassword}
+                    onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                    className="input-field"
+                    placeholder="Repite tu contraseña"
+                  />
+                  <button
+                    type="button"
+                    className="login-eye-btn"
+                    onClick={() => setShowRegConfirm(!showRegConfirm)}
+                  >
+                    {showRegConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+                {registerData.confirmPassword && registerData.confirmPassword !== registerData.admin_password && (
+                  <p className="input-error">Las contraseñas no coinciden</p>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={
+                  registerLoading || 
+                  (registerData.confirmPassword && registerData.confirmPassword !== registerData.admin_password)
+                }
+                className="login-button"
+              >
+                {registerLoading ? 'Creando agencia...' : 'Crear agencia'}
+              </button>
+            </form>
+          )}
         </div>
       </div>
+    );
+  }
 
-      <ChangePasswordModal
-        isOpen={showChangePassword}
-        forced={true}
-        onClose={() => {
-          setShowChangePassword(false);
-          const userRole = localStorage.getItem('userRole');
-          if (userRole === 'employee') {
-            navigate('/employee-dashboard');
-          } else {
-            navigate('/dashboard');
-          }
-        }}
-        onSuccess={() => {
-          toast.success('Contraseña actualizada');
-          const userRole = localStorage.getItem('userRole');
-          if (userRole === 'employee') {
-            navigate('/employee-dashboard');
-          } else {
-            navigate('/dashboard');
-          }
-        }}
-      />
-    </>
-  );
+  // ============================================================
+  // FORMULARIO DE RECUPERAR CONTRASEÑA
+  // ============================================================
+  if (showForgotPassword) {
+    return (
+      <div className="login-container">
+        <div className="login-card">
+          <button onClick={goBackToLogin} className="login-back-btn">
+            <ArrowLeft size={18} />
+            Volver al login
+          </button>
+
+          <div className="login-icon">
+            <KeyRound size={24} />
+          </div>
+          <h1 className="login-title">Recuperar contraseña</h1>
+          <p className="login-subtitle">Te enviaremos un enlace para restablecer tu contraseña</p>
+
+          {forgotSuccess ? (
+            <div className="register-success">
+              <CheckCircle size={48} className="text-green-500" />
+              <p>¡Revisa tu correo!</p>
+              <p className="text-sm text-gray-400">
+                Hemos enviado un enlace para restablecer tu contraseña
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleForgotPassword}>
+              <div className="input-group">
+                <label className="input-label">Correo electrónico</label>
+                <div className="input-wrapper">
+                  <Mail className="input-icon" size={18} />
+                  <input
+                    type="email"
+                    required
+                    value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)}
+                    className="input-field"
+                    placeholder="tu@email.com"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={forgotLoading}
+                className="login-button"
+              >
+                {forgotLoading ? 'Enviando...' : 'Enviar enlace de recuperación'}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
 }

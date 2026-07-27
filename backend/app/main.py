@@ -6,7 +6,7 @@ from app.api.v1 import router as v1_router
 
 app = FastAPI(title="Agencia MX API", version="1.0.0")
 
-# ✅ Configuración CORS completa
+# CORS
 origins = [
     "http://localhost:5173",
     "http://localhost:3000",
@@ -22,17 +22,25 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
-    expose_headers=["*"],  # ✅ Agregar esta línea
+    expose_headers=["*"],
 )
 
-# ✅ SERVIR ARCHIVOS ESTÁTICOS
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# ✅ CORREGIDO: BASE_DIR apunta a la raíz del backend
+# os.path.dirname(os.path.abspath(__file__)) te da /home/hacks/Escritorio/agencia/backend/app
+# Necesitamos subir un nivel para llegar a /home/hacks/Escritorio/agencia/backend
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 UPLOAD_DIR = os.path.join(BASE_DIR, "uploads")
 
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-os.makedirs(os.path.join(UPLOAD_DIR, "tasks"), exist_ok=True)
-os.makedirs(os.path.join(UPLOAD_DIR, "chunks"), exist_ok=True)
+# ✅ Verificar que el directorio existe
+if not os.path.exists(UPLOAD_DIR):
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    os.makedirs(os.path.join(UPLOAD_DIR, "tasks"), exist_ok=True)
+    os.makedirs(os.path.join(UPLOAD_DIR, "chunks"), exist_ok=True)
 
+print(f"📁 BASE_DIR: {BASE_DIR}")
+print(f"📁 Sirviendo archivos desde: {UPLOAD_DIR}")
+
+# ✅ Montar archivos estáticos
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # Incluir routers
