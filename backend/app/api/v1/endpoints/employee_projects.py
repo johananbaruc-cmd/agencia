@@ -20,7 +20,7 @@ def get_my_projects(
     """
     projects = ProjectService.get_projects_by_user(db, current_user)
     
-    # Formatear respuesta
+    # ✅ Formatear respuesta incluyendo updated_at
     result = []
     for project in projects:
         project_data = {
@@ -33,6 +33,7 @@ def get_my_projects(
             "start_date": project.start_date,
             "end_date": project.end_date,
             "created_at": project.created_at,
+            "updated_at": project.updated_at,  # ✅ AGREGADO - Esto faltaba
             "agency_id": project.agency_id,
             "client_id": project.client_id,
             "client_name": project.client.name if project.client else None,
@@ -63,6 +64,7 @@ def get_my_project_detail(
         "start_date": project.start_date,
         "end_date": project.end_date,
         "created_at": project.created_at,
+        "updated_at": project.updated_at,  # ✅ AGREGADO
         "agency_id": project.agency_id,
         "client_id": project.client_id,
         "client_name": project.client.name if project.client else None,

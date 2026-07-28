@@ -10,17 +10,43 @@ export default function EmployeeDashboard() {
   
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchMyProjects();
   }, []);
 
   const fetchMyProjects = async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
+      console.log('🔄 Obteniendo proyectos para empleado:', user?.id);
+      
+      // ✅ Endpoint correcto
       const response = await api.get('/employee/projects/');
+      console.log('📦 Proyectos recibidos:', response.data);
+      
       setProjects(response.data);
     } catch (error) {
-      console.error('Error:', error);
+      console.error('❌ Error al obtener proyectos:', error);
+      setError('Error al cargar tus proyectos');
+      
+      // Opcional: Intentar con el endpoint de proyectos general
+      try {
+        console.log('🔄 Intentando fallback con /projects/');
+        const fallbackResponse = await api.get('/projects/');
+        console.log('📦 Proyectos fallback:', fallbackResponse.data);
+        
+        // Filtrar solo los proyectos donde el usuario es miembro
+        // Si tu API no filtra automáticamente
+        const userProjects = fallbackResponse.data.filter(project => 
+          project.members?.some(m => m.user_id === user?.id)
+        );
+        setProjects(userProjects);
+      } catch (fallbackError) {
+        console.error('❌ Error en fallback:', fallbackError);
+      }
     } finally {
       setLoading(false);
     }
@@ -108,6 +134,13 @@ export default function EmployeeDashboard() {
               <div className="loading-spinner"></div>
               <p>Cargando proyectos...</p>
             </div>
+          ) : error ? (
+            <div className="error-state">
+              <p className="error-title">{error}</p>
+              <button className="btn-retry" onClick={fetchMyProjects}>
+                Reintentar
+              </button>
+            </div>
           ) : projects.length === 0 ? (
             <div className="empty-state">
               <FolderOpen size={40} />
@@ -143,7 +176,6 @@ export default function EmployeeDashboard() {
                       marginTop: '8px',
                       flexWrap: 'wrap'
                     }}>
-                      {/* Badge de estado */}
                       <span 
                         className="status-badge"
                         style={{ 

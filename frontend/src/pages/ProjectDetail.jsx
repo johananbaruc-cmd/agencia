@@ -13,7 +13,8 @@ import {
   DollarSign,
   User,
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  CheckCircle
 } from 'lucide-react';
 import './ProjectDetail.css';
 
@@ -27,13 +28,14 @@ export default function ProjectDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [notification, setNotification] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
     budget: '',
+    end_date: '',
   });
 
-  // ✅ Verificar si viene desde ReportesGestion
   const fromReports = location.state?.from === 'reports';
 
   useEffect(() => {
@@ -48,10 +50,11 @@ export default function ProjectDetail() {
         name: response.data.name,
         description: response.data.description || '',
         budget: response.data.budget,
+        end_date: response.data.end_date ? new Date(response.data.end_date).toISOString().split('T')[0] : '',
       });
     } catch (error) {
       console.error('Error:', error);
-      alert('Error al cargar el proyecto');
+      showNotification('error', 'Error al cargar el proyecto');
       navigate('/dashboard');
     } finally {
       setLoading(false);
@@ -60,16 +63,20 @@ export default function ProjectDetail() {
 
   const handleUpdate = async () => {
     try {
-      await api.put(`/projects/${id}`, {
+      const updateData = {
         name: formData.name,
         description: formData.description,
         budget: parseFloat(formData.budget),
-      });
-      alert('✅ Proyecto actualizado');
+        end_date: formData.end_date ? new Date(formData.end_date).toISOString() : null,
+      };
+      
+      await api.patch(`/projects/${id}`, updateData);
+      showNotification('success', 'Proyecto actualizado correctamente');
       setIsEditing(false);
       fetchProject();
     } catch (error) {
-      alert(error.response?.data?.detail || 'Error al actualizar');
+      console.error('Error:', error);
+      showNotification('error', error.response?.data?.detail || 'Error al actualizar');
     }
   };
 
@@ -77,13 +84,22 @@ export default function ProjectDetail() {
     setDeleting(true);
     try {
       await api.delete(`/projects/${id}`);
-      alert('✅ Proyecto eliminado');
-      // ✅ Volver a la página anterior después de eliminar
-      goBack();
+      showNotification('success', 'Proyecto eliminado correctamente');
+      setTimeout(() => {
+        goBack();
+      }, 500);
     } catch (error) {
-      alert(error.response?.data?.detail || 'Error al eliminar');
+      console.error('Error:', error);
+      showNotification('error', error.response?.data?.detail || 'Error al eliminar');
       setDeleting(false);
     }
+  };
+
+  const showNotification = (type, message) => {
+    setNotification({ type, message });
+    setTimeout(() => {
+      setNotification(null);
+    }, 4000);
   };
 
   const getStatusText = (status) => {
@@ -106,12 +122,11 @@ export default function ProjectDetail() {
     return classMap[status] || 'status-pending';
   };
 
-  // ✅ Función para volver a la página anterior
   const goBack = () => {
     if (fromReports) {
       navigate('/reportes/gestion');
     } else {
-      navigate(-1); // ✅ Vuelve a la página anterior
+      navigate(-1);
     }
   };
 
@@ -155,7 +170,6 @@ export default function ProjectDetail() {
                 <h1>{project.name}</h1>
               )}
               
-              {/* ✅ Ocultar botones de edición/eliminación si viene desde ReportesGestion */}
               {!fromReports && (
                 <div className="detail-actions">
                   {isEditing ? (
@@ -164,7 +178,15 @@ export default function ProjectDetail() {
                         <Save size={16} />
                         Guardar
                       </button>
-                      <button className="cancel-btn" onClick={() => setIsEditing(false)}>
+                      <button className="cancel-btn" onClick={() => {
+                        setIsEditing(false);
+                        setFormData({
+                          name: project.name,
+                          description: project.description || '',
+                          budget: project.budget,
+                          end_date: project.end_date ? new Date(project.end_date).toISOString().split('T')[0] : '',
+                        });
+                      }}>
                         <X size={16} />
                         Cancelar
                       </button>
@@ -190,7 +212,7 @@ export default function ProjectDetail() {
               {getStatusText(project.status)}
             </div>
 
-            {/* Grid de información - SOLO LECTURA */}
+            {/* Grid de información */}
             <div className="info-grid">
               <div className="info-card">
                 <DollarSign size={18} />
@@ -234,6 +256,50 @@ export default function ProjectDetail() {
               </div>
             </div>
 
+            {/* ========================================== */}
+            {/* FECHA DE FIN - Solo editable */}
+            {/* ========================================== */}
+            <div className="dates-section">
+              <h3>Fecha de entrega</h3>
+              <div className="date-card date-editable">
+                <div className="date-icon">
+                  <Calendar size={18} />
+                </div>
+                <div className="date-info">
+                  <label>Fecha de fin</label>
+                  {isEditing ? (
+                    <>
+                      <input
+                        type="date"
+                        className="edit-date-input"
+                        value={formData.end_date}
+                        onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                      />
+                      <small className="date-helper">
+                        {formData.end_date ? 
+                          `Fecha seleccionada: ${new Date(formData.end_date).toLocaleDateString('es-MX')}` :
+                          'Deja vacío si no hay fecha definida'
+                        }
+                      </small>
+                    </>
+                  ) : (
+                    <>
+                      <span className="date-value">
+                        {project.end_date ? 
+                          new Date(project.end_date).toLocaleDateString('es-MX', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          }) : 
+                          'No definida'
+                        }
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Descripción */}
             <div className="description-section">
               <h3>Descripción del proyecto</h3>
@@ -253,7 +319,21 @@ export default function ProjectDetail() {
         </div>
       </div>
 
-      {/* ✅ Modal de confirmación de eliminación - solo si viene del dashboard */}
+      {/* Notificación Toast */}
+      {notification && (
+        <div className={`toast-notification ${notification.type}`}>
+          <div className="toast-content">
+            {notification.type === 'success' && <CheckCircle size={20} />}
+            {notification.type === 'error' && <AlertTriangle size={20} />}
+            <span>{notification.message}</span>
+          </div>
+          <button className="toast-close" onClick={() => setNotification(null)}>
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Modal de confirmación de eliminación */}
       {showDeleteModal && !fromReports && (
         <div className="modal-eliminar-overlay" onClick={() => setShowDeleteModal(false)}>
           <div className="modal-eliminar-content" onClick={(e) => e.stopPropagation()}>
@@ -269,7 +349,7 @@ export default function ProjectDetail() {
             
             <p className="modal-eliminar-mensaje">
               Estás a punto de eliminar el proyecto <strong>"{project.name}"</strong>.
-              <span className="texto-advertencia"> ⚠️ Esta acción eliminará todas las tareas y evidencias asociadas.</span>
+              <span className="texto-advertencia"> Esta acción eliminará todas las tareas y evidencias asociadas.</span>
               <br />
               <span className="texto-importante">Esta acción no se puede deshacer.</span>
             </p>

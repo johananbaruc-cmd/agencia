@@ -235,7 +235,7 @@ export default function Dashboard() {
                   <div className="project-name">{project.name}</div>
                   <div className="project-meta">
                     Cliente: {project.client_name || 'Sin cliente'} • 
-                    ${project.budget?.toLocaleString('es-MX')} • {project.progress || 0}%
+                    ${project.budget?.toLocaleString('es-MX')} 
                   </div>
                 </div>
               ))}

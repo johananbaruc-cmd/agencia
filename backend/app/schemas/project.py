@@ -1,56 +1,69 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Optional, List
 from datetime import datetime
 
-# Esquemas para crear proyectos
+# ============================================
+# ESQUEMA PARA CREAR PROYECTOS
+# ============================================
 class ProjectCreate(BaseModel):
-    name: str = Field(..., min_length=2, max_length=200)
-    description: Optional[str] = None
-    budget: float = Field(..., ge=0)
-    client_id: int
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    name: str = Field(..., min_length=2, max_length=200, description="Nombre del proyecto")
+    description: Optional[str] = Field(None, description="Descripción del proyecto")
+    budget: float = Field(..., ge=0, description="Presupuesto del proyecto")
+    client_id: int = Field(..., description="ID del cliente")
+    start_date: Optional[datetime] = Field(None, description="Fecha de inicio")
+    end_date: Optional[datetime] = Field(None, description="Fecha de fin")
+    
+    # Validación opcional: end_date debe ser mayor que start_date
+    @validator('end_date')
+    def validate_end_date(cls, v, values):
+        if v and values.get('start_date') and v < values['start_date']:
+            raise ValueError('La fecha de fin debe ser posterior a la fecha de inicio')
+        return v
 
-# Esquemas para actualizar proyectos - status es STRING libre
+# ============================================
+# ESQUEMA PARA ACTUALIZAR PROYECTOS
+# ============================================
 class ProjectUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=2, max_length=200)
-    description: Optional[str] = None
-    budget: Optional[float] = Field(None, ge=0)
-    status: Optional[str] = None  # ← String libre para columnas personalizadas
-    progress: Optional[int] = Field(None, ge=0, le=100)
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
+    name: Optional[str] = Field(None, min_length=2, max_length=200, description="Nombre del proyecto")
+    description: Optional[str] = Field(None, description="Descripción del proyecto")
+    budget: Optional[float] = Field(None, ge=0, description="Presupuesto del proyecto")
+    status: Optional[str] = Field(None, description="Estado del proyecto")
+    progress: Optional[int] = Field(None, ge=0, le=100, description="Progreso en porcentaje")
+    start_date: Optional[datetime] = Field(None, description="Fecha de inicio")
+    end_date: Optional[datetime] = Field(None, description="Fecha de fin")  # ✅ EDITABLE
+    
+    # Validación opcional: end_date debe ser mayor que start_date
+    @validator('end_date')
+    def validate_end_date(cls, v, values):
+        # Validar solo si ambos campos están presentes
+        if v and values.get('start_date') and v < values['start_date']:
+            raise ValueError('La fecha de fin debe ser posterior a la fecha de inicio')
+        return v
 
-# Esquema de respuesta - status es STRING
+# ============================================
+# ESQUEMA PARA RESPUESTA BÁSICA
+# ============================================
 class ProjectResponse(BaseModel):
     id: int
     name: str
     description: Optional[str]
     budget: float
-    status: str  # ← String libre
+    status: str
     progress: int
     start_date: Optional[datetime]
-    end_date: Optional[datetime]
+    end_date: Optional[datetime]  # ✅ INCLUIDO en respuesta
     created_at: datetime
+    updated_at: Optional[datetime]
     agency_id: int
     client_id: int
     client_name: Optional[str] = None
     
     class Config:
-        from_attributes = True
+        from_attributes = True  # SQLAlchemy → Pydantic
 
-# Esquema detallado para el modal
-class ProjectDetailResponse(ProjectResponse):
-    members: List[dict] = []
-    tasks_count: int = 0
-    deliverables_count: int = 0
-    hours_spent: float = 0
-
-# Asignar miembros a proyectos
-class AssignMember(BaseModel):
-    user_id: int
-
-# Respuesta de miembros
+# ============================================
+# ESQUEMA PARA RESPUESTA DETALLADA
+# ============================================
 class ProjectMemberResponse(BaseModel):
     id: int
     user_id: int
@@ -60,3 +73,28 @@ class ProjectMemberResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class ProjectDetailResponse(ProjectResponse):
+    members: List[ProjectMemberResponse] = []
+    tasks_count: int = 0
+    deliverables_count: int = 0
+    hours_spent: float = 0
+
+# ============================================
+# ESQUEMA PARA ASIGNAR MIEMBROS
+# ============================================
+class AssignMember(BaseModel):
+    user_id: int = Field(..., description="ID del usuario a asignar")
+
+# ============================================
+# ESQUEMA PARA FILTRAR PROYECTOS (Opcional)
+# ============================================
+class ProjectFilter(BaseModel):
+    status: Optional[str] = None
+    client_id: Optional[int] = None
+    start_date_from: Optional[datetime] = None
+    start_date_to: Optional[datetime] = None
+    end_date_from: Optional[datetime] = None
+    end_date_to: Optional[datetime] = None
+    min_budget: Optional[float] = Field(None, ge=0)
+    max_budget: Optional[float] = Field(None, ge=0)

@@ -150,7 +150,7 @@ export default function Login() {
       }, 2500);
       
     } catch (error) {
-      console.error('❌ Error en registro:', error);
+      console.error('Error en registro:', error);
       toast.error('Error de conexión: ' + error.message);
     }
     setRegisterLoading(false);
@@ -233,7 +233,7 @@ export default function Login() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="input-field"
-                    placeholder="admin@miagencia.com"
+                    placeholder="example@dominio.com"
                   />
                 </div>
               </div>
