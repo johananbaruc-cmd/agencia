@@ -1,4 +1,3 @@
-# app/schemas/reporte.py
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -30,17 +29,16 @@ class ReporteBase(BaseModel):
     texto_avance: Optional[str] = None
     pregunta_cliente: Optional[str] = None
     fecha_expiracion: Optional[datetime] = None
-    horas_expiracion: Optional[int] = Field(24, ge=1, le=720)  # ✅ 1 a 720 horas
-
+    horas_expiracion: Optional[int] = Field(24, ge=1, le=720)  # 1 a 720 horas
+    progreso: Optional[int] = Field(None, ge=0, le=100)  # 🔥 NUEVO - Progreso 1-100
 
 
 class ReporteCreate(ReporteBase):
     project_id: int
     admin_id: int
-    # ❌ ELIMINAR: incluir_evidencias: Optional[bool] = False
-    evidencias_ids: Optional[List[int]] = []            # ✅ Se guarda en la BD
-    # ❌ ELIMINAR: incluir_archivos_existentes: Optional[bool] = False
-    archivos_existentes_ids: Optional[List[int]] = []   # ✅ Se guarda en la BD
+    evidencias_ids: Optional[List[int]] = []
+    archivos_existentes_ids: Optional[List[int]] = []
+
 
 class ReporteUpdate(BaseModel):
     titulo: Optional[str] = Field(None, max_length=255)
@@ -52,6 +50,7 @@ class ReporteUpdate(BaseModel):
     fecha_expiracion: Optional[datetime] = None
     activo: Optional[bool] = None
     horas_expiracion: Optional[int] = Field(None, ge=1, le=720)
+    progreso: Optional[int] = Field(None, ge=0, le=100)  # 🔥 NUEVO - Progreso 1-100
 
 
 # ============================================
@@ -89,7 +88,7 @@ class ReporteResponse(ReporteBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     horas_expiracion: Optional[int] = 24
-    # ✅ AGREGAR ESTOS CAMPOS
+    progreso: Optional[int] = 0  # 🔥 NUEVO - Progreso 1-100
     evidencias_ids: Optional[List[int]] = []
     archivos_existentes_ids: Optional[List[int]] = []
     
@@ -115,6 +114,7 @@ class ReportePublicar(BaseModel):
     enviar_correo: bool = False
     correo_cliente: Optional[str] = None
     horas_expiracion: Optional[int] = Field(24, ge=1, le=720)
+    progreso: Optional[int] = Field(None, ge=0, le=100)  # 🔥 NUEVO - Progreso 1-100
 
 
 class ReportePublicadoResponse(BaseModel):
@@ -139,6 +139,7 @@ class ReportePublicoResponse(BaseModel):
     fecha_generacion: datetime
     fecha_expiracion: Optional[datetime] = None
     horas_expiracion: Optional[int] = 24
+    progreso: Optional[int] = 0  # 🔥 NUEVO - Progreso 1-100
     
     proyecto_nombre: str
     proyecto_descripcion: Optional[str] = None

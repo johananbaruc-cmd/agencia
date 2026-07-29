@@ -763,3 +763,29 @@
     width: 100%;
   }
 }
+
+/* ========================================== */
+/* ÚLTIMO REPORTE INFO */
+/* ========================================== */
+
+.ultimo-reporte-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ultimo-reporte-label {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.ultimo-reporte-fecha {
+  font-size: 0.6rem;
+  color: #64748b;
+}

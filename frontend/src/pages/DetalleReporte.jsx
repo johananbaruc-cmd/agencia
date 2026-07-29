@@ -44,6 +44,7 @@ const DetalleReporte = () => {
   const [copiadoCodigo, setCopiadoCodigo] = useState(false);
   const [publicando, setPublicando] = useState(false);
   
+  // 🔥 Progreso - ahora viene de la BD
   const [progresoVisual, setProgresoVisual] = useState(0);
   const [esReporteRecienCreado, setEsReporteRecienCreado] = useState(false);
   
@@ -77,15 +78,22 @@ const DetalleReporte = () => {
         const reporteBase = response.data;
         setReporte(reporteBase);
         
+        // 🔥 OBTENER PROGRESO DEL REPORTE (de la BD)
+        const progresoDelReporte = reporteBase.progreso || 0;
+        
         const reporteCreadoId = sessionStorage.getItem('reporte_creado_id');
         const esRecienCreado = reporteCreadoId === String(reporteBase.id);
         setEsReporteRecienCreado(esRecienCreado);
         
         if (esRecienCreado) {
+          // Si es recién creado, usar el progreso de sessionStorage
           const progreso = parseInt(sessionStorage.getItem('progreso_visual') || '0');
           setProgresoVisual(progreso);
+          console.log('📊 Progreso de sessionStorage:', progreso);
         } else {
-          setProgresoVisual(reporteBase.proyecto_progress || 0);
+          // 🔥 USAR EL PROGRESO DEL REPORTE (guardado en BD)
+          setProgresoVisual(progresoDelReporte);
+          console.log('📊 Progreso del reporte (BD):', progresoDelReporte);
         }
         
         await cargarInfoProyecto(reporteBase);
@@ -297,7 +305,20 @@ const DetalleReporte = () => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const progresoTotal = esReporteRecienCreado ? progresoVisual : (reporte?.proyecto_progress || 0);
+  // 🔥 OBTENER EL PROGRESO CORRECTO
+  const obtenerProgresoMostrar = () => {
+    if (esReporteRecienCreado) {
+      return progresoVisual;
+    }
+    // Si el reporte tiene progreso en la BD, usarlo
+    if (reporte?.progreso !== undefined && reporte?.progreso !== null) {
+      return reporte.progreso;
+    }
+    // Fallback: usar el progreso del proyecto
+    return reporte?.proyecto_progress || 0;
+  };
+
+  const progresoTotal = obtenerProgresoMostrar();
 
   if (loading) {
     return (
@@ -381,7 +402,7 @@ const DetalleReporte = () => {
             </div>
           </div>
 
-          {/* PROGRESO VISUAL */}
+          {/* 🔥 PROGRESO VISUAL - AHORA MUESTRA EL PROGRESO DEL REPORTE */}
           <div className="detalle-section progreso-visual-section">
             <h3 className="section-title">
               <Sliders size={18} />
@@ -402,7 +423,13 @@ const DetalleReporte = () => {
                   {progresoTotal}%
                 </span>
               </div>
-            
+              {reporte.progreso !== undefined && reporte.progreso !== null && (
+                <div className="progreso-origen">
+                  <span className="progreso-origen-badge">
+                    📊 Guardado en el reporte
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

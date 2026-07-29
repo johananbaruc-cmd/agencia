@@ -120,18 +120,16 @@ export default function EmployeeCalendar() {
     setSelectedDate(null);
   };
 
-  // ✅ Colores con opacidad para los días
   const getPriorityColor = (priority) => {
     const map = {
-      low: 'rgba(16, 185, 129, 0.25)',    // Verde claro
-      medium: 'rgba(245, 158, 11, 0.25)',  // Amarillo claro
-      high: 'rgba(249, 115, 22, 0.25)',    // Naranja claro
-      urgent: 'rgba(239, 68, 68, 0.25)'    // Rojo claro
+      low: 'rgba(16, 185, 129, 0.25)',
+      medium: 'rgba(245, 158, 11, 0.25)',
+      high: 'rgba(249, 115, 22, 0.25)',
+      urgent: 'rgba(239, 68, 68, 0.25)'
     };
     return map[priority] || 'rgba(107, 114, 128, 0.15)';
   };
 
-  // ✅ Colores sólidos para puntos de leyenda
   const getPrioritySolidColor = (priority) => {
     const map = {
       low: '#10b981',
@@ -152,7 +150,6 @@ export default function EmployeeCalendar() {
     return map[priority] || priority;
   };
 
-  // ✅ Obtener colores de prioridad para un día
   const getDayPriorityColors = (dateKey) => {
     if (!tasksByDate[dateKey] || tasksByDate[dateKey].length === 0) return null;
     
@@ -168,7 +165,6 @@ export default function EmployeeCalendar() {
       colorCount[color]++;
     });
     
-    // Orden de prioridad: urgente, alta, media, baja
     const colorOrder = ['#ef4444', '#f97316', '#f59e0b', '#10b981'];
     const segments = [];
     
@@ -183,7 +179,6 @@ export default function EmployeeCalendar() {
       }
     });
     
-    // Si hay un solo color, fondo sólido con opacidad
     if (segments.length === 1) {
       return {
         type: 'single',
@@ -193,7 +188,6 @@ export default function EmployeeCalendar() {
       };
     }
     
-    // Múltiples colores: gradient
     return {
       type: 'multi',
       total,
@@ -307,20 +301,17 @@ export default function EmployeeCalendar() {
                   const isWeekend = day.date.getDay() === 0 || day.date.getDay() === 6;
                   const priorityInfo = hasTasks ? getDayPriorityColors(dateKey) : null;
 
-                  // ✅ Construir estilo del día
                   let dayStyle = {};
                   let borderColor = 'rgba(255,255,255,0.06)';
                   
                   if (priorityInfo) {
                     if (priorityInfo.type === 'single') {
-                      // Un solo color: fondo con opacidad
                       const color = priorityInfo.color;
                       dayStyle = {
-                        background: color + '30' // 30% de opacidad
+                        background: color + '30'
                       };
                       borderColor = color + '50';
                     } else {
-                      // Múltiples colores: gradiente con opacidad
                       const gradientStops = priorityInfo.segments.map((seg, idx) => {
                         const start = idx === 0 ? 0 : priorityInfo.segments.slice(0, idx).reduce((sum, s) => sum + s.percentage, 0);
                         return `${seg.color}30 ${start}% ${start + seg.percentage}%`;
@@ -353,7 +344,6 @@ export default function EmployeeCalendar() {
                     >
                       <span className="day-number">{day.day}</span>
                       
-                      {/* ✅ Puntos de prioridad en la esquina inferior */}
                       {hasTasks && priorityInfo && (
                         <div className="priority-dots">
                           {priorityInfo.segments.map((seg, idx) => (
@@ -362,7 +352,7 @@ export default function EmployeeCalendar() {
                               className="priority-dot"
                               style={{ backgroundColor: seg.color }}
                               title={`${getPriorityLabel(
-                                ['urgent', 'high', 'medium', 'low'][idx] || 'tarea'
+                                ['urgente', 'alta', 'media', 'baja'][idx] || 'tarea'
                               )}: ${seg.count} tarea${seg.count > 1 ? 's' : ''}`}
                             />
                           ))}
@@ -373,7 +363,6 @@ export default function EmployeeCalendar() {
                 })}
               </div>
 
-              {/* Tareas del día seleccionado */}
               {selectedDate && (
                 <div className="selected-date-tasks">
                   <div className="selected-date-header">

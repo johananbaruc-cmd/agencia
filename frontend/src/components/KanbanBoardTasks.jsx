@@ -120,9 +120,9 @@ function DroppableColumn({ column, children, count }) {
 
 // Columnas fijas (3 estados)
 const FIXED_COLUMNS = [
-  { id: 'pending', title: '📌 Pendiente' },
-  { id: 'in_progress', title: '🔄 En Progreso' },
-  { id: 'completed', title: '✅ Finalizado' },
+  { id: 'pending', title: ' Pendiente' },
+  { id: 'in_progress', title: ' En Progreso' },
+  { id: 'completed', title: ' Finalizado' },
 ];
 
 export default function KanbanBoardTasks({ tasks, onTaskUpdate, readOnly = false }) {

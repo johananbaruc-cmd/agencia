@@ -102,11 +102,15 @@ export default function EmployeeKanban() {
               <p className="empty-subtitle">No tienes tareas asignadas en este proyecto</p>
             </div>
           ) : (
-            <KanbanBoardTasks 
-              tasks={tasks}
-              onTaskUpdate={refreshTasks}
-              readOnly={false}
-            />
+            <div className="kanban-wrapper">
+              <div className="kanban-board-container">
+                <KanbanBoardTasks 
+                  tasks={tasks}
+                  onTaskUpdate={refreshTasks}
+                  readOnly={false}
+                />
+              </div>
+            </div>
           )}
         </main>
       </div>

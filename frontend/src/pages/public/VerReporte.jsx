@@ -45,9 +45,8 @@ const VerReporte = () => {
   const [expirado, setExpirado] = useState(false);
   const [activeTab, setActiveTab] = useState('info');
   
-  // ✅ Progreso visual (desde sessionStorage como en DetalleReporte)
+  // 🔥 Progreso - VIENE DIRECTAMENTE DE LA BD
   const [progresoVisual, setProgresoVisual] = useState(0);
-  const [esReporteRecienCreado, setEsReporteRecienCreado] = useState(false);
   
   const [respuestaCliente, setRespuestaCliente] = useState('');
   const [respuestaEnviada, setRespuestaEnviada] = useState(false);
@@ -116,32 +115,17 @@ const VerReporte = () => {
         const reporteBase = response.data;
         setReporte(reporteBase);
         
-        // ✅ Recuperar progreso visual de sessionStorage
-        const reporteCreadoId = sessionStorage.getItem('reporte_creado_id');
-        const esRecienCreado = reporteCreadoId === String(reporteBase.id);
-        setEsReporteRecienCreado(esRecienCreado);
-
-        let progreso = 0;
+        // 🔥 EL PROGRESO VIENE DIRECTAMENTE DE LA BD
+        // El backend debe devolver el campo 'progreso' en la respuesta
+        const progresoDelReporte = reporteBase.progreso || 0;
+        console.log('📊 Progreso del reporte (BD):', progresoDelReporte);
         
-        if (esRecienCreado) {
-          progreso = parseInt(sessionStorage.getItem('progreso_visual') || '0');
-        }
+        // 🔥 Usar el progreso de la BD siempre
+        setProgresoVisual(progresoDelReporte);
         
-        if (progreso === 0) {
-          progreso = reporteBase.proyecto_progress || 0;
-        }
-        
-        if (progreso === 0) {
-          const progresoGuardado = localStorage.getItem(`progreso_visual_${token}`);
-          if (progresoGuardado) {
-            progreso = parseInt(progresoGuardado);
-          }
-        }
-        
-        setProgresoVisual(progreso);
-        
-        if (progreso > 0) {
-          localStorage.setItem(`progreso_visual_${token}`, String(progreso));
+        // Guardar en localStorage para persistencia
+        if (progresoDelReporte > 0) {
+          localStorage.setItem(`progreso_visual_${token}`, String(progresoDelReporte));
         }
         
         // ✅ Recuperar respuesta guardada
@@ -285,8 +269,8 @@ const VerReporte = () => {
     setMostrarModalExpiracion(true);
   };
 
-  // ✅ Progreso total (usando el visual si es recién creado)
-  const progresoTotal = esReporteRecienCreado ? progresoVisual : (reporte?.proyecto_progress || 0);
+  // 🔥 OBTENER EL PROGRESO - SIEMPRE DE LA BD
+  const progresoTotal = reporte?.progreso || reporte?.proyecto_progress || 0;
   
   const todosLosArchivos = reporte?.archivos || [];
   const evidenciasTareas = reporte?.evidencias_tareas || [];
@@ -403,7 +387,7 @@ const VerReporte = () => {
           </div>
         </div>
 
-        {/* ✅ PROGRESO VISUAL */}
+        {/* 🔥 PROGRESO VISUAL - DIRECTAMENTE DE LA BD */}
         <div className="detalle-section progreso-visual-section">
           <h3 className="section-title">
             <Sliders size={18} />
@@ -424,8 +408,12 @@ const VerReporte = () => {
                 {progresoTotal}%
               </span>
             </div>
-            {(esReporteRecienCreado || sessionStorage.getItem('progreso_visual') !== null) && (
-              <p className="progreso-hint">(Valor visual - no se guarda en la base de datos)</p>
+            {reporte?.progreso !== undefined && reporte?.progreso !== null && (
+              <div className="progreso-origen">
+                <span className="progreso-origen-badge">
+                  📊 Guardado en el reporte
+                </span>
+              </div>
             )}
           </div>
         </div>

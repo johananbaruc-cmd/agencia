@@ -1,4 +1,3 @@
-# app/models/reporte.py
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, JSON, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
@@ -23,11 +22,14 @@ class ReporteProyecto(Base):
     texto_avance = Column(Text, nullable=True)
     pregunta_cliente = Column(Text, nullable=True)
     
-    # ✅ EVIDENCIAS
+    # 🔥 NUEVO - Progreso 1-100
+    progreso = Column(Integer, nullable=True, default=0)
+    
+    # EVIDENCIAS
     evidencias_ids = Column(JSON, nullable=True, default=[])
     archivos_existentes_ids = Column(JSON, nullable=True, default=[])
     
-    # ✅ EXPIRACIÓN POR HORAS (el admin elige)
+    # EXPIRACIÓN POR HORAS (el admin elige)
     horas_expiracion = Column(Integer, nullable=False, default=24)
     fecha_expiracion = Column(DateTime(timezone=True), nullable=True)
     

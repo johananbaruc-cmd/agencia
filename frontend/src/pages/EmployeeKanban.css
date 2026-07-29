@@ -177,3 +177,193 @@
     width: 240px;
   }
 }
+
+/* ========================================== */
+/* HEADER DEL KANBAN */
+/* ========================================== */
+
+.employee-kanban-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #020617, #0f172a);
+  padding: 2rem 1.5rem;
+  color: white;
+}
+
+.kanban-header {
+  margin-bottom: 2rem;
+}
+
+.kanban-header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.kanban-title h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 0.25rem 0;
+  background: linear-gradient(135deg, #f0f9ff, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.kanban-title p {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* ========================================== */
+/* SELECTOR DE PROYECTO */
+/* ========================================== */
+
+.kanban-main {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.project-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+  padding: 0.8rem 1.2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.project-selector label {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.project-select {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.6rem;
+  color: white;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.project-select:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.project-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.project-select option {
+  background: #1e293b;
+  color: white;
+}
+
+/* ========================================== */
+/* ESTADOS DE CARGA Y VACÍO */
+/* ========================================== */
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-state p {
+  color: #94a3b8;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.empty-state .empty-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  margin: 1rem 0 0.5rem;
+}
+
+.empty-state .empty-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========================================== */
+/* WRAPPER DEL KANBAN */
+/* ========================================== */
+
+.kanban-wrapper {
+  margin-top: 1rem;
+}
+
+.kanban-board-container {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 1rem;
+  padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ========================================== */
+/* RESPONSIVE */
+/* ========================================== */
+
+@media (max-width: 768px) {
+  .employee-kanban-container {
+    padding: 1rem;
+  }
+
+  .kanban-title h1 {
+    font-size: 1.3rem;
+  }
+
+  .project-selector {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .project-select {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .kanban-board-container {
+    padding: 0.5rem;
+  }
+}

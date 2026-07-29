@@ -64,7 +64,7 @@ const CrearReporte = () => {
   const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   
-  // Progreso visual (NO SE GUARDA EN BD)
+  // 🔥 Progreso - AHORA SE GUARDA EN BD
   const [progresoVisual, setProgresoVisual] = useState(0);
 
   // Cargar proyectos para el selector
@@ -279,9 +279,12 @@ const CrearReporte = () => {
     });
   };
 
+  // 🔥 Manejar cambio de progreso
   const handleProgresoChange = (e) => {
     const value = parseInt(e.target.value);
-    setProgresoVisual(value);
+    if (!isNaN(value) && value >= 0 && value <= 100) {
+      setProgresoVisual(value);
+    }
   };
 
   const handleProgresoInput = (e) => {
@@ -315,7 +318,7 @@ const CrearReporte = () => {
         return;
       }
 
-      // SOLO LOS CAMPOS QUE EXISTEN EN EL MODELO
+      // 🔥 DATOS DEL REPORTE - INCLUYENDO PROGRESO
       const reporteData = {
         project_id: parseInt(projectIdFinal),
         admin_id: user?.id,
@@ -325,19 +328,21 @@ const CrearReporte = () => {
         pregunta_cliente: formData.pregunta_cliente,
         configuracion_analisis: formData.configuracion_analisis,
         horas_expiracion: formData.horas_expiracion,
+        progreso: progresoVisual  // 🔥 GUARDAR PROGRESO EN BD
       };
 
-      // ✅ GUARDAR EVIDENCIAS SELECCIONADAS
+      // GUARDAR EVIDENCIAS SELECCIONADAS
       if (formData.incluir_evidencias && evidenciasSeleccionadas.length > 0) {
         reporteData.evidencias_ids = evidenciasSeleccionadas;
       }
 
-      // ✅ GUARDAR ARCHIVOS DE TAREAS SELECCIONADOS (¡CORRECCIÓN IMPORTANTE!)
+      // GUARDAR ARCHIVOS DE TAREAS SELECCIONADOS
       if (formData.incluir_evidencias && archivosExistentesSeleccionados.length > 0) {
         reporteData.archivos_existentes_ids = archivosExistentesSeleccionados;
       }
 
       console.log('📤 Enviando al backend:');
+      console.log('  - progreso:', progresoVisual);
       console.log('  - evidencias_ids:', evidenciasSeleccionadas);
       console.log('  - archivos_existentes_ids:', archivosExistentesSeleccionados);
 
@@ -646,17 +651,17 @@ const CrearReporte = () => {
             </div>
 
             {/* ========================================== */}
-            {/* BARRA DE PROGRESO VISUAL */}
+            {/* 🔥 BARRA DE PROGRESO - SE GUARDA EN BD */}
             {/* ========================================== */}
             <div className="form-group">
               <div className="progreso-visual-container">
                 <div className="progreso-visual-header">
                   <label className="progreso-visual-label">
                     <Sliders size={18} />
-                    Progreso 
+                    Progreso del Proyecto
                   </label>
                   <span className="progreso-visual-hint">
-                    (Solo visual - no se guarda en el reporte)
+                    (Se guarda en el reporte)
                   </span>
                 </div>
                 

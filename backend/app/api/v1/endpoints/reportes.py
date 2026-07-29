@@ -100,14 +100,14 @@ def eliminar_reporte(
     current_user: User = Depends(require_admin)
 ):
     """
-    ✅ Elimina un reporte (eliminación física) - PERMITE ELIMINAR EN CUALQUIER ESTADO
+    Elimina un reporte (eliminación física) - PERMITE ELIMINAR EN CUALQUIER ESTADO
     """
     # Buscar el reporte
     reporte = db.query(ReporteProyecto).filter(ReporteProyecto.id == reporte_id).first()
     if not reporte:
         raise HTTPException(status_code=404, detail="Reporte no encontrado")
     
-    # ✅ ELIMINAR SIN IMPORTAR EL ESTADO (borrador, publicado o expirado)
+    # ELIMINAR SIN IMPORTAR EL ESTADO (borrador, publicado o expirado)
     db.delete(reporte)
     db.commit()
     
@@ -127,7 +127,7 @@ def obtener_resumen_proyecto(
     return ReporteService.obtener_resumen_proyecto(reporte.project_id, db)
 
 
-# ✅ NUEVO ENDPOINT: Obtener interacciones de un reporte (admin)
+# NUEVO ENDPOINT: Obtener interacciones de un reporte (admin)
 @router.get("/reportes/{reporte_id}/interacciones", response_model=List[InteraccionClienteResponse])
 def obtener_interacciones_reporte(
     reporte_id: int,

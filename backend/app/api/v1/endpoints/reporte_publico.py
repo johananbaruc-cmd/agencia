@@ -142,6 +142,10 @@ def obtener_reporte_publico(
                     "fecha": evidencia.created_at.isoformat() if evidencia.created_at else None
                 })
     
+    # 🔥 IMPORTANTE: Incluir el progreso del reporte
+    progreso_reporte = reporte.progreso or 0
+    print(f"📊 Progreso del reporte: {progreso_reporte}")
+    
     return ReportePublicoResponse(
         # Información del reporte
         id=reporte.id,
@@ -154,7 +158,10 @@ def obtener_reporte_publico(
         fecha_expiracion=reporte.fecha_expiracion,
         horas_expiracion=reporte.horas_expiracion or 24,
         
-        # ✅ INFORMACIÓN DEL PROYECTO
+        # 🔥 PROGRESO DEL REPORTE (NUEVO)
+        progreso=progreso_reporte,
+        
+        # Información del proyecto
         proyecto_nombre=project.name,
         proyecto_descripcion=project.description,
         proyecto_progress=project.progress or 0,
@@ -163,17 +170,17 @@ def obtener_reporte_publico(
         proyecto_start_date=project.start_date,
         proyecto_end_date=project.end_date,
         
-        # ✅ ADMIN Y AGENCIA
+        # Admin y agencia
         admin_name=admin_name,
         admin_email=admin_email,
         agency_name=agency_name,
         agency_email=agency_email,
         agency_rfc=agency_rfc,
         
-        # ✅ EMPLEADOS
+        # Empleados
         total_empleados=total_empleados,
         
-        # ✅ EVIDENCIAS Y ARCHIVOS
+        # Evidencias y archivos
         evidencias_tareas=evidencias_tareas,
         archivos_existentes=archivos_existentes,
         archivos=archivos,
