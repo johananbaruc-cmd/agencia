@@ -1,3 +1,5 @@
+# app/schemas/reporte.py
+
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -20,7 +22,7 @@ class TipoAnalisis(str, Enum):
 
 
 # ============================================
-# SCHEMAS BASE
+# SCHEMAS BASE (SIN CAMBIOS)
 # ============================================
 class ReporteBase(BaseModel):
     titulo: str = Field(..., max_length=255)
@@ -29,8 +31,8 @@ class ReporteBase(BaseModel):
     texto_avance: Optional[str] = None
     pregunta_cliente: Optional[str] = None
     fecha_expiracion: Optional[datetime] = None
-    horas_expiracion: Optional[int] = Field(24, ge=1, le=720)  # 1 a 720 horas
-    progreso: Optional[int] = Field(None, ge=0, le=100)  # 🔥 NUEVO - Progreso 1-100
+    horas_expiracion: Optional[int] = Field(24, ge=1, le=720)
+    progreso: Optional[int] = Field(None, ge=0, le=100)
 
 
 class ReporteCreate(ReporteBase):
@@ -50,7 +52,7 @@ class ReporteUpdate(BaseModel):
     fecha_expiracion: Optional[datetime] = None
     activo: Optional[bool] = None
     horas_expiracion: Optional[int] = Field(None, ge=1, le=720)
-    progreso: Optional[int] = Field(None, ge=0, le=100)  # 🔥 NUEVO - Progreso 1-100
+    progreso: Optional[int] = Field(None, ge=0, le=100)
 
 
 # ============================================
@@ -71,7 +73,7 @@ class CodigoAccesoValidar(BaseModel):
 
 
 # ============================================
-# SCHEMAS DE RESPUESTA
+# SCHEMAS DE RESPUESTA (AGREGAR ANALISIS)
 # ============================================
 class ReporteResponse(ReporteBase):
     id: int
@@ -88,7 +90,7 @@ class ReporteResponse(ReporteBase):
     created_at: datetime
     updated_at: Optional[datetime] = None
     horas_expiracion: Optional[int] = 24
-    progreso: Optional[int] = 0  # 🔥 NUEVO - Progreso 1-100
+    progreso: Optional[int] = 0
     evidencias_ids: Optional[List[int]] = []
     archivos_existentes_ids: Optional[List[int]] = []
     
@@ -96,13 +98,14 @@ class ReporteResponse(ReporteBase):
         from_attributes = True
 
 
+# ✅ NUEVO: Schema con análisis incluidos
 class ReporteConDetalles(ReporteResponse):
     archivos: List['ArchivoReporteResponse'] = []
-    analisis: List['AnalisisReporteResponse'] = []
+    analisis: List['AnalisisReporteResponse'] = []  # ✅ AGREGADO
 
-    
+
 # ============================================
-# SCHEMAS PARA PUBLICAR
+# SCHEMAS PARA PUBLICAR (SIN CAMBIOS)
 # ============================================
 class ReportePublicar(BaseModel):
     titulo: str = Field(..., max_length=255)
@@ -114,7 +117,7 @@ class ReportePublicar(BaseModel):
     enviar_correo: bool = False
     correo_cliente: Optional[str] = None
     horas_expiracion: Optional[int] = Field(24, ge=1, le=720)
-    progreso: Optional[int] = Field(None, ge=0, le=100)  # 🔥 NUEVO - Progreso 1-100
+    progreso: Optional[int] = Field(None, ge=0, le=100)
 
 
 class ReportePublicadoResponse(BaseModel):
@@ -127,7 +130,7 @@ class ReportePublicadoResponse(BaseModel):
 
 
 # ============================================
-# SCHEMAS PARA CLIENTE (Vista Pública)
+# SCHEMAS PARA CLIENTE (Vista Pública) - AGREGAR ANALISIS
 # ============================================
 class ReportePublicoResponse(BaseModel):
     id: int
@@ -139,7 +142,7 @@ class ReportePublicoResponse(BaseModel):
     fecha_generacion: datetime
     fecha_expiracion: Optional[datetime] = None
     horas_expiracion: Optional[int] = 24
-    progreso: Optional[int] = 0  # 🔥 NUEVO - Progreso 1-100
+    progreso: Optional[int] = 0
     
     proyecto_nombre: str
     proyecto_descripcion: Optional[str] = None
@@ -160,7 +163,7 @@ class ReportePublicoResponse(BaseModel):
     evidencias_tareas: Optional[List[Dict[str, Any]]] = []
     archivos_existentes: Optional[List[Dict[str, Any]]] = []
     archivos: List['ArchivoReporteResponse'] = []
-    analisis: List['AnalisisReporteResponse'] = []
+    analisis: List['AnalisisReporteResponse'] = []  # ✅ AGREGADO
     
     class Config:
         from_attributes = True

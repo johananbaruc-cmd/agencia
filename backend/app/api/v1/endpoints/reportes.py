@@ -1,11 +1,13 @@
+# app/api/v1/endpoints/reportes.py
+
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session, joinedload
 from app.core.database import get_db
 from app.core.deps import require_admin
 from app.models.user import User
 from app.models.reporte import ReporteProyecto
-from app.models.interaccion_cliente import InteraccionCliente
+from app.models.analisis_reporte import AnalisisReporte
 from app.schemas.reporte import (
     ReporteCreate,
     ReporteUpdate,
@@ -14,12 +16,12 @@ from app.schemas.reporte import (
     ReportePublicar,
     ReportePublicadoResponse
 )
-from app.schemas.interaccion import InteraccionClienteResponse
 from app.services.reporte_service import ReporteService
 
 router = APIRouter()
 
-@router.post("/reportes", response_model=ReporteResponse)
+
+@router.post("/reportes", response_model=ReporteResponse, status_code=status.HTTP_201_CREATED)
 def crear_reporte(
     datos: ReporteCreate,
     db: Session = Depends(get_db),
@@ -59,9 +61,26 @@ def obtener_reporte(
     current_user: User = Depends(require_admin)
 ):
     """
-    Obtiene un reporte por ID con todos sus detalles
+    Obtiene un reporte por ID con todos sus detalles incluyendo análisis
     """
-    return ReporteService.obtener_reporte(reporte_id, db, incluir_detalles)
+    # ✅ CORREGIDO: Sin .filter() en joinedload
+    query = db.query(ReporteProyecto).filter(
+        ReporteProyecto.id == reporte_id,
+        ReporteProyecto.activo == True
+    )
+    
+    if incluir_detalles:
+        query = query.options(
+            joinedload(ReporteProyecto.archivos),
+            joinedload(ReporteProyecto.analisis)  # ✅ Sin .filter()
+        )
+    
+    reporte = query.first()
+    
+    if not reporte:
+        raise HTTPException(status_code=404, detail="Reporte no encontrado")
+    
+    return reporte
 
 
 @router.put("/reportes/{reporte_id}", response_model=ReporteResponse)
@@ -93,25 +112,27 @@ def publicar_reporte(
     return ReporteService.publicar_reporte(reporte_id, datos, base_url, db)
 
 
-@router.delete("/reportes/{reporte_id}")
+@router.delete("/reportes/{reporte_id}", status_code=status.HTTP_204_NO_CONTENT)
 def eliminar_reporte(
     reporte_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin)
 ):
     """
-    Elimina un reporte (eliminación física) - PERMITE ELIMINAR EN CUALQUIER ESTADO
+    Elimina un reporte (soft delete)
     """
-    # Buscar el reporte
-    reporte = db.query(ReporteProyecto).filter(ReporteProyecto.id == reporte_id).first()
+    reporte = db.query(ReporteProyecto).filter(
+        ReporteProyecto.id == reporte_id,
+        ReporteProyecto.activo == True
+    ).first()
+    
     if not reporte:
         raise HTTPException(status_code=404, detail="Reporte no encontrado")
     
-    # ELIMINAR SIN IMPORTAR EL ESTADO (borrador, publicado o expirado)
-    db.delete(reporte)
+    reporte.activo = False
     db.commit()
     
-    return {"message": "Reporte eliminado exitosamente"}
+    return None
 
 
 @router.get("/reportes/{reporte_id}/resumen")
@@ -125,27 +146,3 @@ def obtener_resumen_proyecto(
     """
     reporte = ReporteService.obtener_reporte(reporte_id, db)
     return ReporteService.obtener_resumen_proyecto(reporte.project_id, db)
-
-
-# NUEVO ENDPOINT: Obtener interacciones de un reporte (admin)
-@router.get("/reportes/{reporte_id}/interacciones", response_model=List[InteraccionClienteResponse])
-def obtener_interacciones_reporte(
-    reporte_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
-):
-    """
-    Obtiene todas las interacciones (respuestas) de un reporte específico.
-    Solo accesible para administradores.
-    """
-    # Verificar que el reporte existe
-    reporte = db.query(ReporteProyecto).filter(ReporteProyecto.id == reporte_id).first()
-    if not reporte:
-        raise HTTPException(status_code=404, detail="Reporte no encontrado")
-    
-    # Obtener todas las interacciones del reporte
-    interacciones = db.query(InteraccionCliente).filter(
-        InteraccionCliente.reporte_id == reporte_id
-    ).order_by(InteraccionCliente.fecha_visto.desc()).all()
-    
-    return interacciones

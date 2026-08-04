@@ -20,6 +20,10 @@ import os
 
 router = APIRouter()
 
+
+# ============================================
+# 1. VALIDAR ACCESO
+# ============================================
 @router.post("/public/reportes/{token}/validar")
 def validar_acceso(
     token: str,
@@ -51,6 +55,9 @@ def validar_acceso(
     }
 
 
+# ============================================
+# 2. OBTENER REPORTE PÚBLICO (CON ANÁLISIS)
+# ============================================
 @router.get("/public/reportes/{token}", response_model=ReportePublicoResponse)
 def obtener_reporte_publico(
     token: str,
@@ -59,6 +66,7 @@ def obtener_reporte_publico(
 ):
     """
     Obtiene un reporte público (requiere código de acceso en header)
+    ✅ Incluye análisis, archivos, evidencias y todos los detalles
     """
     if not codigo_acceso:
         raise HTTPException(
@@ -101,11 +109,14 @@ def obtener_reporte_publico(
     # 6. Obtener archivos del reporte
     archivos = ArchivoService.obtener_archivos_reporte(reporte.id, db)
     
-    # 7. Obtener análisis
+    # 🔥 7. OBTENER ANÁLISIS DEL REPORTE
     analisis = db.query(AnalisisReporte).filter(
         AnalisisReporte.reporte_id == reporte.id,
-        AnalisisReporte.activo == True
-    ).all()
+        AnalisisReporte.activo == True,
+        AnalisisReporte.eliminado == False
+    ).order_by(AnalisisReporte.fecha_ejecucion.desc()).all()
+    
+    print(f"📊 Análisis encontrados: {len(analisis)}")
     
     # 8. Obtener evidencias seleccionadas (desde evidencias_ids)
     evidencias_tareas = []
@@ -142,10 +153,11 @@ def obtener_reporte_publico(
                     "fecha": evidencia.created_at.isoformat() if evidencia.created_at else None
                 })
     
-    # 🔥 IMPORTANTE: Incluir el progreso del reporte
+    # 10. Progreso del reporte
     progreso_reporte = reporte.progreso or 0
-    print(f"📊 Progreso del reporte: {progreso_reporte}")
+    print(f"📊 Progreso del reporte: {progreso_reporte}%")
     
+    # ✅ 11. RETORNAR CON TODOS LOS DATOS INCLUYENDO ANÁLISIS
     return ReportePublicoResponse(
         # Información del reporte
         id=reporte.id,
@@ -158,7 +170,7 @@ def obtener_reporte_publico(
         fecha_expiracion=reporte.fecha_expiracion,
         horas_expiracion=reporte.horas_expiracion or 24,
         
-        # 🔥 PROGRESO DEL REPORTE (NUEVO)
+        # Progreso del reporte
         progreso=progreso_reporte,
         
         # Información del proyecto
@@ -184,10 +196,15 @@ def obtener_reporte_publico(
         evidencias_tareas=evidencias_tareas,
         archivos_existentes=archivos_existentes,
         archivos=archivos,
+        
+        # 🔥 ANÁLISIS INCLUIDOS
         analisis=analisis
     )
 
 
+# ============================================
+# 3. DESCARGAR ARCHIVO PÚBLICO
+# ============================================
 @router.get("/public/reportes/{token}/archivos/{archivo_id}")
 def descargar_archivo_publico(
     token: str,
@@ -272,7 +289,9 @@ def descargar_archivo_publico(
     )
 
 
-# ✅ ENDPOINT CORREGIDO - Acepta JSON en el body
+# ============================================
+# 4. INTERACCIÓN DEL CLIENTE
+# ============================================
 @router.post("/public/reportes/{token}/interactuar")
 async def interactuar_cliente(
     token: str,

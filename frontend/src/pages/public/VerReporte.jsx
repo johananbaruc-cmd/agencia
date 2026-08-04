@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../services/api';
 import ReporteExpirado from '../../components/reportes/ReporteExpirado';
@@ -32,7 +32,14 @@ import {
   Folder,
   Edit,
   X,
-  Check
+  Check,
+  RefreshCw,
+  AlertCircle,
+  Activity,
+  Target,
+  GitBranch,
+  LineChart,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import './VerReporte.css';
 
@@ -45,7 +52,14 @@ const VerReporte = () => {
   const [expirado, setExpirado] = useState(false);
   const [activeTab, setActiveTab] = useState('info');
   
-  // 🔥 Progreso - VIENE DIRECTAMENTE DE LA BD
+  // Estado para análisis
+  const [analisis, setAnalisis] = useState([]);
+  const [cargandoAnalisis, setCargandoAnalisis] = useState(false);
+  const [ejecutandoAnalisis, setEjecutandoAnalisis] = useState(false);
+  const [resultadoEjecucion, setResultadoEjecucion] = useState(null);
+  const [analisisEjecutados, setAnalisisEjecutados] = useState(false); // 🔥 Control de ejecución
+  
+  // Progreso
   const [progresoVisual, setProgresoVisual] = useState(0);
   
   const [respuestaCliente, setRespuestaCliente] = useState('');
@@ -53,14 +67,12 @@ const VerReporte = () => {
   const [enviandoRespuesta, setEnviandoRespuesta] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
   
-  // ✅ Estado para la animación de enviado
   const [mostrarNotificacion, setMostrarNotificacion] = useState(false);
-
-  // ✅ Estado para el modal de expiración
   const [mostrarModalExpiracion, setMostrarModalExpiracion] = useState(false);
-
-  // ✅ Generar o recuperar sesión ID
   const [sesionId, setSesionId] = useState('');
+  
+  // 🔥 Ref para controlar ejecución única
+  const ejecucionRealizada = useRef(false);
 
   const getFechaExpiracion = () => {
     let fecha = localStorage.getItem(`fecha_expiracion_${token}`);
@@ -85,6 +97,65 @@ const VerReporte = () => {
     return false;
   };
 
+  // ==========================================
+  // Cargar análisis del reporte
+  // ==========================================
+  const cargarAnalisis = async (reporteId) => {
+    setCargandoAnalisis(true);
+    try {
+      const response = await api.get(`/reportes/${reporteId}/analisis`);
+      setAnalisis(response.data);
+      console.log('📊 Análisis cargados:', response.data.length);
+      return response.data;
+    } catch (error) {
+      console.error('Error al cargar análisis:', error);
+      setAnalisis([]);
+      return [];
+    } finally {
+      setCargandoAnalisis(false);
+    }
+  };
+
+  // ==========================================
+  // Ejecutar todos los análisis seleccionados
+  // ==========================================
+  const ejecutarAnalisisSeleccionados = async () => {
+    if (!reporte) return;
+    if (ejecucionRealizada.current) return; // ✅ Solo ejecutar una vez
+    
+    setEjecutandoAnalisis(true);
+    setResultadoEjecucion(null);
+    
+    try {
+      console.log('📊 Ejecutando análisis para reporte:', reporte.id);
+      
+      const response = await api.post(`/reportes/${reporte.id}/analisis/ejecutar-todos`);
+      setResultadoEjecucion(response.data);
+      ejecucionRealizada.current = true; // ✅ Marcar como ejecutado
+      setAnalisisEjecutados(true);
+      
+      // Recargar análisis después de ejecutar
+      await cargarAnalisis(reporte.id);
+      
+      console.log('✅ Análisis ejecutados:', response.data);
+      
+      if (response.data.errores && response.data.errores.length > 0) {
+        console.warn('⚠️ Algunos análisis fallaron:', response.data.errores);
+      }
+    } catch (error) {
+      console.error('Error al ejecutar análisis:', error);
+      // Si el error es porque no hay análisis seleccionados, no mostrar alerta
+      if (error.response?.status !== 400) {
+        console.error('Error detallado:', error.response?.data);
+      }
+    } finally {
+      setEjecutandoAnalisis(false);
+    }
+  };
+
+  // ==========================================
+  // Cargar reporte principal
+  // ==========================================
   useEffect(() => {
     const cargarReporte = async () => {
       if (verificarExpiracionSesion()) {
@@ -99,7 +170,6 @@ const VerReporte = () => {
           return;
         }
 
-        // ✅ Generar o recuperar sesión ID
         const sesion = localStorage.getItem(`sesion_${token}`) || crypto.randomUUID();
         localStorage.setItem(`sesion_${token}`, sesion);
         setSesionId(sesion);
@@ -115,25 +185,43 @@ const VerReporte = () => {
         const reporteBase = response.data;
         setReporte(reporteBase);
         
-        // 🔥 EL PROGRESO VIENE DIRECTAMENTE DE LA BD
-        // El backend debe devolver el campo 'progreso' en la respuesta
+        // Progreso
         const progresoDelReporte = reporteBase.progreso || 0;
-        console.log('📊 Progreso del reporte (BD):', progresoDelReporte);
-        
-        // 🔥 Usar el progreso de la BD siempre
         setProgresoVisual(progresoDelReporte);
         
-        // Guardar en localStorage para persistencia
         if (progresoDelReporte > 0) {
           localStorage.setItem(`progreso_visual_${token}`, String(progresoDelReporte));
         }
         
-        // ✅ Recuperar respuesta guardada
+        // 🔥 Cargar y ejecutar análisis automáticamente
+        if (reporteBase.id) {
+          // 1. Cargar análisis existentes
+          const analisisExistentes = await cargarAnalisis(reporteBase.id);
+          
+          // 2. Verificar si hay configuración de análisis
+          const configAnalisis = reporteBase.configuracion_analisis || {};
+          const hayAnalisisSeleccionados = Object.values(configAnalisis).some(v => v === true);
+          
+          // 3. Si hay análisis seleccionados y no se han ejecutado aún
+          if (hayAnalisisSeleccionados && !ejecucionRealizada.current) {
+            console.log('📊 Ejecutando análisis automáticos...');
+            // Pequeño delay para asegurar que el reporte está cargado
+            setTimeout(async () => {
+              await ejecutarAnalisisSeleccionados();
+            }, 1000);
+          } else if (analisisExistentes.length > 0) {
+            console.log(`📊 ${analisisExistentes.length} análisis ya existentes`);
+            ejecucionRealizada.current = true;
+          } else {
+            console.log('ℹ️ No hay análisis seleccionados en la configuración');
+          }
+        }
+        
+        // Respuesta del cliente
         const respuestaGuardada = sessionStorage.getItem(`respuesta_${token}`);
         if (respuestaGuardada) {
           setRespuestaEnviada(true);
           setRespuestaCliente(respuestaGuardada);
-          console.log('📝 Respuesta recuperada de sessionStorage:', respuestaGuardada);
         }
         
       } catch (error) {
@@ -153,13 +241,7 @@ const VerReporte = () => {
     cargarReporte();
   }, [token, navigate]);
 
-  // ✅ Enviar respuesta (nuevo o edición)
   const handleEnviarRespuesta = async () => {
-    console.log('📝 === ENVIANDO RESPUESTA ===');
-    console.log('📝 Token:', token);
-    console.log('📝 Respuesta:', respuestaCliente);
-    console.log('📝 Sesión ID:', sesionId);
-    
     if (!respuestaCliente.trim()) {
       console.log('⚠️ Respuesta vacía, no se envía');
       return;
@@ -168,28 +250,23 @@ const VerReporte = () => {
     setEnviandoRespuesta(true);
     try {
       const codigo = localStorage.getItem(`codigo_acceso_${token}`) || sessionStorage.getItem('codigo_acceso');
-      console.log('📝 Código de acceso:', codigo);
-      
+     
       const payload = {
         respuesta_pregunta: respuestaCliente,
         comentarios: respuestaCliente
       };
-      console.log('📝 Payload:', JSON.stringify(payload, null, 2));
-      
-      const response = await api.post(`/public/reportes/${token}/interactuar`, payload, {
+    
+      await api.post(`/public/reportes/${token}/interactuar`, payload, {
         headers: {
           'X-Codigo-Acceso': codigo,
           'X-Session-Id': sesionId
         }
       });
       
-      console.log('✅ Respuesta del servidor:', response.data);
-      
       sessionStorage.setItem(`respuesta_${token}`, respuestaCliente);
       setRespuestaEnviada(true);
       setModoEdicion(false);
       
-      // ✅ Mostrar animación de enviado
       setMostrarNotificacion(true);
       setTimeout(() => {
         setMostrarNotificacion(false);
@@ -197,15 +274,12 @@ const VerReporte = () => {
       
     } catch (error) {
       console.error('❌ Error al enviar respuesta:', error);
-      console.error('❌ Detalles del error:', error.response?.data);
       alert('Error al enviar tu respuesta. Intenta nuevamente.');
     } finally {
       setEnviandoRespuesta(false);
-      console.log('📝 === FIN ENVÍO ===\n');
     }
   };
 
-  // ✅ Función para cancelar edición
   const cancelarEdicion = () => {
     const respuestaGuardada = sessionStorage.getItem(`respuesta_${token}`);
     if (respuestaGuardada) {
@@ -216,7 +290,6 @@ const VerReporte = () => {
     setModoEdicion(false);
   };
 
-  // ✅ Función para iniciar edición
   const iniciarEdicion = () => {
     const respuestaGuardada = sessionStorage.getItem(`respuesta_${token}`);
     if (respuestaGuardada) {
@@ -225,7 +298,6 @@ const VerReporte = () => {
     setModoEdicion(true);
   };
 
-  // ✅ Función para descargar archivos con el código de acceso
   const descargarArchivo = async (itemId, nombre) => {
     try {
       const codigo = localStorage.getItem(`codigo_acceso_${token}`) || sessionStorage.getItem('codigo_acceso');
@@ -264,19 +336,16 @@ const VerReporte = () => {
     }
   };
 
-  // ✅ Función para manejar expiración del temporizador
   const handleTemporizadorExpirado = () => {
     setMostrarModalExpiracion(true);
   };
 
-  // 🔥 OBTENER EL PROGRESO - SIEMPRE DE LA BD
   const progresoTotal = reporte?.progreso || reporte?.proyecto_progress || 0;
   
   const todosLosArchivos = reporte?.archivos || [];
   const evidenciasTareas = reporte?.evidencias_tareas || [];
   const archivosExistentes = reporte?.archivos_existentes || [];
 
-  // ✅ UNIFICAR: Combinar evidencias_tareas y archivos_existentes (sin duplicados)
   const elementosUnificados = [...evidenciasTareas, ...archivosExistentes].reduce((acc, item) => {
     const exists = acc.some(el => el.id === item.id);
     if (!exists) {
@@ -290,6 +359,57 @@ const VerReporte = () => {
     if (progreso < 60) return '#f59e0b';
     if (progreso < 85) return '#3b82f6';
     return '#10b981';
+  };
+
+  // ==========================================
+  // ✅ FUNCIONES DE ANÁLISIS (10 TIPOS)
+  // ==========================================
+  const getAnalisisIcon = (tipo) => {
+    const iconos = {
+      'pca': <TrendingUp size={16} />,
+      'regresion': <BarChart3 size={16} />,
+      'clustering': <PieChart size={16} />,
+      'estadisticas': <Database size={16} />,
+      'regresion_gasto_tiempo': <Activity size={16} />,
+      'regresion_rendimiento_empleado': <Users size={16} />,
+      'regresion_presupuesto_plazo': <Target size={16} />,
+      'curva_s': <LineChart size={16} />,
+      'desviacion_plazos': <Calendar size={16} />,
+      'prediccion_fin': <CalendarIcon size={16} />
+    };
+    return iconos[tipo] || <Activity size={16} />;
+  };
+
+  const getAnalisisNombre = (tipo) => {
+    const nombres = {
+      'pca': 'PCA - Análisis de Componentes Principales',
+      'regresion': 'Regresión Lineal',
+      'clustering': 'Clustering K-Means',
+      'estadisticas': 'Estadísticas Descriptivas',
+      'regresion_gasto_tiempo': 'Gasto vs Tiempo - Desviación presupuestaria',
+      'regresion_rendimiento_empleado': 'Rendimiento del Empleado - Productividad',
+      'regresion_presupuesto_plazo': 'Presupuesto vs Plazo - Eficiencia CPI/SPI',
+      'curva_s': 'Curva S - Avance físico vs financiero',
+      'desviacion_plazos': 'Desviación de Plazos - Tareas críticas',
+      'prediccion_fin': 'Predicción de Fin - Fecha estimada'
+    };
+    return nombres[tipo] || tipo;
+  };
+
+  const getAnalisisColor = (tipo) => {
+    const colores = {
+      'pca': '#3b82f6',
+      'regresion': '#8b5cf6',
+      'clustering': '#f59e0b',
+      'estadisticas': '#10b981',
+      'regresion_gasto_tiempo': '#ef4444',
+      'regresion_rendimiento_empleado': '#8b5cf6',
+      'regresion_presupuesto_plazo': '#f59e0b',
+      'curva_s': '#3b82f6',
+      'desviacion_plazos': '#ef4444',
+      'prediccion_fin': '#10b981'
+    };
+    return colores[tipo] || '#6b7280';
   };
 
   const getFileIcon = (fileName) => {
@@ -387,7 +507,7 @@ const VerReporte = () => {
           </div>
         </div>
 
-        {/* 🔥 PROGRESO VISUAL - DIRECTAMENTE DE LA BD */}
+        {/* Progreso Visual */}
         <div className="detalle-section progreso-visual-section">
           <h3 className="section-title">
             <Sliders size={18} />
@@ -408,13 +528,6 @@ const VerReporte = () => {
                 {progresoTotal}%
               </span>
             </div>
-            {reporte?.progreso !== undefined && reporte?.progreso !== null && (
-              <div className="progreso-origen">
-                <span className="progreso-origen-badge">
-                  📊 Guardado en el reporte
-                </span>
-              </div>
-            )}
           </div>
         </div>
 
@@ -434,8 +547,8 @@ const VerReporte = () => {
             >
               <BarChart3 size={16} />
               Análisis de Datos
-              {reporte.analisis?.length > 0 && (
-                <span className="tab-badge">{reporte.analisis.length}</span>
+              {analisis.length > 0 && (
+                <span className="tab-badge">{analisis.length}</span>
               )}
             </button>
             <button
@@ -453,7 +566,6 @@ const VerReporte = () => {
           {/* TAB 1: INFORMACIÓN GENERAL */}
           {activeTab === 'info' && (
             <div className="tab-content">
-              {/* INFORMACIÓN DEL PROYECTO */}
               <div className="seccion-reporte info-proyecto-section">
                 <h2 className="seccion-titulo">
                   <Folder size={18} />
@@ -521,7 +633,6 @@ const VerReporte = () => {
                 </div>
               </div>
 
-              {/* TEXTO DE AVANCE */}
               {reporte.texto_avance && (
                 <div className="seccion-reporte">
                   <h2 className="seccion-titulo">
@@ -532,7 +643,6 @@ const VerReporte = () => {
                 </div>
               )}
 
-              {/* PREGUNTA AL CLIENTE - CON EDICIÓN */}
               {reporte.pregunta_cliente && (
                 <div className="seccion-reporte pregunta-cliente-section">
                   <h2 className="seccion-titulo">
@@ -550,10 +660,7 @@ const VerReporte = () => {
                             <span>Tu respuesta ha sido enviada</span>
                           </div>
                           {!modoEdicion && (
-                            <button 
-                              onClick={iniciarEdicion}
-                              className="btn-editar-respuesta"
-                            >
+                            <button onClick={iniciarEdicion} className="btn-editar-respuesta">
                               <Edit size={14} />
                               Editar
                             </button>
@@ -578,10 +685,7 @@ const VerReporte = () => {
                                 <Check size={16} />
                                 {enviandoRespuesta ? 'Guardando...' : 'Guardar cambios'}
                               </button>
-                              <button 
-                                onClick={cancelarEdicion}
-                                className="btn-cancelar-edicion"
-                              >
+                              <button onClick={cancelarEdicion} className="btn-cancelar-edicion">
                                 <X size={16} />
                                 Cancelar
                               </button>
@@ -618,8 +722,340 @@ const VerReporte = () => {
           {/* TAB 2: ANÁLISIS DE DATOS */}
           {activeTab === 'analisis' && (
             <div className="tab-content">
-              {reporte.analisis && reporte.analisis.length > 0 ? (
-                <VistaGraficas analisis={reporte.analisis} />
+              <div className="analisis-header-actions">
+                <h3 className="analisis-tab-title">
+                  <BarChart3 size={18} />
+                  Análisis de Datos
+                </h3>
+                {reporte && (
+                  <button
+                    onClick={ejecutarAnalisisSeleccionados}
+                    disabled={ejecutandoAnalisis || analisisEjecutados}
+                    className="btn-ejecutar-analisis"
+                  >
+                    <RefreshCw size={16} className={ejecutandoAnalisis ? 'spin' : ''} />
+                    {ejecutandoAnalisis ? 'Ejecutando...' : analisisEjecutados ? 'Análisis ejecutados' : 'Ejecutar Análisis'}
+                  </button>
+                )}
+              </div>
+
+              {cargandoAnalisis ? (
+                <div className="analisis-loading">
+                  <div className="loading-spinner-small"></div>
+                  <p>Cargando análisis...</p>
+                </div>
+              ) : analisis.length > 0 ? (
+                <div className="analisis-list">
+                  {analisis.map((item) => (
+                    <div key={item.id} className="analisis-item">
+                      <div className="analisis-item-header">
+                        <div className="analisis-item-icon" style={{ backgroundColor: getAnalisisColor(item.tipo_analisis) + '20', color: getAnalisisColor(item.tipo_analisis) }}>
+                          {getAnalisisIcon(item.tipo_analisis)}
+                        </div>
+                        <div className="analisis-item-info">
+                          <h4>{item.nombre || getAnalisisNombre(item.tipo_analisis)}</h4>
+                          <p className="analisis-item-desc">{item.descripcion || 'Análisis de datos del proyecto'}</p>
+                        </div>
+                        <div className="analisis-item-meta">
+                          <span className="analisis-item-tipo" style={{ backgroundColor: getAnalisisColor(item.tipo_analisis) + '20', color: getAnalisisColor(item.tipo_analisis) }}>
+                            {item.tipo_analisis}
+                          </span>
+                          {item.nivel_riesgo && (
+                            <span className={`analisis-riesgo-badge riesgo-${item.nivel_riesgo}`}>
+                              {item.nivel_riesgo.toUpperCase()}
+                            </span>
+                          )}
+                          <span className="analisis-item-tiempo">
+                            <Clock size={12} />
+                            {item.tiempo_ejecucion_ms}ms
+                          </span>
+                        </div>
+                      </div>
+
+                      {item.recomendaciones && item.recomendaciones.length > 0 && (
+                        <div className="analisis-recomendaciones">
+                          <strong>📋 Recomendaciones:</strong>
+                          <ul>
+                            {item.recomendaciones.map((rec, idx) => (
+                              <li key={idx}>{rec}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {item.alertas && item.alertas.length > 0 && (
+                        <div className="analisis-alertas">
+                          {item.alertas.map((alerta, idx) => (
+                            <div key={idx} className={`alerta-item alerta-${alerta.tipo}`}>
+                              <AlertCircle size={14} />
+                              <span>{alerta.mensaje}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {item.resultados && (
+                        <div className="analisis-item-resultados">
+                          {/* Resultados por tipo - Todos los tipos están incluidos */}
+                          {item.tipo_analisis === 'regresion_gasto_tiempo' && (
+                            <div className="resultados-gasto-tiempo">
+                              <div className="resultado-item">
+                                <span className="resultado-label">Ecuación:</span>
+                                <span className="resultado-value">{item.resultados.ecuacion}</span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">R² Score:</span>
+                                <span className="resultado-value" style={{ color: item.resultados.r2_score > 0.7 ? '#10b981' : '#f59e0b' }}>
+                                  {(item.resultados.r2_score * 100).toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Desviación:</span>
+                                <span className="resultado-value" style={{ color: Math.abs(item.resultados.desviacion_porcentaje) > 20 ? '#ef4444' : '#10b981' }}>
+                                  {item.resultados.desviacion_porcentaje?.toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Gasto estimado final:</span>
+                                <span className="resultado-value">${item.resultados.gasto_estimado_final?.toFixed(2)}</span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Muestras:</span>
+                                <span className="resultado-value">{item.resultados.n_muestras}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {item.tipo_analisis === 'regresion_rendimiento_empleado' && (
+                            <div className="resultados-rendimiento">
+                              <div className="resultado-item">
+                                <span className="resultado-label">Empleado:</span>
+                                <span className="resultado-value">{item.resultados.empleado || 'No especificado'}</span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Tendencia:</span>
+                                <span className={`resultado-value tendencia-${item.resultados.tendencia}`}>
+                                  {item.resultados.tendencia?.replace('_', ' ')}
+                                </span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Riesgo de sobrecarga:</span>
+                                <span className="resultado-value" style={{ color: item.resultados.riesgo_sobrecarga > 70 ? '#ef4444' : '#10b981' }}>
+                                  {item.resultados.riesgo_sobrecarga?.toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Retraso promedio:</span>
+                                <span className="resultado-value">{item.resultados.promedio_retraso?.toFixed(1)} días</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {item.tipo_analisis === 'regresion_presupuesto_plazo' && (
+                            <div className="resultados-presupuesto-plazo">
+                              <div className="resultado-item">
+                                <span className="resultado-label">CPI:</span>
+                                <span className="resultado-value" style={{ color: item.resultados.cpi_promedio < 0.9 ? '#ef4444' : '#10b981' }}>
+                                  {item.resultados.cpi_promedio?.toFixed(2)}
+                                </span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">SPI:</span>
+                                <span className="resultado-value" style={{ color: item.resultados.spi_promedio < 0.9 ? '#ef4444' : '#10b981' }}>
+                                  {item.resultados.spi_promedio?.toFixed(2)}
+                                </span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">R² Score:</span>
+                                <span className="resultado-value">{(item.resultados.r2_score * 100).toFixed(1)}%</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {item.tipo_analisis === 'curva_s' && (
+                            <div className="resultados-curva-s">
+                              <div className="resultado-item">
+                                <span className="resultado-label">Desviación promedio:</span>
+                                <span className="resultado-value" style={{ color: Math.abs(item.resultados.desviacion_promedio) > 10 ? '#ef4444' : '#10b981' }}>
+                                  {item.resultados.desviacion_promedio?.toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Avance físico:</span>
+                                <span className="resultado-value">{item.resultados.avance_fisico?.[item.resultados.avance_fisico.length - 1]?.toFixed(1)}%</span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Avance financiero:</span>
+                                <span className="resultado-value">{item.resultados.avance_financiero?.[item.resultados.avance_financiero.length - 1]?.toFixed(1)}%</span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Muestras:</span>
+                                <span className="resultado-value">{item.resultados.n_muestras}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {item.tipo_analisis === 'desviacion_plazos' && (
+                            <div className="resultados-desviacion">
+                              <div className="resultado-item">
+                                <span className="resultado-label">Retraso promedio:</span>
+                                <span className="resultado-value">{item.resultados.desviacion_promedio?.toFixed(1)} días</span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Retraso máximo:</span>
+                                <span className="resultado-value">{item.resultados.desviacion_maxima?.toFixed(1)} días</span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Tareas retrasadas:</span>
+                                <span className="resultado-value">{item.resultados.total_tareas_retrasadas} de {item.resultados.total_tareas}</span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Probabilidad de cumplir plazo:</span>
+                                <span className="resultado-value" style={{ color: item.resultados.probabilidad_cumplir_plazo < 50 ? '#ef4444' : '#10b981' }}>
+                                  {item.resultados.probabilidad_cumplir_plazo?.toFixed(1)}%
+                                </span>
+                              </div>
+                              {item.resultados.tareas_criticas?.length > 0 && (
+                                <div className="resultado-item">
+                                  <span className="resultado-label">Tareas críticas:</span>
+                                  <span className="resultado-value">
+                                    {item.resultados.tareas_criticas.map(t => t.nombre).join(', ')}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {item.tipo_analisis === 'prediccion_fin' && (
+                            <div className="resultados-prediccion">
+                              <div className="resultado-item">
+                                <span className="resultado-label">Fecha estimada de fin:</span>
+                                <span className="resultado-value">
+                                  {item.resultados.fecha_estimada_fin ? new Date(item.resultados.fecha_estimada_fin).toLocaleDateString('es-MX') : 'N/A'}
+                                </span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Días estimados:</span>
+                                <span className="resultado-value">{item.resultados.dias_totales_estimados?.toFixed(0)} días</span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Días de diferencia:</span>
+                                <span className="resultado-value" style={{ color: Math.abs(item.resultados.dias_diferencia) > 15 ? '#ef4444' : '#10b981' }}>
+                                  {item.resultados.dias_diferencia > 0 ? '+' : ''}{item.resultados.dias_diferencia} días
+                                </span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Probabilidad de cumplir:</span>
+                                <span className="resultado-value" style={{ color: item.resultados.probabilidad_cumplir < 50 ? '#ef4444' : '#10b981' }}>
+                                  {item.resultados.probabilidad_cumplir?.toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">R² Score:</span>
+                                <span className="resultado-value">{(item.resultados.r2_score * 100).toFixed(1)}%</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {item.tipo_analisis === 'pca' && (
+                            <div className="resultados-pca">
+                              <div className="resultado-item">
+                                <span className="resultado-label">Varianza explicada:</span>
+                                <span className="resultado-value">
+                                  {item.resultados.varianza_explicada?.map((v, i) => (
+                                    <span key={i} className="varianza-item">
+                                      PC{i+1}: {(v * 100).toFixed(1)}%
+                                    </span>
+                                  ))}
+                                </span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Componentes:</span>
+                                <span className="resultado-value">{item.resultados.n_componentes}</span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Variables:</span>
+                                <span className="resultado-value">{item.resultados.n_variables}</span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Muestras:</span>
+                                <span className="resultado-value">{item.resultados.n_muestras}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {item.tipo_analisis === 'regresion' && (
+                            <div className="resultados-regresion">
+                              <div className="resultado-item">
+                                <span className="resultado-label">R² Score:</span>
+                                <span className="resultado-value" style={{ color: item.resultados.r2_score > 0.7 ? '#10b981' : '#f59e0b' }}>
+                                  {(item.resultados.r2_score * 100).toFixed(1)}%
+                                </span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">MSE:</span>
+                                <span className="resultado-value">{item.resultados.mse?.toFixed(2)}</span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Coeficientes:</span>
+                                <span className="resultado-value">
+                                  {Object.entries(item.resultados.coeficientes || {}).map(([key, val]) => (
+                                    <span key={key} className="coeficiente-item">
+                                      {key}: {typeof val === 'number' ? val.toFixed(2) : val}
+                                    </span>
+                                  ))}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {item.tipo_analisis === 'clustering' && (
+                            <div className="resultados-clustering">
+                              <div className="resultado-item">
+                                <span className="resultado-label">Clusters:</span>
+                                <span className="resultado-value">{item.resultados.n_clusters}</span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Silhouette Score:</span>
+                                <span className="resultado-value" style={{ color: item.resultados.silhouette_score > 0.5 ? '#10b981' : '#f59e0b' }}>
+                                  {item.resultados.silhouette_score?.toFixed(3)}
+                                </span>
+                              </div>
+                              <div className="resultado-item">
+                                <span className="resultado-label">Muestras:</span>
+                                <span className="resultado-value">{item.resultados.n_muestras}</span>
+                              </div>
+                            </div>
+                          )}
+
+                          {item.tipo_analisis === 'estadisticas' && (
+                            <div className="resultados-estadisticas">
+                              {Object.entries(item.resultados.estadisticas || {}).map(([variable, stats]) => (
+                                <div key={variable} className="estadistica-item">
+                                  <span className="estadistica-variable">{variable}</span>
+                                  <div className="estadistica-valores">
+                                    <span>Media: {stats.mean?.toFixed(2)}</span>
+                                    <span>Mediana: {stats['50%']?.toFixed(2)}</span>
+                                    <span>Min: {stats.min?.toFixed(2)}</span>
+                                    <span>Max: {stats.max?.toFixed(2)}</span>
+                                    <span>Std: {stats.std?.toFixed(2)}</span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Gráficas */}
+                      {item.datos_grafica && (
+                        <div className="analisis-item-grafica">
+                          <VistaGraficas analisis={[item]} />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="empty-state-tab">
                   <BarChart3 size={48} />
@@ -630,10 +1066,9 @@ const VerReporte = () => {
             </div>
           )}
 
-          {/* TAB 3: EVIDENCIAS Y ARCHIVOS UNIFICADO */}
+          {/* TAB 3: EVIDENCIAS Y ARCHIVOS */}
           {activeTab === 'archivos' && (
             <div className="tab-content">
-              {/* Elementos unificados de tareas */}
               {elementosUnificados.length > 0 && (
                 <div className="seccion-archivos">
                   <h3 className="seccion-titulo">
@@ -688,7 +1123,6 @@ const VerReporte = () => {
                 </div>
               )}
 
-              {/* Archivos subidos al reporte */}
               {todosLosArchivos.length > 0 && (
                 <div className="seccion-archivos">
                   <h3 className="seccion-titulo">
@@ -744,7 +1178,7 @@ const VerReporte = () => {
         </div>
       </div>
 
-      {/* ✅ NOTIFICACIÓN DE ENVÍO CORRECTO - ANIMACIÓN */}
+      {/* NOTIFICACIÓN */}
       {mostrarNotificacion && (
         <div className="notificacion-envio">
           <div className="notificacion-envio-content">
@@ -754,7 +1188,7 @@ const VerReporte = () => {
         </div>
       )}
 
-      {/* ✅ MODAL DE EXPIRACIÓN */}
+      {/* MODAL DE EXPIRACIÓN */}
       {mostrarModalExpiracion && (
         <div className="modal-expiracion-overlay">
           <div className="modal-expiracion">
@@ -780,13 +1214,19 @@ const VerReporte = () => {
   );
 };
 
-// ✅ Temporizador con detección de expiración
+// ==========================================
+// 🔥 TEMPORIZADOR CON TIEMPO REAL
+// ==========================================
 const Temporizador = ({ token, onExpirado }) => {
   const [tiempoRestante, setTiempoRestante] = useState('');
+  const [expirado, setExpirado] = useState(false);
 
   useEffect(() => {
     const calcularTiempo = () => {
+      // Buscar fecha de expiración en localStorage primero
       let fechaExpiracionStr = localStorage.getItem(`fecha_expiracion_${token}`);
+      
+      // Si no está en localStorage, buscar en sessionStorage
       if (!fechaExpiracionStr) {
         fechaExpiracionStr = sessionStorage.getItem('fecha_expiracion');
         if (fechaExpiracionStr) {
@@ -794,6 +1234,7 @@ const Temporizador = ({ token, onExpirado }) => {
         }
       }
       
+      // Si no hay fecha, mostrar "--:--"
       if (!fechaExpiracionStr) {
         setTiempoRestante('--:--');
         return;
@@ -803,25 +1244,40 @@ const Temporizador = ({ token, onExpirado }) => {
       const ahora = new Date();
       const diffMs = expiracion - ahora;
       
+      // Si ya expiró
       if (diffMs <= 0) {
-        setTiempoRestante('Expirado');
-        if (onExpirado) {
-          onExpirado();
+        setTiempoRestante('⏰ Expirado');
+        if (!expirado) {
+          setExpirado(true);
+          if (onExpirado) {
+            onExpirado();
+          }
         }
         return;
       }
 
+      // Calcular tiempo restante
       const diffSegundos = Math.floor(diffMs / 1000);
-      const minutos = Math.floor(diffSegundos / 60);
+      const horas = Math.floor(diffSegundos / 3600);
+      const minutos = Math.floor((diffSegundos % 3600) / 60);
       const segundos = diffSegundos % 60;
-      setTiempoRestante(`${minutos}:${segundos.toString().padStart(2, '0')}`);
+      
+      // Formatear tiempo
+      if (horas > 0) {
+        setTiempoRestante(`${horas}h ${minutos.toString().padStart(2, '0')}m ${segundos.toString().padStart(2, '0')}s`);
+      } else {
+        setTiempoRestante(`${minutos.toString().padStart(2, '0')}:${segundos.toString().padStart(2, '0')}`);
+      }
     };
 
+    // Calcular inmediatamente
     calcularTiempo();
+    
+    // Actualizar cada segundo
     const interval = setInterval(calcularTiempo, 1000);
 
     return () => clearInterval(interval);
-  }, [token, onExpirado]);
+  }, [token, onExpirado, expirado]);
 
   return <span className="temporizador-texto">{tiempoRestante}</span>;
 };

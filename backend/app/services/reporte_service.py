@@ -15,6 +15,7 @@ from app.schemas.reporte import ReporteCreate, ReporteUpdate, ReportePublicar
 from app.services.codigo_service import CodigoService
 from app.services.qr_service import QRService
 from app.services.archivo_service import ArchivoService
+from app.services.analisis_service import AnalisisService  # 🔥 NUEVA IMPORTACIÓN
 
 
 class ReporteService:
@@ -27,6 +28,7 @@ class ReporteService:
     ) -> ReporteProyecto:
         """
         Crea un nuevo reporte en estado borrador
+        🔥 EJECUTA ANÁLISIS AUTOMÁTICAMENTE
         """
         project = db.query(Project).filter(Project.id == datos.project_id).first()
         if not project:
@@ -50,6 +52,27 @@ class ReporteService:
         db.add(reporte)
         db.commit()
         db.refresh(reporte)
+        
+        # 🔥 EJECUTAR ANÁLISIS AUTOMÁTICAMENTE
+        try:
+            config_analisis = datos.configuracion_analisis or {}
+            
+            # Verificar que hay análisis seleccionados
+            if any(config_analisis.values()):
+                print(f"📊 Ejecutando análisis automáticos para reporte {reporte.id}")
+                resultado = AnalisisService.ejecutar_analisis_seleccionados(
+                    reporte.id, db
+                )
+                print(f"✅ Análisis ejecutados: {resultado.get('mensaje', 'OK')}")
+            else:
+                print(f"ℹ️ No hay análisis seleccionados para el reporte {reporte.id}")
+                
+        except Exception as e:
+            # Si falla el análisis, NO BLOQUEA la creación del reporte
+            print(f"⚠️ Error al ejecutar análisis automáticos: {e}")
+            # Opcional: guardar el error en el reporte si tienes un campo para eso
+            # reporte.error_analisis = str(e)
+            db.commit()
         
         return reporte
     

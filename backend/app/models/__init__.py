@@ -5,8 +5,7 @@ from app.models.project import Project
 from app.models.project_member import ProjectMember
 from app.models.task import Task, TaskStatus, TaskPriority
 from app.models.time_entry import TimeEntry
-from app.models.task_evidence import TaskEvidence  # ✅ Cambiado de Task_evidence a TaskEvidence
-
+from app.models.task_evidence import TaskEvidence  
 from app.models.reporte import ReporteProyecto
 from app.models.archivo_reporte import ArchivoReporte
 from app.models.analisis_reporte import AnalisisReporte

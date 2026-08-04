@@ -1646,3 +1646,183 @@
     font-size: 0.85rem;
   }
 }
+
+/* ========================================== */
+/* VISTA DE GRÁFICAS */
+/* ========================================== */
+
+.graficas-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.grafica-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.8rem;
+  padding: 1rem;
+  transition: all 0.3s ease;
+}
+
+.grafica-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.grafica-card h4 {
+  color: #e2e8f0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.grafica-card .grafica-placeholder {
+  width: 100%;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  font-size: 0.85rem;
+  border: 1px dashed rgba(255, 255, 255, 0.05);
+}
+
+.grafica-card .grafica-img {
+  width: 100%;
+  max-height: 250px;
+  object-fit: contain;
+  border-radius: 0.5rem;
+}
+
+/* ========================================== */
+/* VARIANCE CHART - PCA */
+/* ========================================== */
+
+.varianza-chart {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.8rem;
+  height: 120px;
+  padding: 0.5rem 0;
+}
+
+.varianza-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  flex: 1;
+}
+
+.varianza-bar .bar {
+  width: 100%;
+  max-width: 30px;
+  border-radius: 0.3rem 0.3rem 0 0;
+  transition: height 0.6s ease;
+  min-height: 4px;
+}
+
+.varianza-bar .bar-label {
+  font-size: 0.55rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.varianza-bar .bar-value {
+  font-size: 0.55rem;
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+/* ========================================== */
+/* SCATTER PLOT - PCA */
+/* ========================================== */
+
+.scatter-plot {
+  width: 100%;
+  height: 200px;
+  position: relative;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.scatter-points {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.scatter-point {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.scatter-point:hover {
+  transform: translate(-50%, -50%) scale(2);
+  z-index: 10;
+}
+
+/* ========================================== */
+/* COEFICIENTES - REGRESIÓN */
+/* ========================================== */
+
+.coeficientes-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.coeficiente-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.3rem;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.coeficiente-item .coef-val {
+  color: #e2e8f0;
+  font-weight: 500;
+}
+
+.coeficiente-item .coef-pos {
+  color: #10b981;
+}
+
+.coeficiente-item .coef-neg {
+  color: #ef4444;
+}
+
+/* ========================================== */
+/* RESPONSIVE */
+/* ========================================== */
+
+@media (max-width: 768px) {
+  .graficas-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .scatter-plot {
+    height: 150px;
+  }
+  
+  .varianza-chart {
+    height: 80px;
+  }
+}

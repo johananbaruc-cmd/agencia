@@ -25,7 +25,12 @@ import {
   File,
   Image,
   FileArchive,
-  Trash2
+  Trash2,
+  Target,
+  GitBranch,
+  LineChart,
+  Activity,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import './CrearReporte.css';
 
@@ -42,6 +47,7 @@ const CrearReporte = () => {
   const [archivosExistentes, setArchivosExistentes] = useState([]);
   const [archivosExistentesCargando, setArchivosExistentesCargando] = useState(false);
   
+  // 🔥 CONFIGURACIÓN DE ANÁLISIS - TODOS LOS 10 TIPOS
   const [formData, setFormData] = useState({
     titulo: '',
     descripcion: '',
@@ -49,10 +55,17 @@ const CrearReporte = () => {
     pregunta_cliente: '',
     proyecto_seleccionado: projectId || '',
     configuracion_analisis: {
+      // ✅ 10 tipos de análisis
       pca: false,
       regresion: false,
       clustering: false,
-      estadisticas: false
+      estadisticas: false,
+      regresion_gasto_tiempo: false,
+      regresion_rendimiento_empleado: false,
+      regresion_presupuesto_plazo: false,
+      curva_s: false,
+      desviacion_plazos: false,
+      prediccion_fin: false
     },
     incluir_evidencias: false,
     horas_expiracion: 24
@@ -64,10 +77,12 @@ const CrearReporte = () => {
   const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
   
-  // 🔥 Progreso - AHORA SE GUARDA EN BD
+  // 🔥 Progreso - SE GUARDA EN BD
   const [progresoVisual, setProgresoVisual] = useState(0);
 
-  // Cargar proyectos para el selector
+  // ==========================================
+  // CARGAR PROYECTOS
+  // ==========================================
   useEffect(() => {
     const cargarProyectos = async () => {
       setCargandoProyectos(true);
@@ -86,7 +101,9 @@ const CrearReporte = () => {
     }
   }, [mostrarSelector]);
 
-  // Cargar proyecto si hay projectId
+  // ==========================================
+  // CARGAR PROYECTO ESPECÍFICO
+  // ==========================================
   useEffect(() => {
     if (projectId) {
       const cargarProyecto = async () => {
@@ -112,7 +129,9 @@ const CrearReporte = () => {
     }
   }, [projectId]);
 
-  // Cargar evidencias de tareas del proyecto
+  // ==========================================
+  // CARGAR EVIDENCIAS
+  // ==========================================
   const cargarEvidencias = async (proyectoId) => {
     setEvidenciasCargando(true);
     try {
@@ -150,7 +169,9 @@ const CrearReporte = () => {
     }
   };
 
-  // Cargar archivos existentes del proyecto
+  // ==========================================
+  // CARGAR ARCHIVOS EXISTENTES
+  // ==========================================
   const cargarArchivosExistentes = async (proyectoId) => {
     setArchivosExistentesCargando(true);
     try {
@@ -188,6 +209,9 @@ const CrearReporte = () => {
     }
   };
 
+  // ==========================================
+  // HANDLERS
+  // ==========================================
   const handleSeleccionarProyecto = async (e) => {
     const id = parseInt(e.target.value);
     setFormData(prev => ({ ...prev, proyecto_seleccionado: id }));
@@ -241,7 +265,6 @@ const CrearReporte = () => {
     }));
   };
 
-  // Toggle para seleccionar/deseleccionar evidencia
   const toggleEvidencia = (evidenciaId) => {
     setEvidenciasSeleccionadas(prev => {
       const newSelection = prev.includes(evidenciaId)
@@ -260,7 +283,6 @@ const CrearReporte = () => {
     });
   };
 
-  // Toggle para seleccionar/deseleccionar archivo existente
   const toggleArchivoExistente = (archivoId) => {
     setArchivosExistentesSeleccionados(prev => {
       const newSelection = prev.includes(archivoId)
@@ -301,6 +323,9 @@ const CrearReporte = () => {
     return '#10b981';
   };
 
+  // ==========================================
+  // ✅ SUBMIT
+  // ==========================================
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -318,7 +343,17 @@ const CrearReporte = () => {
         return;
       }
 
-      // 🔥 DATOS DEL REPORTE - INCLUYENDO PROGRESO
+      // ✅ Validar tamaño de archivos (50MB max)
+      const MAX_FILE_SIZE = 50 * 1024 * 1024;
+      for (const archivo of archivosNuevos) {
+        if (archivo.size > MAX_FILE_SIZE) {
+          setError(`El archivo "${archivo.name}" excede el límite de 50MB`);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // 🔥 DATOS DEL REPORTE - INCLUYENDO TODOS LOS ANÁLISIS Y PROGRESO
       const reporteData = {
         project_id: parseInt(projectIdFinal),
         admin_id: user?.id,
@@ -328,83 +363,77 @@ const CrearReporte = () => {
         pregunta_cliente: formData.pregunta_cliente,
         configuracion_analisis: formData.configuracion_analisis,
         horas_expiracion: formData.horas_expiracion,
-        progreso: progresoVisual  // 🔥 GUARDAR PROGRESO EN BD
+        progreso: progresoVisual  // ✅ El progreso se guarda en BD
       };
 
-      // GUARDAR EVIDENCIAS SELECCIONADAS
+      // EVIDENCIAS SELECCIONADAS
       if (formData.incluir_evidencias && evidenciasSeleccionadas.length > 0) {
         reporteData.evidencias_ids = evidenciasSeleccionadas;
       }
 
-      // GUARDAR ARCHIVOS DE TAREAS SELECCIONADOS
+      // ARCHIVOS DE TAREAS SELECCIONADOS
       if (formData.incluir_evidencias && archivosExistentesSeleccionados.length > 0) {
         reporteData.archivos_existentes_ids = archivosExistentesSeleccionados;
       }
 
-      console.log('📤 Enviando al backend:');
-      console.log('  - progreso:', progresoVisual);
-      console.log('  - evidencias_ids:', evidenciasSeleccionadas);
-      console.log('  - archivos_existentes_ids:', archivosExistentesSeleccionados);
+      // 🔥 LOGS PARA DEPURAR
+      console.log('📤 ===== ENVIANDO REPORTE AL BACKEND =====');
+      console.log('📊 Configuración de análisis:', JSON.stringify(formData.configuracion_analisis, null, 2));
+      console.log('📊 Progreso:', progresoVisual);
 
       // 1. CREAR EL REPORTE
       const response = await api.post('/reportes', reporteData);
       const reporteId = response.data.id;
+      
+      console.log('✅ Reporte creado:', response.data);
 
-      // 2. PREPARAR ARCHIVOS PARA SUBIR
-      const todosLosArchivos = [];
-
-      // 2a. Archivos nuevos
-      todosLosArchivos.push(...archivosNuevos);
-
-      // 2b. Archivos existentes seleccionados (se suben físicamente al reporte)
-      if (formData.incluir_evidencias && archivosExistentesSeleccionados.length > 0) {
-        const archivosParaSubir = archivosExistentes.filter(
-          arch => archivosExistentesSeleccionados.includes(arch.id)
-        );
-
-        for (const archivo of archivosParaSubir) {
-          if (archivo.archivo_url) {
-            try {
-              const responseArchivo = await fetch(archivo.archivo_url);
-              const blob = await responseArchivo.blob();
-              const file = new File([blob], archivo.nombre, { 
-                type: blob.type || 'application/octet-stream' 
-              });
-              todosLosArchivos.push(file);
-            } catch (error) {
-              console.error(`Error descargando archivo ${archivo.nombre}:`, error);
-            }
-          }
-        }
-      }
-
-      // 3. SUBIR TODOS LOS ARCHIVOS
-      if (todosLosArchivos.length > 0) {
-        for (const archivo of todosLosArchivos) {
+      // 2. SUBIR ARCHIVOS NUEVOS
+      if (archivosNuevos.length > 0) {
+        for (const archivo of archivosNuevos) {
           const formDataArchivo = new FormData();
           formDataArchivo.append('archivo', archivo);
           await api.post(`/reportes/${reporteId}/archivos`, formDataArchivo, {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
         }
+        console.log(`✅ ${archivosNuevos.length} archivos subidos`);
       }
 
+      // 3. GUARDAR EN SESSION STORAGE
       sessionStorage.setItem('evidencias_seleccionadas', JSON.stringify(evidenciasSeleccionadas));
       sessionStorage.setItem('archivos_existentes_seleccionados', JSON.stringify(archivosExistentesSeleccionados));
       sessionStorage.setItem('progreso_visual', String(progresoVisual));
       sessionStorage.setItem('reporte_creado_id', String(reporteId));
 
+      // 4. NAVEGAR
       navigate(`/reportes/detalle/${reporteId}`);
+      
     } catch (error) {
-      console.error('Error al crear reporte:', error);
-      setError(error.response?.data?.detail || 'Error al crear el reporte');
+      console.error('❌ Error al crear reporte:', error);
+      console.error('❌ Detalles:', error.response?.data);
+      
+      const errorMsg = error.response?.data?.detail || 
+                      error.response?.data?.message || 
+                      'Error al crear el reporte. Intenta nuevamente.';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
+  // ==========================================
+  // HANDLERS DE ARCHIVOS
+  // ==========================================
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    
+    const invalidFiles = files.filter(f => f.size > MAX_FILE_SIZE);
+    if (invalidFiles.length > 0) {
+      setError(`Los siguientes archivos exceden el límite de 50MB: ${invalidFiles.map(f => f.name).join(', ')}`);
+      return;
+    }
+    
     setArchivosNuevos(prev => [...prev, ...files]);
   };
 
@@ -412,6 +441,9 @@ const CrearReporte = () => {
     setArchivosNuevos(prev => prev.filter((_, i) => i !== index));
   };
 
+  // ==========================================
+  // DRAG & DROP
+  // ==========================================
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -428,9 +460,20 @@ const CrearReporte = () => {
     setDragActive(false);
     
     const files = Array.from(e.dataTransfer.files);
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    
+    const invalidFiles = files.filter(f => f.size > MAX_FILE_SIZE);
+    if (invalidFiles.length > 0) {
+      setError(`Los siguientes archivos exceden el límite de 50MB: ${invalidFiles.map(f => f.name).join(', ')}`);
+      return;
+    }
+    
     setArchivosNuevos(prev => [...prev, ...files]);
   };
 
+  // ==========================================
+  // UTILIDADES
+  // ==========================================
   const getFileIcon = (nombre) => {
     if (!nombre) return '📎';
     const ext = nombre.split('.').pop()?.toLowerCase();
@@ -463,18 +506,53 @@ const CrearReporte = () => {
 
   const evidenciasSeleccionadasCount = evidenciasSeleccionadas.length;
 
+  // ==========================================
+  // GRUPOS DE ANÁLISIS
+  // ==========================================
+  const analisisGroups = [
+    {
+      title: 'Análisis Estadísticos',
+      icon: <Database size={16} />,
+      items: [
+        { id: 'estadisticas', label: 'Estadísticas Descriptivas', icon: <Database size={16} />, desc: 'Análisis estadístico completo' },
+        { id: 'pca', label: 'PCA', icon: <TrendingUp size={16} />, desc: 'Reducción de dimensionalidad' },
+        { id: 'clustering', label: 'Clustering', icon: <PieChart size={16} />, desc: 'Agrupación de datos por eficiencia' }
+      ]
+    },
+    {
+      title: 'Análisis Predictivos',
+      icon: <LineChart size={16} />,
+      items: [
+        { id: 'regresion', label: 'Regresión Lineal', icon: <BarChart3 size={16} />, desc: 'Predicción de tendencias generales' },
+        { id: 'regresion_gasto_tiempo', label: 'Gasto vs Tiempo', icon: <Activity size={16} />, desc: 'Desviación presupuestaria' },
+        { id: 'regresion_presupuesto_plazo', label: 'Presupuesto vs Plazo', icon: <Target size={16} />, desc: 'Eficiencia CPI/SPI' },
+        { id: 'prediccion_fin', label: 'Predicción de Fin', icon: <CalendarIcon size={16} />, desc: 'Fecha estimada de finalización' }
+      ]
+    },
+    {
+      title: 'Análisis de Gestión',
+      icon: <GitBranch size={16} />,
+      items: [
+        { id: 'regresion_rendimiento_empleado', label: 'Rendimiento del Empleado', icon: <Users size={16} />, desc: 'Productividad y sobrecarga' },
+        { id: 'curva_s', label: 'Curva S', icon: <LineChart size={16} />, desc: 'Avance físico vs financiero' },
+        { id: 'desviacion_plazos', label: 'Desviación de Plazos', icon: <Calendar size={16} />, desc: 'Tareas críticas y holguras' }
+      ]
+    }
+  ];
+
+  // ==========================================
+  // RENDER
+  // ==========================================
   return (
     <>
       <Navbar />
       <div className="crear-reporte-container">
         <div className="crear-reporte-inner">
-          {/* Botón Volver */}
           <button onClick={() => navigate(-1)} className="btn-back">
             <ArrowLeft size={18} />
             Volver
           </button>
 
-          {/* Título */}
           <div className="crear-reporte-title">
             <h1>Crear Nuevo Reporte</h1>
             <p>
@@ -486,14 +564,12 @@ const CrearReporte = () => {
             </p>
           </div>
 
-          {/* Error */}
           {error && (
             <div className="form-error">
               {error}
             </div>
           )}
 
-          {/* Formulario */}
           <form onSubmit={handleSubmit} className="reporte-form">
             
             {/* ========================================== */}
@@ -527,7 +603,7 @@ const CrearReporte = () => {
               </div>
             )}
 
-            {/* Proyecto seleccionado */}
+            {/* PROYECTO SELECCIONADO */}
             {project && (
               <div className="proyecto-seleccionado">
                 <div className="proyecto-info">
@@ -708,52 +784,52 @@ const CrearReporte = () => {
             </div>
 
             {/* ========================================== */}
-            {/* ANÁLISIS DE DATOS */}
+            {/* 📊 ANÁLISIS DE DATOS - CON TODOS LOS 10 TIPOS */}
             {/* ========================================== */}
             <div className="form-group">
-              <label>Análisis de Datos</label>
-              <p className="field-hint">Selecciona los análisis que deseas incluir en el reporte</p>
-              <div className="analisis-grid">
-                <label className={`analisis-option ${formData.configuracion_analisis.pca ? 'active' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={formData.configuracion_analisis.pca}
-                    onChange={() => handleAnalisisChange('pca')}
-                  />
-                  <TrendingUp size={16} />
-                  PCA
-                  <span className="analisis-desc">Reducción de dimensionalidad</span>
-                </label>
-                <label className={`analisis-option ${formData.configuracion_analisis.regresion ? 'active' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={formData.configuracion_analisis.regresion}
-                    onChange={() => handleAnalisisChange('regresion')}
-                  />
-                  <BarChart3 size={16} />
-                  Regresión
-                  <span className="analisis-desc">Predicción de tendencias</span>
-                </label>
-                <label className={`analisis-option ${formData.configuracion_analisis.clustering ? 'active' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={formData.configuracion_analisis.clustering}
-                    onChange={() => handleAnalisisChange('clustering')}
-                  />
-                  <PieChart size={16} />
-                  Clustering
-                  <span className="analisis-desc">Agrupación de datos</span>
-                </label>
-                <label className={`analisis-option ${formData.configuracion_analisis.estadisticas ? 'active' : ''}`}>
-                  <input
-                    type="checkbox"
-                    checked={formData.configuracion_analisis.estadisticas}
-                    onChange={() => handleAnalisisChange('estadisticas')}
-                  />
-                  <Database size={16} />
-                  Estadísticas
-                  <span className="analisis-desc">Análisis descriptivo</span>
-                </label>
+              <div className="analisis-header">
+                <label>Análisis de Datos</label>
+                <p className="field-hint">Selecciona los análisis que deseas incluir en el reporte</p>
+              </div>
+              
+              <div className="analisis-groups">
+                {analisisGroups.map((group, idx) => (
+                  <div key={idx} className="analisis-group">
+                    <div className="analisis-group-title">
+                      {group.icon}
+                      <span>{group.title}</span>
+                    </div>
+                    <div className="analisis-grid">
+                      {group.items.map((item) => (
+                        <label 
+                          key={item.id}
+                          className={`analisis-option ${formData.configuracion_analisis[item.id] ? 'active' : ''}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.configuracion_analisis[item.id] || false}
+                            onChange={() => handleAnalisisChange(item.id)}
+                          />
+                          {item.icon}
+                          {item.label}
+                          <span className="analisis-desc">{item.desc}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="analisis-resumen">
+                {Object.values(formData.configuracion_analisis).some(v => v) ? (
+                  <span className="analisis-resumen-text">
+                    ✅ {Object.entries(formData.configuracion_analisis).filter(([_, v]) => v).length} análisis seleccionados
+                  </span>
+                ) : (
+                  <span className="analisis-resumen-text text-muted">
+                    ⚠️ No has seleccionado ningún análisis. El reporte solo incluirá los datos básicos.
+                  </span>
+                )}
               </div>
             </div>
 

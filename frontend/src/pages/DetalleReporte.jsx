@@ -30,7 +30,12 @@ import {
   User,
   Mail,
   Briefcase,
-  DollarSign
+  DollarSign,
+  Target,
+  GitBranch,
+  LineChart,
+  Activity,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import './DetalleReporte.css';
 
@@ -44,7 +49,7 @@ const DetalleReporte = () => {
   const [copiadoCodigo, setCopiadoCodigo] = useState(false);
   const [publicando, setPublicando] = useState(false);
   
-  // 🔥 Progreso - ahora viene de la BD
+  // Progreso - ahora viene de la BD
   const [progresoVisual, setProgresoVisual] = useState(0);
   const [esReporteRecienCreado, setEsReporteRecienCreado] = useState(false);
   
@@ -64,7 +69,7 @@ const DetalleReporte = () => {
     end_date: null
   });
   
-  // ✅ Estados unificados
+  // Estados unificados
   const [archivosSubidos, setArchivosSubidos] = useState([]);
   const [elementosDeTareas, setElementosDeTareas] = useState([]);
 
@@ -78,7 +83,7 @@ const DetalleReporte = () => {
         const reporteBase = response.data;
         setReporte(reporteBase);
         
-        // 🔥 OBTENER PROGRESO DEL REPORTE (de la BD)
+        // OBTENER PROGRESO DEL REPORTE (de la BD)
         const progresoDelReporte = reporteBase.progreso || 0;
         
         const reporteCreadoId = sessionStorage.getItem('reporte_creado_id');
@@ -91,7 +96,7 @@ const DetalleReporte = () => {
           setProgresoVisual(progreso);
           console.log('📊 Progreso de sessionStorage:', progreso);
         } else {
-          // 🔥 USAR EL PROGRESO DEL REPORTE (guardado en BD)
+          // USAR EL PROGRESO DEL REPORTE (guardado en BD)
           setProgresoVisual(progresoDelReporte);
           console.log('📊 Progreso del reporte (BD):', progresoDelReporte);
         }
@@ -259,12 +264,23 @@ const DetalleReporte = () => {
     setTimeout(() => setCopiadoCodigo(false), 3000);
   };
 
+  // ==========================================
+  // ✅ FUNCIONES DE ANÁLISIS ACTUALIZADAS
+  // ==========================================
   const getAnalisisNombre = (tipo) => {
     const nombres = {
+      // Análisis existentes
       'pca': 'PCA - Reducción de dimensionalidad',
       'regresion': 'Regresión Lineal - Predicción de tendencias',
       'clustering': 'Clustering - Agrupación de datos',
-      'estadisticas': 'Estadísticas - Análisis descriptivo'
+      'estadisticas': 'Estadísticas - Análisis descriptivo',
+      // 🔥 NUEVOS ANÁLISIS
+      'regresion_gasto_tiempo': 'Gasto vs Tiempo - Desviación presupuestaria',
+      'regresion_rendimiento_empleado': 'Rendimiento del Empleado - Productividad',
+      'regresion_presupuesto_plazo': 'Presupuesto vs Plazo - Eficiencia CPI/SPI',
+      'curva_s': 'Curva S - Avance físico vs financiero',
+      'desviacion_plazos': 'Desviación de Plazos - Tareas críticas',
+      'prediccion_fin': 'Predicción de Fin - Fecha estimada'
     };
     return nombres[tipo] || tipo;
   };
@@ -274,11 +290,21 @@ const DetalleReporte = () => {
       'pca': <TrendingUp size={16} />,
       'regresion': <BarChart3 size={16} />,
       'clustering': <PieChart size={16} />,
-      'estadisticas': <Database size={16} />
+      'estadisticas': <Database size={16} />,
+      // 🔥 NUEVOS ANÁLISIS
+      'regresion_gasto_tiempo': <Activity size={16} />,
+      'regresion_rendimiento_empleado': <Users size={16} />,
+      'regresion_presupuesto_plazo': <Target size={16} />,
+      'curva_s': <LineChart size={16} />,
+      'desviacion_plazos': <Calendar size={16} />,
+      'prediccion_fin': <CalendarIcon size={16} />
     };
     return iconos[tipo] || <FileText size={16} />;
   };
 
+  // ==========================================
+  // ✅ FUNCIONES DE UTILIDAD MEJORADAS
+  // ==========================================
   const getProgressColor = (progreso) => {
     if (progreso < 30) return '#ef4444';
     if (progreso < 60) return '#f59e0b';
@@ -305,7 +331,7 @@ const DetalleReporte = () => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  // 🔥 OBTENER EL PROGRESO CORRECTO
+  // ✅ OBTENER EL PROGRESO CORRECTO
   const obtenerProgresoMostrar = () => {
     if (esReporteRecienCreado) {
       return progresoVisual;
@@ -320,6 +346,9 @@ const DetalleReporte = () => {
 
   const progresoTotal = obtenerProgresoMostrar();
 
+  // ==========================================
+  // RENDER - LOADING
+  // ==========================================
   if (loading) {
     return (
       <>
@@ -352,6 +381,9 @@ const DetalleReporte = () => {
   const estaPublicado = reporte.estado === 'publicado';
   const noHayElementosTareas = elementosDeTareas.length === 0;
 
+  // ==========================================
+  // RENDER - MAIN
+  // ==========================================
   return (
     <>
       <Navbar />
@@ -402,7 +434,7 @@ const DetalleReporte = () => {
             </div>
           </div>
 
-          {/* 🔥 PROGRESO VISUAL - AHORA MUESTRA EL PROGRESO DEL REPORTE */}
+          {/* 🔥 PROGRESO VISUAL */}
           <div className="detalle-section progreso-visual-section">
             <h3 className="section-title">
               <Sliders size={18} />
@@ -433,14 +465,13 @@ const DetalleReporte = () => {
             </div>
           </div>
 
-          {/* ✅ INFORMACIÓN DEL PROYECTO - SOLO CAMPOS CON VALORES */}
+          {/* ✅ INFORMACIÓN DEL PROYECTO */}
           <div className="detalle-section info-proyecto-section">
             <h3 className="section-title">
               <Folder size={18} />
               Información del Proyecto
             </h3>
             <div className="info-proyecto-grid">
-              {/* Proyecto */}
               <div className="info-card">
                 <div className="info-card-icon"><Building2 size={18} /></div>
                 <div className="info-card-content">
@@ -449,7 +480,6 @@ const DetalleReporte = () => {
                 </div>
               </div>
 
-              {/* Presupuesto */}
               <div className="info-card">
                 <div className="info-card-icon"><DollarSign size={18} /></div>
                 <div className="info-card-content">
@@ -458,7 +488,6 @@ const DetalleReporte = () => {
                 </div>
               </div>
 
-              {/* Empleados */}
               <div className="info-card">
                 <div className="info-card-icon"><Users size={18} /></div>
                 <div className="info-card-content">
@@ -467,7 +496,6 @@ const DetalleReporte = () => {
                 </div>
               </div>
 
-              {/* Estado */}
               <div className="info-card">
                 <div className="info-card-icon"><FileText size={18} /></div>
                 <div className="info-card-content">
@@ -476,7 +504,6 @@ const DetalleReporte = () => {
                 </div>
               </div>
 
-              {/* ✅ Administrador - SOLO si tiene valor */}
               {proyectoInfo.admin_name && (
                 <div className="info-card">
                   <div className="info-card-icon"><User size={18} /></div>
@@ -487,7 +514,6 @@ const DetalleReporte = () => {
                 </div>
               )}
 
-              {/* ✅ Agencia - SOLO si tiene valor */}
               {proyectoInfo.agency_name && (
                 <div className="info-card">
                   <div className="info-card-icon"><Briefcase size={18} /></div>
@@ -498,7 +524,6 @@ const DetalleReporte = () => {
                 </div>
               )}
 
-              {/* ✅ Correo - SOLO si tiene valor */}
               {proyectoInfo.agency_email && (
                 <div className="info-card">
                   <div className="info-card-icon"><Mail size={18} /></div>
@@ -509,7 +534,6 @@ const DetalleReporte = () => {
                 </div>
               )}
 
-              {/* ✅ RFC - SOLO si tiene valor */}
               {proyectoInfo.agency_rfc && (
                 <div className="info-card">
                   <div className="info-card-icon"><FileText size={18} /></div>
@@ -520,7 +544,6 @@ const DetalleReporte = () => {
                 </div>
               )}
 
-              {/* ✅ Fechas - SOLO si tiene fechas válidas */}
               {proyectoInfo.start_date && proyectoInfo.end_date && (
                 <div className="info-card">
                   <div className="info-card-icon"><Calendar size={18} /></div>
@@ -642,7 +665,7 @@ const DetalleReporte = () => {
             </div>
           )}
 
-          {/* ✅ SECCIÓN UNIFICADA: ELEMENTOS DE TAREAS (Archivos + Evidencias) */}
+          {/* ✅ ELEMENTOS DE TAREAS */}
           <div className="detalle-section">
             <h3 className="section-title">
               <FolderOpen size={18} />
@@ -681,7 +704,7 @@ const DetalleReporte = () => {
                     </div>
                     {item.file_url && (
                       <a
-                        href={`http://localhost:8000${item.file_url}`}
+                        href={item.file_url.startsWith('http') ? item.file_url : `${window.location.origin}${item.file_url}`}
                         className="btn-download"
                         download
                         target="_blank"
@@ -715,7 +738,8 @@ const DetalleReporte = () => {
                                          archivo.ruta_archivo?.split('/').pop() || 
                                          archivo.ruta?.split('/').pop() || 
                                          '';
-                  const urlDescarga = `http://localhost:8000/uploads/reportes/${reporteId}/${nombreGuardado}`;
+                  // ✅ URL dinámica usando window.location.origin
+                  const urlDescarga = `${window.location.origin}/uploads/reportes/${reporteId}/${nombreGuardado}`;
                   
                   return (
                     <div key={archivo.id} className="archivo-row">
@@ -742,12 +766,13 @@ const DetalleReporte = () => {
             )}
           </div>
 
-          {/* ANÁLISIS EJECUTADOS */}
+          {/* 🔥 ANÁLISIS EJECUTADOS - MEJORADO */}
           {reporte.analisis && reporte.analisis.length > 0 && (
             <div className="detalle-section">
               <h3 className="section-title">
                 <BarChart3 size={18} />
                 Resultados de Análisis
+                <span className="badge-count">{reporte.analisis.length}</span>
               </h3>
               <div className="analisis-resultados">
                 {reporte.analisis.map((analisis) => (
@@ -757,24 +782,64 @@ const DetalleReporte = () => {
                       <span className="analisis-resultado-nombre">
                         {analisis.nombre || getAnalisisNombre(analisis.tipo_analisis)}
                       </span>
+                      {analisis.nivel_riesgo && (
+                        <span className={`analisis-riesgo-badge riesgo-${analisis.nivel_riesgo}`}>
+                          {analisis.nivel_riesgo.toUpperCase()}
+                        </span>
+                      )}
+                      {analisis.nivel_confianza && (
+                        <span className="analisis-confianza">
+                          🔬 {Math.round(analisis.nivel_confianza * 100)}% confianza
+                        </span>
+                      )}
                       {analisis.tiempo_ejecucion_ms && (
                         <span className="analisis-tiempo">
-                          {analisis.tiempo_ejecucion_ms}ms
+                          ⏱️ {analisis.tiempo_ejecucion_ms}ms
                         </span>
                       )}
                     </div>
+                    
                     {analisis.descripcion && (
                       <p className="analisis-resultado-desc">{analisis.descripcion}</p>
                     )}
+                    
+                    {/* 🔥 Recomendaciones */}
+                    {analisis.recomendaciones && analisis.recomendaciones.length > 0 && (
+                      <div className="analisis-recomendaciones">
+                        <strong>📋 Recomendaciones:</strong>
+                        <ul>
+                          {analisis.recomendaciones.map((rec, idx) => (
+                            <li key={idx}>{rec}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    
+                    {/* 🔥 Alertas */}
+                    {analisis.alertas && analisis.alertas.length > 0 && (
+                      <div className="analisis-alertas">
+                        {analisis.alertas.map((alerta, idx) => (
+                          <div key={idx} className={`alerta-item alerta-${alerta.tipo}`}>
+                            <AlertCircle size={14} />
+                            <span>{alerta.mensaje}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {/* 🔥 Gráfica */}
                     {analisis.grafica_principal && (
                       <div className="analisis-grafica">
                         <img src={analisis.grafica_principal} alt="Gráfica de análisis" />
                       </div>
                     )}
+                    
+                    {/* 🔥 Resultados en JSON (colapsado por defecto) */}
                     {analisis.resultados && (
-                      <div className="analisis-resultados-json">
+                      <details className="analisis-resultados-json">
+                        <summary>📊 Ver resultados detallados</summary>
                         <pre>{JSON.stringify(analisis.resultados, null, 2)}</pre>
-                      </div>
+                      </details>
                     )}
                   </div>
                 ))}
