@@ -339,3 +339,102 @@ class AnalisisResumenResponse(BaseModel):
     total_analisis: int
     fecha_generacion: str
     analisis: List[Dict[str, Any]]
+
+
+# ============================================
+# SCHEMAS PARA DASHBOARD (NUEVO)
+# ============================================
+
+class DashboardKPIs(BaseModel):
+    """KPIs del dashboard"""
+    totalProyectos: int
+    totalEmpleados: int
+    totalClientes: int
+    tareasPendientes: int
+    tareasCompletadas: int
+    proyectosActivos: int
+    horasTotales: int
+
+
+class DashboardProyectoEstado(BaseModel):
+    """Proyecto por estado"""
+    name: str
+    value: int
+
+
+class DashboardTareaPrioridad(BaseModel):
+    """Tarea por prioridad"""
+    name: str
+    value: int
+
+
+class DashboardTareaProyecto(BaseModel):
+    """Tareas por proyecto"""
+    name: str
+    completadas: int
+    enProgreso: int
+    pendientes: int
+
+
+class DashboardHorasDiarias(BaseModel):
+    """Horas diarias"""
+    fecha: str
+    horas: float
+
+
+class DashboardPrediccionHoras(BaseModel):
+    """Predicción de horas"""
+    fecha: str
+    horas: Optional[float]
+    prediccion: float
+
+
+class DashboardCargaEmpleado(BaseModel):
+    """Carga de trabajo por empleado"""
+    name: str
+    pendientes: int
+    enProgreso: int
+    completadas: int
+    eficiencia: int
+
+
+class DashboardProyectoRiesgo(BaseModel):
+    """Proyecto en riesgo"""
+    name: str
+    progreso: float
+    diasRestantes: int
+    riesgo: str  # critical, warning, safe
+
+
+class DashboardTopCliente(BaseModel):
+    """Top cliente por presupuesto"""
+    name: str
+    presupuesto: float
+
+
+class DashboardClienteIndustria(BaseModel):
+    """Cliente por industria"""
+    name: str
+    value: int
+
+
+class DashboardEficienciaProyecto(BaseModel):
+    """Eficiencia por proyecto"""
+    name: str
+    estimado: float
+    real: float
+
+
+class DashboardAnalisisResponse(BaseModel):
+    """Respuesta completa del dashboard de análisis"""
+    kpis: DashboardKPIs
+    proyectosPorEstado: List[DashboardProyectoEstado]
+    tareasPorPrioridad: List[DashboardTareaPrioridad]
+    tareasPorProyecto: List[DashboardTareaProyecto]
+    horasDiarias: List[DashboardHorasDiarias]
+    prediccionHoras: List[DashboardPrediccionHoras]
+    cargaEmpleados: List[DashboardCargaEmpleado]
+    proyectosRiesgo: List[DashboardProyectoRiesgo]
+    topClientes: List[DashboardTopCliente]
+    clientesIndustria: List[DashboardClienteIndustria]
+    eficienciaProyectos: List[DashboardEficienciaProyecto]

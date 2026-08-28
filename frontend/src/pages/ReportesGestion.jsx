@@ -23,7 +23,8 @@ import {
   Building2,
   AlertTriangle,
   X,
-  Edit
+  Edit,
+  KeyRound
 } from 'lucide-react';
 import './ReportesGestion.css';
 
@@ -126,7 +127,7 @@ const ReportesGestion = () => {
     } catch (error) {
       console.error('Error al eliminar reporte:', error);
       const mensaje = error.response?.data?.detail || 'Error al eliminar el reporte';
-      alert(`❌ ${mensaje}`);
+      alert(`Error: ${mensaje}`);
     } finally {
       setEliminandoProgreso(false);
     }
@@ -218,6 +219,9 @@ const ReportesGestion = () => {
     return (
       <>
         <Navbar />
+        <div className="orb orb-blue"></div>
+        <div className="orb orb-cyan"></div>
+        <div className="bg-gradient"></div>
         <div className="gestion-container">
           <div className="gestion-loading">
             <div className="loading-spinner"></div>
@@ -231,6 +235,12 @@ const ReportesGestion = () => {
   return (
     <>
       <Navbar />
+
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
+
       <div className="gestion-container">
         <div className="gestion-main">
           <div className="gestion-header">
@@ -353,7 +363,8 @@ const ReportesGestion = () => {
                         </span>
                         {reporte.codigo_acceso && (
                           <span className="reporte-codigo">
-                            🔑 {reporte.codigo_acceso}
+                            <KeyRound size={12} />
+                            {reporte.codigo_acceso}
                           </span>
                         )}
                       </div>
@@ -474,7 +485,7 @@ const ReportesGestion = () => {
             </div>
           )}
 
-          {/* ✅ MODAL DE RESPUESTAS - SOLO MUESTRA LA RESPUESTA */}
+          {/* MODAL DE RESPUESTAS */}
           {mostrarModalRespuestas && (
             <div className="modal-overlay" onClick={() => setMostrarModalRespuestas(false)}>
               <div className="modal-respuestas-container" onClick={(e) => e.stopPropagation()}>
@@ -519,14 +530,12 @@ const ReportesGestion = () => {
                             )}
                           </div>
                           <div className="respuesta-card-body">
-                            {/* ✅ SOLO MOSTRAR LA RESPUESTA (no el comentario duplicado) */}
                             {interaccion.respuesta_pregunta && (
                               <div className="respuesta-texto">
                                 <span className="respuesta-label">Respuesta:</span>
                                 <p>{interaccion.respuesta_pregunta}</p>
                               </div>
                             )}
-                            {/* ❌ ELIMINADO: Sección de comentarios duplicada */}
                           </div>
                         </div>
                       ))}
@@ -561,13 +570,13 @@ const ReportesGestion = () => {
                 <p className="modal-eliminar-mensaje">
                   Estás a punto de eliminar el reporte <strong>"{reporteAEliminar.titulo}"</strong>.
                   {reporteAEliminar.estado === 'publicado' && (
-                    <span className="texto-advertencia"> ⚠️ Este reporte está <strong>PUBLICADO</strong> y los clientes ya tienen acceso a él.</span>
+                    <span className="texto-advertencia"> Este reporte está <strong>PUBLICADO</strong> y los clientes ya tienen acceso a él.</span>
                   )}
                   {reporteAEliminar.estado === 'expirado' && (
-                    <span className="texto-advertencia"> ⚠️ Este reporte está <strong>EXPIRADO</strong>.</span>
+                    <span className="texto-advertencia"> Este reporte está <strong>EXPIRADO</strong>.</span>
                   )}
                   {reporteAEliminar.estado === 'borrador' && (
-                    <span className="texto-info"> 📝 Este reporte está en estado <strong>borrador</strong>.</span>
+                    <span className="texto-info"> Este reporte está en estado <strong>borrador</strong>.</span>
                   )}
                   <br />
                   <span className="texto-importante">Esta acción no se puede deshacer.</span>

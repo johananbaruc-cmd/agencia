@@ -22,14 +22,12 @@ export default function EmployeeEvidence() {
   const [showEvidenceModal, setShowEvidenceModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState('all');
 
-  // ✅ Estado para actualizar evidencia
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [evidenceToUpdate, setEvidenceToUpdate] = useState(null);
   const [newFile, setNewFile] = useState(null);
   const [newComment, setNewComment] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  // ✅ Usar STATIC_URL de api.js (SIN /api/v1)
   const getFullUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
@@ -43,7 +41,6 @@ export default function EmployeeEvidence() {
     return `${STATIC_URL}${cleanUrl}`;
   };
 
-  // ✅ Formatear fecha
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -132,7 +129,6 @@ export default function EmployeeEvidence() {
     setShowEvidenceModal(true);
   };
 
-  // ✅ Abrir modal para actualizar evidencia
   const openUpdateModal = (evidence) => {
     setEvidenceToUpdate(evidence);
     setNewComment(evidence.comment || '');
@@ -140,10 +136,9 @@ export default function EmployeeEvidence() {
     setShowUpdateModal(true);
   };
 
-  // ✅ Subir nueva evidencia (REEMPLAZA la anterior)
   const handleUpdateEvidence = async () => {
     if (!newFile && !newComment) {
-      setMessage({ text: '❌ Debes subir un archivo o agregar un comentario', type: 'error' });
+      setMessage({ text: 'Debes subir un archivo o agregar un comentario', type: 'error' });
       return;
     }
 
@@ -157,28 +152,25 @@ export default function EmployeeEvidence() {
     }
 
     try {
-      // 1. Eliminar la evidencia anterior
       await api.delete(`/tasks/evidence/${evidenceToUpdate.id}`);
 
-      // 2. Subir la nueva evidencia
       const response = await api.post(`/tasks/${evidenceToUpdate.task_id}/evidence`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
 
-      setMessage({ text: '✅ Evidencia actualizada exitosamente', type: 'success' });
+      setMessage({ text: 'Evidencia actualizada exitosamente', type: 'success' });
       setShowUpdateModal(false);
       setNewFile(null);
       setNewComment('');
       
-      // Recargar evidencias
       await fetchEvidence(selectedProject.id);
       
       setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     } catch (error) {
       console.error('Error:', error);
-      setMessage({ text: '❌ Error al actualizar evidencia', type: 'error' });
+      setMessage({ text: 'Error al actualizar evidencia', type: 'error' });
     } finally {
       setUploading(false);
     }
@@ -223,6 +215,12 @@ export default function EmployeeEvidence() {
   return (
     <>
       <Navbar />
+
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
+
       <div className="employee-evidence-container">
         <div className="evidence-header">
           <div className="evidence-header-content">
@@ -269,9 +267,9 @@ export default function EmployeeEvidence() {
                   }}
                 >
                   <option value="all">Todos los estados</option>
-                  <option value="pending">⏳ Pendientes</option>
-                  <option value="approved">✅ Aprobadas</option>
-                  <option value="rejected">❌ Rechazadas</option>
+                  <option value="pending">Pendientes</option>
+                  <option value="approved">Aprobadas</option>
+                  <option value="rejected">Rechazadas</option>
                 </select>
               </div>
             </div>
@@ -354,7 +352,7 @@ export default function EmployeeEvidence() {
                         <span>Fecha de entrega: {formatDate(item.delivery_date || item.created_at)}</span>
                       </div>
                       {item.comment && (
-                        <div className="evidence-comment">💬 {item.comment}</div>
+                        <div className="evidence-comment">Comentario: {item.comment}</div>
                       )}
                       {isRejected && item.review_comment && (
                         <div className="evidence-rejection">
@@ -519,7 +517,8 @@ export default function EmployeeEvidence() {
                   </p>
                 )}
                 <p className="update-warning">
-                  ⚠️ Al actualizar, la evidencia anterior será reemplazada completamente.
+                  <AlertTriangle size={14} />
+                  Al actualizar, la evidencia anterior será reemplazada completamente.
                 </p>
               </div>
 

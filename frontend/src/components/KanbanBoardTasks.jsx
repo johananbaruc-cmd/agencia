@@ -16,11 +16,41 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Clock, AlertCircle, CheckCircle, FileText } from 'lucide-react';
+import { Clock, AlertCircle, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../services/api';
 
-// Tarjeta de tarea con drag & drop
-function SortableTaskCard({ task, onClick }) {
+// Colores para cada columna
+const COLUMN_COLORS = {
+  pending: {
+    border: '#f59e0b',
+    background: 'rgba(245, 158, 11, 0.08)',
+    hover: 'rgba(245, 158, 11, 0.18)',
+    glow: 'rgba(245, 158, 11, 0.3)'
+  },
+  in_progress: {
+    border: '#3b82f6',
+    background: 'rgba(59, 130, 246, 0.08)',
+    hover: 'rgba(59, 130, 246, 0.18)',
+    glow: 'rgba(59, 130, 246, 0.3)'
+  },
+  completed: {
+    border: '#10b981',
+    background: 'rgba(16, 185, 129, 0.08)',
+    hover: 'rgba(16, 185, 129, 0.18)',
+    glow: 'rgba(16, 185, 129, 0.3)'
+  }
+};
+
+// Colores por defecto
+const DEFAULT_COLUMN_COLOR = {
+  border: '#6b7280',
+  background: 'rgba(107, 114, 128, 0.08)',
+  hover: 'rgba(107, 114, 128, 0.18)',
+  glow: 'rgba(107, 114, 128, 0.3)'
+};
+
+// Tarjeta de tarea con drag & drop y efecto gelatina
+function SortableTaskCard({ task, onClick, columnId, onMoveLeft, onMoveRight, hasLeft, hasRight }) {
   const {
     attributes,
     listeners,
@@ -30,11 +60,36 @@ function SortableTaskCard({ task, onClick }) {
     isDragging,
   } = useSortable({ id: task.id });
 
+  const colors = COLUMN_COLORS[columnId] || DEFAULT_COLUMN_COLOR;
+
+  const [isHovered, setIsHovered] = useState(false);
+  const [isJelly, setIsJelly] = useState(false);
+
+  const handleMouseEnter = () => {
+    if (!isDragging) {
+      setIsHovered(true);
+      setIsJelly(true);
+      setTimeout(() => setIsJelly(false), 400);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: isDragging 
+      ? `${CSS.Transform.toString(transform)} scale(1.05)` 
+      : CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.3 : 1,
+    opacity: isDragging ? 0.4 : 1,
     cursor: 'grab',
+    border: `2px solid ${isHovered ? colors.border : colors.border}`,
+    background: isDragging ? colors.hover : (isHovered ? colors.hover : colors.background),
+    boxShadow: isDragging ? `0 10px 40px ${colors.glow}` : (isHovered ? `0 6px 20px ${colors.glow}` : 'none'),
+    transform: isDragging 
+      ? `${CSS.Transform.toString(transform)} scale(1.08) rotate(2deg)` 
+      : (isJelly ? 'scale(1.05) rotate(1deg)' : CSS.Transform.toString(transform)),
   };
 
   const getPriorityColor = (priority) => {
@@ -74,6 +129,8 @@ function SortableTaskCard({ task, onClick }) {
       {...listeners}
       className="kanban-task-card"
       onClick={() => !isDragging && onClick(task)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className="kanban-task-title">{task.title}</div>
       {task.description && (
@@ -90,26 +147,78 @@ function SortableTaskCard({ task, onClick }) {
           {getStatusIcon(task.status)}
         </span>
       </div>
+
+      {/* Botones para mover tarea */}
+      <div className="kanban-task-move-buttons">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (hasLeft) onMoveLeft(task.id);
+          }}
+          disabled={!hasLeft}
+          className={`kanban-move-btn kanban-move-left ${hasLeft ? 'active' : 'disabled'}`}
+          title="Mover a columna anterior"
+        >
+          <ChevronLeft size={14} />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            if (hasRight) onMoveRight(task.id);
+          }}
+          disabled={!hasRight}
+          className={`kanban-move-btn kanban-move-right ${hasRight ? 'active' : 'disabled'}`}
+          title="Mover a columna siguiente"
+        >
+          <ChevronRight size={14} />
+        </button>
+      </div>
     </div>
   );
 }
 
-// Columna del Kanban
+// Columna del Kanban (con expansión automática)
 function DroppableColumn({ column, children, count }) {
   const { setNodeRef } = useSortable({
     id: column.id,
     data: { type: 'column', columnId: column.id },
-    disabled: true, // No permitir mover columnas
+    disabled: true,
   });
+
+  const colors = COLUMN_COLORS[column.id] || DEFAULT_COLUMN_COLOR;
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
       ref={setNodeRef}
       className="kanban-column"
+      style={{
+        borderColor: `${colors.border}44`,
+        background: 'rgba(255, 255, 255, 0.03)',
+        maxHeight: 'calc(100vh - 250px)', // Expandible pero con scroll
+        overflowY: 'auto',
+      }}
+      onMouseEnter={(e) => {
+        setIsHovered(true);
+        e.currentTarget.style.borderColor = `${colors.border}88`;
+        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+      }}
+      onMouseLeave={(e) => {
+        setIsHovered(false);
+        e.currentTarget.style.borderColor = `${colors.border}44`;
+        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+      }}
     >
       <div className="kanban-column-header">
-        <span className="kanban-column-title">{column.title}</span>
-        <span className="column-count">{count}</span>
+        <span className="kanban-column-title" style={{ color: colors.border }}>
+          {column.title}
+        </span>
+        <span className="column-count" style={{ 
+          background: `${colors.border}22`,
+          color: colors.border
+        }}>
+          {count}
+        </span>
       </div>
       <div className="kanban-column-body">
         {children}
@@ -120,9 +229,9 @@ function DroppableColumn({ column, children, count }) {
 
 // Columnas fijas (3 estados)
 const FIXED_COLUMNS = [
-  { id: 'pending', title: ' Pendiente' },
-  { id: 'in_progress', title: ' En Progreso' },
-  { id: 'completed', title: ' Finalizado' },
+  { id: 'pending', title: 'Pendiente' },
+  { id: 'in_progress', title: 'En Progreso' },
+  { id: 'completed', title: 'Finalizado' },
 ];
 
 export default function KanbanBoardTasks({ tasks, onTaskUpdate, readOnly = false }) {
@@ -134,7 +243,6 @@ export default function KanbanBoardTasks({ tasks, onTaskUpdate, readOnly = false
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  // Inicializar items cuando cambian las tareas
   useEffect(() => {
     const initialItems = {};
     FIXED_COLUMNS.forEach(col => {
@@ -167,7 +275,6 @@ export default function KanbanBoardTasks({ tasks, onTaskUpdate, readOnly = false
     const activeId = active.id;
     const overId = over.id;
 
-    // Encontrar la columna de origen
     const activeColumnId = findColumnForTask(activeId);
     let overColumnId = null;
 
@@ -179,7 +286,6 @@ export default function KanbanBoardTasks({ tasks, onTaskUpdate, readOnly = false
 
     if (!activeColumnId || !overColumnId) return;
 
-    // Si es la misma columna, solo reordenar
     if (activeColumnId === overColumnId) {
       const columnItems = items[activeColumnId];
       const oldIndex = columnItems.indexOf(activeId);
@@ -190,16 +296,13 @@ export default function KanbanBoardTasks({ tasks, onTaskUpdate, readOnly = false
       return;
     }
 
-    // Movimiento entre columnas - actualizar estado en el backend
     const task = tasks.find(t => t.id === activeId);
     if (!task) return;
 
     setUpdating(true);
     try {
-      // Actualizar estado en el backend
       await api.put(`/tasks/${activeId}/status`, { status: overColumnId });
 
-      // Actualizar estado local
       const activeItems = items[activeColumnId].filter(id => id !== activeId);
       const overItems = [...items[overColumnId], activeId];
 
@@ -209,7 +312,6 @@ export default function KanbanBoardTasks({ tasks, onTaskUpdate, readOnly = false
         [overColumnId]: overItems,
       });
 
-      // Notificar cambio
       if (onTaskUpdate) onTaskUpdate();
 
     } catch (error) {
@@ -220,11 +322,49 @@ export default function KanbanBoardTasks({ tasks, onTaskUpdate, readOnly = false
     }
   };
 
-  // Obtener todas las columnas
+  // Función para mover tarea manualmente (con botones)
+  const moveTaskManually = async (taskId, direction) => {
+    if (readOnly || updating) return;
+
+    const currentColumnId = findColumnForTask(taskId);
+    if (!currentColumnId) return;
+
+    const currentIndex = FIXED_COLUMNS.findIndex(col => col.id === currentColumnId);
+    const targetIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+
+    if (targetIndex < 0 || targetIndex >= FIXED_COLUMNS.length) return;
+
+    const targetColumnId = FIXED_COLUMNS[targetIndex].id;
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    setUpdating(true);
+    try {
+      await api.put(`/tasks/${taskId}/status`, { status: targetColumnId });
+
+      const activeItems = items[currentColumnId].filter(id => id !== taskId);
+      const targetItems = [...(items[targetColumnId] || []), taskId];
+
+      setItems({
+        ...items,
+        [currentColumnId]: activeItems,
+        [targetColumnId]: targetItems,
+      });
+
+      if (onTaskUpdate) onTaskUpdate();
+
+    } catch (error) {
+      console.error('Error al mover tarea:', error);
+      alert('Error al mover la tarea: ' + (error.response?.data?.detail || error.message));
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const allColumns = FIXED_COLUMNS;
 
   return (
-    <div className="kanban-wrapper">
+    <div className="kanban-wrapper" style={{ position: 'relative' }}>
       {updating && (
         <div className="kanban-updating-overlay">
           <div className="loading-spinner-small"></div>
@@ -238,7 +378,7 @@ export default function KanbanBoardTasks({ tasks, onTaskUpdate, readOnly = false
         onDragEnd={handleDragEnd}
       >
         <div className="kanban-board">
-          {allColumns.map((column) => {
+          {allColumns.map((column, index) => {
             const count = getColumnItems(column.id).length;
             const columnItems = getColumnItems(column.id);
 
@@ -259,7 +399,12 @@ export default function KanbanBoardTasks({ tasks, onTaskUpdate, readOnly = false
                       <SortableTaskCard
                         key={task.id}
                         task={task}
-                        onClick={() => {}} // Sin acción al hacer click
+                        onClick={() => {}}
+                        columnId={column.id}
+                        hasLeft={index > 0}
+                        hasRight={index < allColumns.length - 1}
+                        onMoveLeft={(id) => moveTaskManually(id, 'left')}
+                        onMoveRight={(id) => moveTaskManually(id, 'right')}
                       />
                     );
                   })}

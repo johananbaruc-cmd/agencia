@@ -35,6 +35,7 @@ import {
   GitBranch,
   LineChart,
   Activity,
+  CheckCircle,
   Calendar as CalendarIcon
 } from 'lucide-react';
 import './DetalleReporte.css';
@@ -49,7 +50,6 @@ const DetalleReporte = () => {
   const [copiadoCodigo, setCopiadoCodigo] = useState(false);
   const [publicando, setPublicando] = useState(false);
   
-  // Progreso - ahora viene de la BD
   const [progresoVisual, setProgresoVisual] = useState(0);
   const [esReporteRecienCreado, setEsReporteRecienCreado] = useState(false);
   
@@ -69,7 +69,6 @@ const DetalleReporte = () => {
     end_date: null
   });
   
-  // Estados unificados
   const [archivosSubidos, setArchivosSubidos] = useState([]);
   const [elementosDeTareas, setElementosDeTareas] = useState([]);
 
@@ -83,7 +82,6 @@ const DetalleReporte = () => {
         const reporteBase = response.data;
         setReporte(reporteBase);
         
-        // OBTENER PROGRESO DEL REPORTE (de la BD)
         const progresoDelReporte = reporteBase.progreso || 0;
         
         const reporteCreadoId = sessionStorage.getItem('reporte_creado_id');
@@ -91,14 +89,10 @@ const DetalleReporte = () => {
         setEsReporteRecienCreado(esRecienCreado);
         
         if (esRecienCreado) {
-          // Si es recién creado, usar el progreso de sessionStorage
           const progreso = parseInt(sessionStorage.getItem('progreso_visual') || '0');
           setProgresoVisual(progreso);
-          console.log('📊 Progreso de sessionStorage:', progreso);
         } else {
-          // USAR EL PROGRESO DEL REPORTE (guardado en BD)
           setProgresoVisual(progresoDelReporte);
-          console.log('📊 Progreso del reporte (BD):', progresoDelReporte);
         }
         
         await cargarInfoProyecto(reporteBase);
@@ -176,20 +170,14 @@ const DetalleReporte = () => {
     }
   };
 
-  // ✅ FUNCIÓN UNIFICADA: Cargar archivos y evidencias
   const cargarArchivosYEvidencias = async (reporteBase) => {
     try {
       const projectId = reporteBase.project_id;
-      if (!projectId) {
-        console.warn('No hay project_id en el reporte');
-        return;
-      }
+      if (!projectId) return;
 
-      // 1. Obtener TODAS las tareas del proyecto
       const tasksResponse = await api.get(`/tasks/projects/${projectId}/tasks`);
       const tasks = tasksResponse.data;
 
-      // 2. Obtener TODAS las evidencias de TODAS las tareas
       let todasLasEvidencias = [];
       for (const task of tasks) {
         try {
@@ -206,26 +194,18 @@ const DetalleReporte = () => {
         }
       }
 
-      // 3. Obtener los IDs guardados en el reporte (UNIFICADOS)
       const evidenciasIds = reporteBase.evidencias_ids || [];
       const archivosIds = reporteBase.archivos_existentes_ids || [];
       
-      // 4. UNIFICAR: Combinar evidencias_ids y archivos_existentes_ids (sin duplicados)
       const idsUnificados = [...new Set([...evidenciasIds, ...archivosIds])];
       
-      console.log('📋 IDs unificados:', idsUnificados);
-
-      // 5. Filtrar elementos de tareas (UNIFICADOS)
       const elementosFiltrados = todasLasEvidencias.filter(ev => 
         idsUnificados.includes(ev.id)
       );
       
-      console.log('✅ Elementos de tareas unificados:', elementosFiltrados.length);
       setElementosDeTareas(elementosFiltrados);
 
-      // 6. Archivos subidos directamente al reporte
       const archivosSubidosDirectamente = reporteBase.archivos || [];
-      console.log('✅ Archivos subidos al reporte:', archivosSubidosDirectamente.length);
       setArchivosSubidos(archivosSubidosDirectamente);
 
     } catch (error) {
@@ -264,17 +244,12 @@ const DetalleReporte = () => {
     setTimeout(() => setCopiadoCodigo(false), 3000);
   };
 
-  // ==========================================
-  // ✅ FUNCIONES DE ANÁLISIS ACTUALIZADAS
-  // ==========================================
   const getAnalisisNombre = (tipo) => {
     const nombres = {
-      // Análisis existentes
       'pca': 'PCA - Reducción de dimensionalidad',
       'regresion': 'Regresión Lineal - Predicción de tendencias',
       'clustering': 'Clustering - Agrupación de datos',
       'estadisticas': 'Estadísticas - Análisis descriptivo',
-      // 🔥 NUEVOS ANÁLISIS
       'regresion_gasto_tiempo': 'Gasto vs Tiempo - Desviación presupuestaria',
       'regresion_rendimiento_empleado': 'Rendimiento del Empleado - Productividad',
       'regresion_presupuesto_plazo': 'Presupuesto vs Plazo - Eficiencia CPI/SPI',
@@ -291,7 +266,6 @@ const DetalleReporte = () => {
       'regresion': <BarChart3 size={16} />,
       'clustering': <PieChart size={16} />,
       'estadisticas': <Database size={16} />,
-      // 🔥 NUEVOS ANÁLISIS
       'regresion_gasto_tiempo': <Activity size={16} />,
       'regresion_rendimiento_empleado': <Users size={16} />,
       'regresion_presupuesto_plazo': <Target size={16} />,
@@ -302,9 +276,6 @@ const DetalleReporte = () => {
     return iconos[tipo] || <FileText size={16} />;
   };
 
-  // ==========================================
-  // ✅ FUNCIONES DE UTILIDAD MEJORADAS
-  // ==========================================
   const getProgressColor = (progreso) => {
     if (progreso < 30) return '#ef4444';
     if (progreso < 60) return '#f59e0b';
@@ -313,15 +284,10 @@ const DetalleReporte = () => {
   };
 
   const getFileIcon = (fileName) => {
-    if (!fileName) return '📎';
+    if (!fileName) return <FileText size={20} />;
     const ext = fileName.split('.').pop()?.toLowerCase();
-    if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) return '🖼️';
-    if (['pdf'].includes(ext)) return '📄';
-    if (['doc', 'docx'].includes(ext)) return '📝';
-    if (['xls', 'xlsx'].includes(ext)) return '📊';
-    if (['ppt', 'pptx'].includes(ext)) return '📑';
-    if (['zip', 'rar', '7z'].includes(ext)) return '📦';
-    return '📎';
+    if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) return <FileText size={20} />;
+    return <FileText size={20} />;
   };
 
   const formatFileSize = (bytes) => {
@@ -331,28 +297,25 @@ const DetalleReporte = () => {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  // ✅ OBTENER EL PROGRESO CORRECTO
   const obtenerProgresoMostrar = () => {
     if (esReporteRecienCreado) {
       return progresoVisual;
     }
-    // Si el reporte tiene progreso en la BD, usarlo
     if (reporte?.progreso !== undefined && reporte?.progreso !== null) {
       return reporte.progreso;
     }
-    // Fallback: usar el progreso del proyecto
     return reporte?.proyecto_progress || 0;
   };
 
   const progresoTotal = obtenerProgresoMostrar();
 
-  // ==========================================
-  // RENDER - LOADING
-  // ==========================================
   if (loading) {
     return (
       <>
         <Navbar />
+        <div className="orb orb-blue"></div>
+        <div className="orb orb-cyan"></div>
+        <div className="bg-gradient"></div>
         <div className="detalle-container">
           <div className="detalle-loading">
             <div className="loading-spinner"></div>
@@ -367,6 +330,9 @@ const DetalleReporte = () => {
     return (
       <>
         <Navbar />
+        <div className="orb orb-blue"></div>
+        <div className="orb orb-cyan"></div>
+        <div className="bg-gradient"></div>
         <div className="detalle-container">
           <div className="detalle-main">
             <div className="error-message">
@@ -381,12 +347,15 @@ const DetalleReporte = () => {
   const estaPublicado = reporte.estado === 'publicado';
   const noHayElementosTareas = elementosDeTareas.length === 0;
 
-  // ==========================================
-  // RENDER - MAIN
-  // ==========================================
   return (
     <>
       <Navbar />
+
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
+
       <div className="detalle-container">
         <div className="detalle-main">
           {/* Botón Volver */}
@@ -403,7 +372,8 @@ const DetalleReporte = () => {
                 <p className="header-desc">{reporte.descripcion || 'Sin descripción'}</p>
                 <div className="header-meta">
                   <span className={`estado-badge ${reporte.estado === 'publicado' ? 'estado-publicado' : 'estado-borrador'}`}>
-                    {reporte.estado === 'publicado' ? '✅ Publicado' : '📝 Borrador'}
+                    <CheckCircle size={14} />
+                    {reporte.estado === 'publicado' ? 'Publicado' : 'Borrador'}
                   </span>
                   <span>
                     <Clock size={14} />
@@ -434,7 +404,7 @@ const DetalleReporte = () => {
             </div>
           </div>
 
-          {/* 🔥 PROGRESO VISUAL */}
+          {/* PROGRESO */}
           <div className="detalle-section progreso-visual-section">
             <h3 className="section-title">
               <Sliders size={18} />
@@ -458,14 +428,15 @@ const DetalleReporte = () => {
               {reporte.progreso !== undefined && reporte.progreso !== null && (
                 <div className="progreso-origen">
                   <span className="progreso-origen-badge">
-                    📊 Guardado en el reporte
+                    <Database size={14} />
+                    Guardado en el reporte
                   </span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* ✅ INFORMACIÓN DEL PROYECTO */}
+          {/* INFORMACIÓN DEL PROYECTO */}
           <div className="detalle-section info-proyecto-section">
             <h3 className="section-title">
               <Folder size={18} />
@@ -594,13 +565,14 @@ const DetalleReporte = () => {
                 <div className="qr-container">
                   <div className="qr-box">
                     <img src={reporte.codigo_qr} alt="Código QR" />
-                    <p>📱 Escanea para acceder</p>
+                    <p><QrCode size={14} /> Escanea para acceder</p>
                   </div>
                 </div>
               )}
 
               <div className="expira-notice">
-                ⏰ El código expirará {reporte.horas_expiracion || 24} horas después de la primera apertura
+                <Clock size={14} />
+                El código expirará {reporte.horas_expiracion || 24} horas después de la primera apertura
               </div>
             </div>
           )}
@@ -608,24 +580,24 @@ const DetalleReporte = () => {
           {/* ESTADÍSTICAS */}
           <div className="stats-grid">
             <div className="stat-card">
-              <div className="stat-icon">👁️</div>
+              <div className="stat-icon"><Eye size={18} /></div>
               <div className="stat-number">{reporte.veces_visto || 0}</div>
               <div className="stat-label">Visitas</div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon">📄</div>
+              <div className="stat-icon"><FileText size={18} /></div>
               <div className="stat-number">
                 {archivosSubidos.length + elementosDeTareas.length || 0}
               </div>
               <div className="stat-label">Archivos</div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon">👥</div>
+              <div className="stat-icon"><Users size={18} /></div>
               <div className="stat-number">{proyectoInfo.total_empleados || 0}</div>
               <div className="stat-label">Empleados</div>
             </div>
             <div className="stat-card">
-              <div className="stat-icon">📊</div>
+              <div className="stat-icon"><BarChart3 size={18} /></div>
               <div className="stat-number">{reporte.analisis?.length || 0}</div>
               <div className="stat-label">Análisis</div>
             </div>
@@ -660,12 +632,15 @@ const DetalleReporte = () => {
           {/* TEXTO DE AVANCE */}
           {reporte.texto_avance && (
             <div className="detalle-section">
-              <h3 className="section-title">📝 Avance del Proyecto</h3>
+              <h3 className="section-title">
+                <FileText size={18} />
+                Avance del Proyecto
+              </h3>
               <p className="avance-texto">{reporte.texto_avance}</p>
             </div>
           )}
 
-          {/* ✅ ELEMENTOS DE TAREAS */}
+          {/* ELEMENTOS DE TAREAS */}
           <div className="detalle-section">
             <h3 className="section-title">
               <FolderOpen size={18} />
@@ -684,7 +659,7 @@ const DetalleReporte = () => {
                       <span className="elemento-icon">{getFileIcon(item.file_name)}</span>
                       <span className="elemento-nombre">{item.file_name || 'Sin nombre'}</span>
                       <span className="elemento-size">{formatFileSize(item.file_size)}</span>
-                      <span className="elemento-tarea">📁 {item.tarea_nombre}</span>
+                      <span className="elemento-tarea">{item.tarea_nombre}</span>
                     </div>
                     <div className="elemento-detalles">
                       {item.comment && (
@@ -720,7 +695,7 @@ const DetalleReporte = () => {
             )}
           </div>
 
-          {/* ✅ ARCHIVOS SUBIDOS AL REPORTE */}
+          {/* ARCHIVOS SUBIDOS AL REPORTE */}
           <div className="detalle-section">
             <h3 className="section-title">
               <Upload size={18} />
@@ -738,7 +713,6 @@ const DetalleReporte = () => {
                                          archivo.ruta_archivo?.split('/').pop() || 
                                          archivo.ruta?.split('/').pop() || 
                                          '';
-                  // ✅ URL dinámica usando window.location.origin
                   const urlDescarga = `${window.location.origin}/uploads/reportes/${reporteId}/${nombreGuardado}`;
                   
                   return (
@@ -747,7 +721,7 @@ const DetalleReporte = () => {
                         <span className="archivo-icon">{getFileIcon(archivo.nombre_original || archivo.nombre)}</span>
                         <span className="archivo-name">{archivo.nombre_original || archivo.nombre || 'Sin nombre'}</span>
                         <span className="archivo-size">{formatFileSize(archivo.tamaño_bytes || archivo.tamaño)}</span>
-                        <span className="archivo-origen">📌 Subido en reporte</span>
+                        <span className="archivo-origen">Subido en reporte</span>
                       </div>
                       <a
                         href={urlDescarga}
@@ -766,7 +740,7 @@ const DetalleReporte = () => {
             )}
           </div>
 
-          {/* 🔥 ANÁLISIS EJECUTADOS - MEJORADO */}
+          {/* ANÁLISIS EJECUTADOS */}
           {reporte.analisis && reporte.analisis.length > 0 && (
             <div className="detalle-section">
               <h3 className="section-title">
@@ -789,12 +763,14 @@ const DetalleReporte = () => {
                       )}
                       {analisis.nivel_confianza && (
                         <span className="analisis-confianza">
-                          🔬 {Math.round(analisis.nivel_confianza * 100)}% confianza
+                          <Database size={12} />
+                          {Math.round(analisis.nivel_confianza * 100)}% confianza
                         </span>
                       )}
                       {analisis.tiempo_ejecucion_ms && (
                         <span className="analisis-tiempo">
-                          ⏱️ {analisis.tiempo_ejecucion_ms}ms
+                          <Clock size={12} />
+                          {analisis.tiempo_ejecucion_ms}ms
                         </span>
                       )}
                     </div>
@@ -803,10 +779,9 @@ const DetalleReporte = () => {
                       <p className="analisis-resultado-desc">{analisis.descripcion}</p>
                     )}
                     
-                    {/* 🔥 Recomendaciones */}
                     {analisis.recomendaciones && analisis.recomendaciones.length > 0 && (
                       <div className="analisis-recomendaciones">
-                        <strong>📋 Recomendaciones:</strong>
+                        <strong>Recomendaciones:</strong>
                         <ul>
                           {analisis.recomendaciones.map((rec, idx) => (
                             <li key={idx}>{rec}</li>
@@ -815,7 +790,6 @@ const DetalleReporte = () => {
                       </div>
                     )}
                     
-                    {/* 🔥 Alertas */}
                     {analisis.alertas && analisis.alertas.length > 0 && (
                       <div className="analisis-alertas">
                         {analisis.alertas.map((alerta, idx) => (
@@ -827,17 +801,15 @@ const DetalleReporte = () => {
                       </div>
                     )}
                     
-                    {/* 🔥 Gráfica */}
                     {analisis.grafica_principal && (
                       <div className="analisis-grafica">
                         <img src={analisis.grafica_principal} alt="Gráfica de análisis" />
                       </div>
                     )}
                     
-                    {/* 🔥 Resultados en JSON (colapsado por defecto) */}
                     {analisis.resultados && (
                       <details className="analisis-resultados-json">
-                        <summary>📊 Ver resultados detallados</summary>
+                        <summary>Ver resultados detallados</summary>
                         <pre>{JSON.stringify(analisis.resultados, null, 2)}</pre>
                       </details>
                     )}
@@ -850,7 +822,10 @@ const DetalleReporte = () => {
           {/* PREGUNTA AL CLIENTE */}
           {reporte.pregunta_cliente && (
             <div className="detalle-section">
-              <h3 className="section-title">❓ Pregunta para el Cliente</h3>
+              <h3 className="section-title">
+                <CheckSquare size={18} />
+                Pregunta para el Cliente
+              </h3>
               <div className="pregunta-box">
                 <p>{reporte.pregunta_cliente}</p>
               </div>

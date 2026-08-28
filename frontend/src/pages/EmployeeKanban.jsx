@@ -60,6 +60,12 @@ export default function EmployeeKanban() {
   return (
     <>
       <Navbar />
+
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
+
       <div className="employee-kanban-container">
         <div className="kanban-header">
           <div className="kanban-header-content">

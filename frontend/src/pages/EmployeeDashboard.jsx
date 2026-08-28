@@ -21,31 +21,20 @@ export default function EmployeeDashboard() {
     setError(null);
     
     try {
-      console.log('🔄 Obteniendo proyectos para empleado:', user?.id);
-      
-      // ✅ Endpoint correcto
       const response = await api.get('/employee/projects/');
-      console.log('📦 Proyectos recibidos:', response.data);
-      
       setProjects(response.data);
     } catch (error) {
-      console.error('❌ Error al obtener proyectos:', error);
+      console.error('Error al obtener proyectos:', error);
       setError('Error al cargar tus proyectos');
       
-      // Opcional: Intentar con el endpoint de proyectos general
       try {
-        console.log('🔄 Intentando fallback con /projects/');
         const fallbackResponse = await api.get('/projects/');
-        console.log('📦 Proyectos fallback:', fallbackResponse.data);
-        
-        // Filtrar solo los proyectos donde el usuario es miembro
-        // Si tu API no filtra automáticamente
         const userProjects = fallbackResponse.data.filter(project => 
           project.members?.some(m => m.user_id === user?.id)
         );
         setProjects(userProjects);
       } catch (fallbackError) {
-        console.error('❌ Error en fallback:', fallbackError);
+        console.error('Error en fallback:', fallbackError);
       }
     } finally {
       setLoading(false);
@@ -81,6 +70,12 @@ export default function EmployeeDashboard() {
   return (
     <>
       <Navbar />
+
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
+
       <div className="employee-dashboard-container">
         <div className="dashboard-header">
           <div className="dashboard-header-content">
@@ -160,45 +155,21 @@ export default function EmployeeDashboard() {
                     </div>
                     
                     {project.description && (
-                      <div className="project-description" style={{ 
-                        color: '#94a3b8', 
-                        fontSize: '0.85rem',
-                        marginTop: '4px'
-                      }}>
+                      <div className="project-description">
                         {project.description}
                       </div>
                     )}
 
-                    <div className="project-meta" style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '12px',
-                      marginTop: '8px',
-                      flexWrap: 'wrap'
-                    }}>
+                    <div className="project-meta">
                       <span 
                         className="status-badge"
-                        style={{ 
-                          backgroundColor: getStatusColor(project.status),
-                          color: 'white',
-                          padding: '2px 12px',
-                          borderRadius: '12px',
-                          fontSize: '0.7rem',
-                          display: 'inline-flex',
-                          alignItems: 'center'
-                        }}
+                        style={{ backgroundColor: getStatusColor(project.status) }}
                       >
                         {getStatusText(project.status)}
                       </span>
 
                       {project.client_name && (
-                        <span style={{ 
-                          color: '#94a3b8', 
-                          fontSize: '0.7rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}>
+                        <span className="client-name">
                           Cliente: {project.client_name}
                         </span>
                       )}

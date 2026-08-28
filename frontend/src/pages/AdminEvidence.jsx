@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import api, { STATIC_URL } from '../services/api'; // ✅ STATIC_URL viene de api.js
+import api, { STATIC_URL } from '../services/api';
 import Navbar from '../components/Navbar';
 import { 
-  FolderOpen, FileImage, Users, Eye, ExternalLink, 
+  FolderOpen, FileImage, Users, Eye, 
   Download, X, AlertTriangle, File, Image, Video, FileText, 
-  Search, CheckCircle, XCircle, Clock, MessageSquare, Send, Calendar, Edit
+  Search, CheckCircle, XCircle, Clock, Calendar, Edit
 } from 'lucide-react';
 import './AdminEvidence.css';
 
@@ -38,7 +38,6 @@ export default function AdminEvidence() {
   const [evidenceToEditDate, setEvidenceToEditDate] = useState(null);
   const [newDeliveryDate, setNewDeliveryDate] = useState('');
 
-  // ✅ Usar STATIC_URL de api.js (SIN /api/v1)
   const getFullUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
@@ -113,7 +112,7 @@ export default function AdminEvidence() {
       }
       
       setEvidence(allEvidence);
-      applyFilters(allEvidence, searchTerm, filterType, 'pending');
+      applyFilters(allEvidence, searchTerm, filterType, filterStatus);
     } catch (error) {
       console.error('Error cargando evidencia:', error);
       setMessage({ text: 'Error al cargar evidencia', type: 'error' });
@@ -195,7 +194,7 @@ export default function AdminEvidence() {
     if (!evidenceToEditDate) return;
     
     if (!newDeliveryDate) {
-      setMessage({ text: '❌ Debes seleccionar una fecha', type: 'error' });
+      setMessage({ text: 'Debes seleccionar una fecha', type: 'error' });
       return;
     }
 
@@ -206,11 +205,11 @@ export default function AdminEvidence() {
       
       await fetchEvidence(selectedProject.id);
       
-      setMessage({ text: '✅ Fecha de entrega actualizada', type: 'success' });
+      setMessage({ text: 'Fecha de entrega actualizada', type: 'success' });
       setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     } catch (error) {
       console.error('Error:', error);
-      setMessage({ text: '❌ Error al actualizar fecha', type: 'error' });
+      setMessage({ text: 'Error al actualizar fecha', type: 'error' });
     } finally {
       setShowEditDateModal(false);
       setEvidenceToEditDate(null);
@@ -235,13 +234,13 @@ export default function AdminEvidence() {
           : e
       );
       setEvidence(updatedEvidence);
-      applyFilters(updatedEvidence, searchTerm, filterType, 'pending');
+      applyFilters(updatedEvidence, searchTerm, filterType, filterStatus);
       
-      setMessage({ text: '✅ Evidencia aprobada exitosamente', type: 'success' });
+      setMessage({ text: 'Evidencia aprobada exitosamente', type: 'success' });
       setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     } catch (error) {
       console.error('Error:', error);
-      setMessage({ text: '❌ Error al aprobar evidencia', type: 'error' });
+      setMessage({ text: 'Error al aprobar evidencia', type: 'error' });
     } finally {
       setShowApproveConfirm(false);
       setEvidenceToApprove(null);
@@ -259,12 +258,12 @@ export default function AdminEvidence() {
     if (!evidenceToReject) return;
     
     if (!rejectReason.trim()) {
-      setMessage({ text: '❌ Debes indicar el motivo del rechazo', type: 'error' });
+      setMessage({ text: 'Debes indicar el motivo del rechazo', type: 'error' });
       return;
     }
     
     if (!rejectDeliveryDate) {
-      setMessage({ text: '❌ Debes seleccionar una fecha de entrega', type: 'error' });
+      setMessage({ text: 'Debes seleccionar una fecha de entrega', type: 'error' });
       return;
     }
     
@@ -277,11 +276,11 @@ export default function AdminEvidence() {
       
       await fetchEvidence(selectedProject.id);
       
-      setMessage({ text: '✅ Evidencia rechazada y fecha actualizada', type: 'success' });
+      setMessage({ text: 'Evidencia rechazada y fecha actualizada', type: 'success' });
       setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     } catch (error) {
       console.error('Error:', error);
-      setMessage({ text: '❌ Error al rechazar evidencia', type: 'error' });
+      setMessage({ text: 'Error al rechazar evidencia', type: 'error' });
     } finally {
       setShowRejectModal(false);
       setEvidenceToReject(null);
@@ -329,122 +328,146 @@ export default function AdminEvidence() {
   return (
     <>
       <Navbar />
-      <div className="admin-evidence-container">
-        <div className="evidence-header">
-          <div className="evidence-header-content">
-            <div className="evidence-title">
-              <h1>Gestión de Evidencias</h1>
-              <p>Revisa y aprueba las evidencias pendientes</p>
+      
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
+
+      {/* ===== HEADER TRANSPARENTE ===== */}
+      <div className="evidence-header">
+        <div className="evidence-header-content">
+          <div className="evidence-title">
+            <div className="evidence-title-icon">
+              <FileImage size={28} />
+            </div>
+            <div>
+              <h1>Evidencias</h1>
+              <p>Revisa y aprueba las evidencias de los proyectos</p>
             </div>
           </div>
         </div>
+      </div>
 
+      {/* ===== CONTENEDOR PRINCIPAL ===== */}
+      <div className="evidence-container">
+
+        {/* BUSCADOR Y FILTROS */}
+        <div className="evidence-controls">
+          <div className="search-container">
+            <div className="search-wrapper">
+              <Search size={18} className="search-icon" />
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Buscar por nombre, tarea o empleado..."
+                value={searchTerm}
+                onChange={handleSearch}
+              />
+              {searchTerm && (
+                <button className="search-clear" onClick={() => setSearchTerm('')}>
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            <span className="search-count">
+              {filteredEvidence.length} evidencias
+            </span>
+          </div>
+
+          <div className="filters-row">
+            <select
+              value={selectedProject?.id || ''}
+              onChange={(e) => handleProjectChange(Number(e.target.value))}
+              className="filter-select"
+            >
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filterType}
+              onChange={(e) => handleFilterChange(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">Todos los tipos</option>
+              <option value="image">Imágenes</option>
+              <option value="video">Videos</option>
+              <option value="document">Documentos</option>
+              <option value="audio">Audios</option>
+            </select>
+
+            <select
+              value={filterStatus}
+              onChange={(e) => handleStatusFilterChange(e.target.value)}
+              className="filter-select"
+              style={{ 
+                borderColor: filterStatus === 'pending' ? '#f59e0b' : 
+                            filterStatus === 'approved' ? '#10b981' : 
+                            filterStatus === 'rejected' ? '#ef4444' : 'rgba(56,189,248,0.2)'
+              }}
+            >
+              <option value="all">Todos los estados</option>
+              <option value="pending">Pendientes</option>
+              <option value="approved">Aprobadas</option>
+              <option value="rejected">Rechazadas</option>
+            </select>
+
+            <button
+              onClick={() => setShowMembers(!showMembers)}
+              className="btn-members"
+            >
+              <Users size={16} />
+              {showMembers ? 'Ocultar Miembros' : 'Ver Miembros'}
+            </button>
+          </div>
+        </div>
+
+        {/* MENSAJE */}
         {message.text && (
           <div className={`message-floating ${message.type}`}>
             {message.text}
           </div>
         )}
 
-        <main className="evidence-main">
-          {projects.length > 0 && (
-            <div className="controls-bar">
-              <div className="project-selector">
-                <label>Proyecto:</label>
-                <select
-                  value={selectedProject?.id || ''}
-                  onChange={(e) => handleProjectChange(Number(e.target.value))}
-                  className="project-select"
-                >
-                  {projects.map((project) => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="filters">
-                <div className="search-box">
-                  <Search size={16} />
-                  <input
-                    type="text"
-                    placeholder="Buscar..."
-                    value={searchTerm}
-                    onChange={handleSearch}
-                    className="search-input"
-                  />
-                </div>
-
-                <select
-                  value={filterType}
-                  onChange={(e) => handleFilterChange(e.target.value)}
-                  className="filter-select"
-                >
-                  <option value="all">Todos los tipos</option>
-                  <option value="image">Imágenes</option>
-                  <option value="video">Videos</option>
-                  <option value="document">Documentos</option>
-                  <option value="audio">Audios</option>
-                </select>
-
-                <select
-                  value={filterStatus}
-                  onChange={(e) => handleStatusFilterChange(e.target.value)}
-                  className="filter-select"
-                  style={{ 
-                    borderColor: filterStatus === 'pending' ? '#f59e0b' : 
-                                filterStatus === 'approved' ? '#10b981' : 
-                                filterStatus === 'rejected' ? '#ef4444' : 'rgba(255,255,255,0.1)'
-                  }}
-                >
-                  <option value="all">Todos los estados</option>
-                  <option value="pending">⏳ Pendientes</option>
-                  <option value="approved">✅ Aprobadas</option>
-                  <option value="rejected">❌ Rechazadas</option>
-                </select>
-
-                <button
-                  onClick={() => setShowMembers(!showMembers)}
-                  className="btn-members"
-                >
-                  <Users size={16} />
-                  {showMembers ? 'Ocultar Miembros' : 'Ver Miembros'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {showMembers && (
-            <div className="members-list">
-              <h3>Miembros del proyecto</h3>
-              <div className="members-grid">
-                {members.map((member) => (
-                  <div key={member.user_id || member.id} className="member-item">
-                    <div className="member-avatar">
-                      {((member.user_name || member.name)?.charAt(0) || 'U')}
-                    </div>
-                    <div className="member-info">
-                      <span className="member-name">{member.user_name || member.name}</span>
-                      <span className="member-email">{member.user_email || member.email}</span>
-                    </div>
+        {/* MEMBERS LIST */}
+        {showMembers && (
+          <div className="members-list">
+            <h3>Miembros del proyecto</h3>
+            <div className="members-grid">
+              {members.map((member) => (
+                <div key={member.user_id || member.id} className="member-item">
+                  <div className="member-avatar">
+                    {((member.user_name || member.name)?.charAt(0) || 'U')}
                   </div>
-                ))}
-              </div>
+                  <div className="member-info">
+                    <span className="member-name">{member.user_name || member.name}</span>
+                    <span className="member-email">{member.user_email || member.email}</span>
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
+        )}
 
-          {!loading && !loadingEvidence && evidence.length > 0 && (
-            <div className="evidence-counter">
-              <span>Total: {evidence.length} evidencias</span>
-              <span>Mostrando: {filteredEvidence.length}</span>
-              <span>
-                Pendientes: {evidence.filter(e => e.status === 'pending').length} | 
-                Aprobadas: {evidence.filter(e => e.status === 'approved').length} | 
-                Rechazadas: {evidence.filter(e => e.status === 'rejected').length}
-              </span>
-            </div>
-          )}
+        {/* EVIDENCE COUNTER (SIN EMOJIS) */}
+        {!loading && !loadingEvidence && evidence.length > 0 && (
+          <div className="evidence-counter">
+            <span>Total: {evidence.length} evidencias</span>
+            <span>Mostrando: {filteredEvidence.length}</span>
+            <span>
+              Pendientes: {evidence.filter(e => e.status === 'pending').length} | 
+              Aprobadas: {evidence.filter(e => e.status === 'approved').length} | 
+              Rechazadas: {evidence.filter(e => e.status === 'rejected').length}
+            </span>
+          </div>
+        )}
 
+        {/* MAIN CONTENT */}
+        <main className="evidence-main">
           {loading ? (
             <div className="loading-state">
               <div className="loading-spinner"></div>
@@ -453,21 +476,23 @@ export default function AdminEvidence() {
           ) : loadingEvidence ? (
             <div className="loading-state">
               <div className="loading-spinner"></div>
-              <p>Cargando evidencias pendientes...</p>
+              <p>Cargando evidencias...</p>
             </div>
           ) : filteredEvidence.length === 0 ? (
             <div className="empty-state">
-              <FileImage size={48} />
-              <p className="empty-title">
-                {searchTerm || filterType !== 'all' || filterStatus !== 'all'
-                  ? 'No se encontraron resultados'
-                  : 'No hay evidencias pendientes por revisar'}
-              </p>
-              <p className="empty-subtitle">
-                {searchTerm || filterType !== 'all' || filterStatus !== 'all'
-                  ? 'Prueba con otros filtros'
-                  : 'Todas las evidencias han sido revisadas'}
-              </p>
+              {searchTerm || filterType !== 'all' || filterStatus !== 'all' ? (
+                <>
+                  <Search size={48} />
+                  <p>No se encontraron resultados</p>
+                  <span>Prueba con otros filtros</span>
+                </>
+              ) : (
+                <>
+                  <FileImage size={48} />
+                  <p>No hay evidencias pendientes por revisar</p>
+                  <span>Todas las evidencias han sido revisadas</span>
+                </>
+              )}
             </div>
           ) : (
             <div className="evidence-grid">
@@ -506,7 +531,7 @@ export default function AdminEvidence() {
                         <span>Subido por: {item.uploaded_by_name || 'Usuario'}</span>
                       </div>
                       {item.comment && (
-                        <div className="evidence-comment">💬 {item.comment}</div>
+                        <div className="evidence-comment">Comentario: {item.comment}</div>
                       )}
                       <div className="evidence-delivery-date">
                         <Calendar size={12} />
@@ -579,13 +604,13 @@ export default function AdminEvidence() {
         </main>
       </div>
 
-      {/* Todos los modales sin cambios */}
+      {/* MODALES */}
       {showEvidenceModal && selectedEvidence && (
         <div className="modal-overlay" onClick={() => setShowEvidenceModal(false)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Detalle de Evidencia</h2>
-              <button className="modal-close" onClick={() => setShowEvidenceModal(false)}>
+              <button className="modal-close-btn" onClick={() => setShowEvidenceModal(false)}>
                 <X size={18} />
               </button>
             </div>
@@ -617,7 +642,7 @@ export default function AdminEvidence() {
                   <span className="detail-value">{selectedEvidence.uploaded_by_name || 'Usuario'}</span>
                 </div>
                 <div className="detail-row">
-                  <span className="detail-label">Fecha de entrega:</span>
+                  <span className="detail-label">Fecha entrega:</span>
                   <span className="detail-value">
                     {formatDate(selectedEvidence.delivery_date || selectedEvidence.created_at)}
                     <button
@@ -626,7 +651,7 @@ export default function AdminEvidence() {
                         openEditDateModal(selectedEvidence);
                       }}
                       className="evidence-btn-edit-date-inline"
-                      title="Editar fecha de entrega"
+                      title="Editar fecha"
                     >
                       <Edit size={14} />
                     </button>
@@ -644,7 +669,7 @@ export default function AdminEvidence() {
                 </div>
                 {selectedEvidence.status === 'rejected' && selectedEvidence.review_comment && (
                   <div className="detail-row full">
-                    <span className="detail-label">Motivo de rechazo:</span>
+                    <span className="detail-label">Motivo rechazo:</span>
                     <span className="detail-value rejected">{selectedEvidence.review_comment}</span>
                   </div>
                 )}
@@ -674,13 +699,12 @@ export default function AdminEvidence() {
         </div>
       )}
 
-      {/* Modal editar fecha */}
       {showEditDateModal && evidenceToEditDate && (
         <div className="modal-overlay" onClick={() => setShowEditDateModal(false)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '450px' }}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Editar Fecha de Entrega</h2>
-              <button className="modal-close" onClick={() => setShowEditDateModal(false)}>
+              <button className="modal-close-btn" onClick={() => setShowEditDateModal(false)}>
                 <X size={18} />
               </button>
             </div>
@@ -718,20 +742,19 @@ export default function AdminEvidence() {
                 disabled={!newDeliveryDate}
               >
                 <Calendar size={16} />
-                Actualizar Fecha
+                Actualizar
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal rechazo */}
       {showRejectModal && evidenceToReject && (
         <div className="modal-overlay" onClick={() => setShowRejectModal(false)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Rechazar Evidencia</h2>
-              <button className="modal-close" onClick={() => setShowRejectModal(false)}>
+              <button className="modal-close-btn" onClick={() => setShowRejectModal(false)}>
                 <X size={18} />
               </button>
             </div>
@@ -740,7 +763,7 @@ export default function AdminEvidence() {
               <div className="reject-info">
                 <p><strong>Archivo:</strong> {evidenceToReject.file_name}</p>
                 <p><strong>Tarea:</strong> {evidenceToReject.task_title || 'Sin tarea'}</p>
-                <p><strong>Fecha de entrega actual:</strong> {formatDate(evidenceToReject.delivery_date || evidenceToReject.created_at)}</p>
+                <p><strong>Fecha actual:</strong> {formatDate(evidenceToReject.delivery_date || evidenceToReject.created_at)}</p>
               </div>
 
               <div className="reject-form">
@@ -779,7 +802,7 @@ export default function AdminEvidence() {
               </button>
               <button
                 onClick={confirmReject}
-                className="btn-modal-reject"
+                className="btn-modal-danger"
                 disabled={!rejectReason.trim() || !rejectDeliveryDate}
               >
                 <XCircle size={16} />
@@ -790,10 +813,9 @@ export default function AdminEvidence() {
         </div>
       )}
 
-      {/* Modal confirmación aprobación */}
       {showApproveConfirm && evidenceToApprove && (
         <div className="confirm-overlay">
-          <div className="confirm-modal approve">
+          <div className="confirm-modal">
             <div className="confirm-icon approve">
               <CheckCircle size={48} />
             </div>

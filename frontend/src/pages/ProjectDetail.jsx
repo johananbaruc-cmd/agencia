@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
+// ELIMINADO: import FondoMarmol from '../components/FondoMarmol';
 import { 
   ArrowLeft, 
   Edit, 
@@ -134,6 +135,9 @@ export default function ProjectDetail() {
     return (
       <>
         <Navbar />
+        <div className="orb orb-blue"></div>
+        <div className="orb orb-cyan"></div>
+        <div className="bg-gradient"></div>
         <div className="detail-loading">
           <div className="loading-spinner"></div>
           <p>Cargando proyecto...</p>
@@ -147,6 +151,13 @@ export default function ProjectDetail() {
   return (
     <>
       <Navbar />
+      
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
+
+      {/* ===== CONTENIDO PRINCIPAL (FLUYE ENCIMA) ===== */}
       <div className="detail-container">
         <div className="detail-content">
           {/* Botón volver */}
@@ -256,9 +267,7 @@ export default function ProjectDetail() {
               </div>
             </div>
 
-            {/* ========================================== */}
-            {/* FECHA DE FIN - Solo editable */}
-            {/* ========================================== */}
+            {/* Fecha de fin */}
             <div className="dates-section">
               <h3>Fecha de entrega</h3>
               <div className="date-card date-editable">

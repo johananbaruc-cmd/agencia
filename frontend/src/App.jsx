@@ -21,13 +21,18 @@ import Employees from './pages/Employees';
 import ReportesProyectos from './pages/ReportesProyectos';
 import CrearReporte from './pages/CrearReporte';
 import DetalleReporte from './pages/DetalleReporte';
-import ReportesGestion from './pages/ReportesGestion'; // ✅ NUEVA IMPORTACIÓN
+import ReportesGestion from './pages/ReportesGestion';
 
 // ==========================================
 // REPORTES - Páginas Públicas
 // ==========================================
 import AccesoReporte from './pages/public/AccesoReporte';
 import VerReporte from './pages/public/VerReporte';
+
+// ==========================================
+// DASHBOARD DE ANÁLISIS - ADMIN 👈 NUEVA IMPORTACIÓN
+// ==========================================
+import DashboardAnalisis from './pages/DashboardAnalisis';
 
 function App() {
   return (
@@ -117,10 +122,18 @@ function App() {
             </ProtectedRoute>
           } />
 
-          {/* ✅ NUEVA RUTA: Gestión de Reportes (Ver, eliminar, respuestas) */}
           <Route path="/reportes/gestion" element={
             <ProtectedRoute allowedRoles={['admin']}>
               <ReportesGestion />
+            </ProtectedRoute>
+          } />
+
+          {/* ========================================== */}
+          {/* DASHBOARD DE ANÁLISIS - ADMIN 👈 NUEVA RUTA */}
+          {/* ========================================== */}
+          <Route path="/dashboard-analisis" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <DashboardAnalisis />
             </ProtectedRoute>
           } />
 

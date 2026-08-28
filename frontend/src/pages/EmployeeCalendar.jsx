@@ -4,7 +4,7 @@ import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { 
   Calendar, ChevronLeft, ChevronRight, Clock, CheckCircle, 
-  AlertCircle, XCircle, FolderOpen, FileText
+  AlertCircle, FolderOpen, FileText, ChevronDown, ChevronUp
 } from 'lucide-react';
 import './EmployeeCalendar.css';
 
@@ -18,6 +18,8 @@ export default function EmployeeCalendar() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [tasksByDate, setTasksByDate] = useState({});
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [showYearPicker, setShowYearPicker] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -117,6 +119,19 @@ export default function EmployeeCalendar() {
     const newDate = new Date(currentDate);
     newDate.setMonth(newDate.getMonth() + delta);
     setCurrentDate(newDate);
+    setSelectedDate(null);
+  };
+
+  const changeYear = (delta) => {
+    const newDate = new Date(currentDate);
+    newDate.setFullYear(newDate.getFullYear() + delta);
+    setCurrentDate(newDate);
+    setSelectedDate(null);
+    setShowYearPicker(false);
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
     setSelectedDate(null);
   };
 
@@ -233,6 +248,12 @@ export default function EmployeeCalendar() {
   return (
     <>
       <Navbar />
+
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
+
       <div className="employee-calendar-container">
         <div className="calendar-header">
           <div className="calendar-header-content">
@@ -274,17 +295,83 @@ export default function EmployeeCalendar() {
             </div>
           ) : (
             <div className="calendar-wrapper">
+              {/* NAVEGACIÓN CON SELECCIONADORES DE MES Y AÑO */}
               <div className="calendar-nav">
-                <button onClick={() => changeMonth(-1)} className="nav-btn">
+                <button onClick={() => changeMonth(-1)} className="nav-btn" title="Mes anterior">
                   <ChevronLeft size={20} />
                 </button>
-                <span className="month-title">
-                  {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-                </span>
-                <button onClick={() => changeMonth(1)} className="nav-btn">
+                
+                <div className="month-year-selector">
+                  <button 
+                    className="month-selector-btn"
+                    onClick={() => setShowMonthPicker(!showMonthPicker)}
+                  >
+                    {monthNames[currentDate.getMonth()]}
+                    {showMonthPicker ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+                  
+                  <button 
+                    className="year-selector-btn"
+                    onClick={() => setShowYearPicker(!showYearPicker)}
+                  >
+                    {currentDate.getFullYear()}
+                    {showYearPicker ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+                  
+                  <button onClick={goToToday} className="today-btn">
+                    Hoy
+                  </button>
+                </div>
+
+                <button onClick={() => changeMonth(1)} className="nav-btn" title="Mes siguiente">
                   <ChevronRight size={20} />
                 </button>
               </div>
+
+              {/* Selector de mes rápido */}
+              {showMonthPicker && (
+                <div className="month-picker">
+                  {monthNames.map((month, index) => (
+                    <button
+                      key={index}
+                      className={`month-picker-item ${index === currentDate.getMonth() ? 'active' : ''}`}
+                      onClick={() => {
+                        const newDate = new Date(currentDate);
+                        newDate.setMonth(index);
+                        setCurrentDate(newDate);
+                        setSelectedDate(null);
+                        setShowMonthPicker(false);
+                      }}
+                    >
+                      {month}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Selector de año rápido */}
+              {showYearPicker && (
+                <div className="year-picker">
+                  {[-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5].map((offset) => {
+                    const year = new Date().getFullYear() + offset;
+                    return (
+                      <button
+                        key={year}
+                        className={`year-picker-item ${year === currentDate.getFullYear() ? 'active' : ''}`}
+                        onClick={() => {
+                          const newDate = new Date(currentDate);
+                          newDate.setFullYear(year);
+                          setCurrentDate(newDate);
+                          setSelectedDate(null);
+                          setShowYearPicker(false);
+                        }}
+                      >
+                        {year}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               <div className="calendar-grid">
                 {dayNames.map((day, index) => (

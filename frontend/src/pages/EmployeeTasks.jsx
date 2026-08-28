@@ -28,16 +28,12 @@ export default function EmployeeTasks() {
   const [taskEvidence, setTaskEvidence] = useState([]);
   const [loadingEvidence, setLoadingEvidence] = useState(false);
 
-  // ✅ Estado para el modal de confirmación de eliminación
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [evidenceToDelete, setEvidenceToDelete] = useState(null);
 
-  // ✅ Usar STATIC_URL importado (SIN /api/v1)
-  // ✅ CORREGIDO: Elimina /api/v1 si está presente en la URL
   const getFullUrl = (url) => {
     if (!url) return '';
     if (url.startsWith('http')) return url;
-    // ✅ Limpiar /api/v1 si existe
     let cleanUrl = url;
     if (cleanUrl.includes('/api/v1')) {
       cleanUrl = cleanUrl.replace('/api/v1', '');
@@ -45,13 +41,9 @@ export default function EmployeeTasks() {
     if (!cleanUrl.startsWith('/')) {
       cleanUrl = '/' + cleanUrl;
     }
-    console.log('📸 URL original:', url);
-    console.log('📸 URL limpia:', cleanUrl);
-    console.log('📸 URL final:', `${STATIC_URL}${cleanUrl}`);
     return `${STATIC_URL}${cleanUrl}`;
   };
 
-  // ✅ Formatear fecha
   const formatDate = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -120,11 +112,11 @@ export default function EmployeeTasks() {
       setTasks(tasks.map(task => 
         task.id === taskId ? { ...task, status: newStatus } : task
       ));
-      setMessage({ text: '✅ Estado actualizado', type: 'success' });
+      setMessage({ text: 'Estado actualizado', type: 'success' });
       setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     } catch (error) {
       console.error('Error:', error);
-      setMessage({ text: '❌ Error al actualizar estado', type: 'error' });
+      setMessage({ text: 'Error al actualizar estado', type: 'error' });
     } finally {
       setUpdatingStatus(false);
     }
@@ -135,7 +127,7 @@ export default function EmployeeTasks() {
       const file = e.target.files[0];
       setEvidenceFile(file);
       setMessage({ 
-        text: `📎 ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`, 
+        text: `${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`, 
         type: 'success' 
       });
       setTimeout(() => setMessage({ text: '', type: '' }), 3000);
@@ -144,7 +136,7 @@ export default function EmployeeTasks() {
 
   const handleUploadEvidence = async (taskId) => {
     if (!evidenceFile) {
-      setMessage({ text: '❌ Selecciona un archivo', type: 'error' });
+      setMessage({ text: 'Selecciona un archivo', type: 'error' });
       return;
     }
 
@@ -196,7 +188,7 @@ export default function EmployeeTasks() {
 
       await api.post(`/tasks/${taskId}/evidence/chunk/complete`, completeFormData);
 
-      setMessage({ text: '✅ Evidencia subida exitosamente', type: 'success' });
+      setMessage({ text: 'Evidencia subida exitosamente', type: 'success' });
       setEvidenceFile(null);
       setEvidenceComment('');
       setShowEvidenceModal(false);
@@ -210,32 +202,30 @@ export default function EmployeeTasks() {
 
     } catch (error) {
       console.error('Error al subir evidencia:', error);
-      setMessage({ text: '❌ Error al subir evidencia', type: 'error' });
+      setMessage({ text: 'Error al subir evidencia', type: 'error' });
       setUploadProgress(0);
     } finally {
       setUploading(false);
     }
   };
 
-  // ✅ Nueva función para mostrar modal de confirmación
   const handleDeleteClick = (evidenceId) => {
     const evidence = taskEvidence.find(e => e.id === evidenceId);
     setEvidenceToDelete(evidence);
     setShowConfirmDelete(true);
   };
 
-  // ✅ Confirmar eliminación
   const confirmDelete = async () => {
     if (!evidenceToDelete) return;
     
     try {
       await api.delete(`/tasks/evidence/${evidenceToDelete.id}`);
       setTaskEvidence(taskEvidence.filter(e => e.id !== evidenceToDelete.id));
-      setMessage({ text: '✅ Evidencia eliminada', type: 'success' });
+      setMessage({ text: 'Evidencia eliminada', type: 'success' });
       setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     } catch (error) {
       console.error('Error:', error);
-      setMessage({ text: '❌ Error al eliminar evidencia', type: 'error' });
+      setMessage({ text: 'Error al eliminar evidencia', type: 'error' });
     } finally {
       setShowConfirmDelete(false);
       setEvidenceToDelete(null);
@@ -329,7 +319,6 @@ export default function EmployeeTasks() {
     return fileName?.split('.').pop()?.toLowerCase() || '';
   };
 
-  // ✅ Obtener el nombre del archivo para el modal de confirmación
   const getEvidenceFileName = () => {
     if (!evidenceToDelete) return '';
     return evidenceToDelete.file_name || 'Archivo';
@@ -338,6 +327,12 @@ export default function EmployeeTasks() {
   return (
     <>
       <Navbar />
+
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
+
       <div className="employee-tasks-container">
         <div className="tasks-header">
           <div className="tasks-header-content">
@@ -415,9 +410,9 @@ export default function EmployeeTasks() {
                         }}
                         disabled={updatingStatus}
                       >
-                        <option value="pending">⏳ Pendiente</option>
-                        <option value="in_progress">🔄 En Progreso</option>
-                        <option value="completed">✅ Finalizado</option>
+                        <option value="pending">Pendiente</option>
+                        <option value="in_progress">En Progreso</option>
+                        <option value="completed">Finalizado</option>
                       </select>
                     </div>
 
@@ -442,7 +437,6 @@ export default function EmployeeTasks() {
                     </div>
                   </div>
 
-                  {/* ✅ FECHA DE ENTREGA DE LA TAREA */}
                   {task.due_date && (
                     <div className="task-footer">
                       <div className="task-due-date">
@@ -581,7 +575,7 @@ export default function EmployeeTasks() {
                             <span>{new Date(evidence.created_at).toLocaleDateString('es-MX')}</span>
                           </div>
                           {evidence.comment && (
-                            <div className="evidence-comment-text">💬 {evidence.comment}</div>
+                            <div className="evidence-comment-text">Comentario: {evidence.comment}</div>
                           )}
                         </div>
                         <div className="evidence-actions">
@@ -621,7 +615,7 @@ export default function EmployeeTasks() {
         </div>
       )}
 
-      {/* ✅ MODAL DE CONFIRMACIÓN DE ELIMINACIÓN PERSONALIZADO */}
+      {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
       {showConfirmDelete && evidenceToDelete && (
         <div className="confirm-overlay">
           <div className="confirm-modal">

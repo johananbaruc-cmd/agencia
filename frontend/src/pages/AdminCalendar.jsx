@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import api, { STATIC_URL } from '../services/api';
+import api from '../services/api';
 import Navbar from '../components/Navbar';
 import { 
   Calendar, ChevronLeft, ChevronRight, Clock, CheckCircle, 
-  AlertCircle, XCircle, FolderOpen, FileText, User, Users, 
-  Filter, ChevronDown, Eye
+  AlertCircle, FolderOpen, User, ChevronDown, ChevronUp
 } from 'lucide-react';
 import './AdminCalendar.css';
 
@@ -21,6 +20,8 @@ export default function AdminCalendar() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [tasksByDate, setTasksByDate] = useState({});
   const [message, setMessage] = useState({ text: '', type: '' });
+  const [showYearPicker, setShowYearPicker] = useState(false);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
 
   useEffect(() => {
     fetchInitialData();
@@ -117,23 +118,17 @@ export default function AdminCalendar() {
     }
   };
 
-  // ✅ Función corregida para obtener los días del mes
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
     const month = date.getMonth();
     
-    // Primer día del mes
     const firstDay = new Date(year, month, 1);
-    // Último día del mes
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-    
-    // Día de la semana del primer día (0 = Domingo, 1 = Lunes, ...)
     const startingDayOfWeek = firstDay.getDay();
     
     const days = [];
     
-    // Días del mes anterior (para completar la primera semana)
     const prevMonthLastDay = new Date(year, month, 0).getDate();
     for (let i = startingDayOfWeek - 1; i >= 0; i--) {
       days.push({
@@ -143,7 +138,6 @@ export default function AdminCalendar() {
       });
     }
     
-    // Días del mes actual
     for (let i = 1; i <= daysInMonth; i++) {
       days.push({
         day: i,
@@ -152,7 +146,6 @@ export default function AdminCalendar() {
       });
     }
     
-    // Días del mes siguiente (para completar la última semana)
     const remainingDays = 42 - days.length;
     for (let i = 1; i <= remainingDays; i++) {
       days.push({
@@ -169,6 +162,19 @@ export default function AdminCalendar() {
     const newDate = new Date(currentDate);
     newDate.setMonth(newDate.getMonth() + delta);
     setCurrentDate(newDate);
+    setSelectedDate(null);
+  };
+
+  const changeYear = (delta) => {
+    const newDate = new Date(currentDate);
+    newDate.setFullYear(newDate.getFullYear() + delta);
+    setCurrentDate(newDate);
+    setSelectedDate(null);
+    setShowYearPicker(false);
+  };
+
+  const goToToday = () => {
+    setCurrentDate(new Date());
     setSelectedDate(null);
   };
 
@@ -290,7 +296,15 @@ export default function AdminCalendar() {
   return (
     <>
       <Navbar />
+      
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
+
       <div className="admin-calendar-container">
+
+        {/* HEADER */}
         <div className="calendar-header">
           <div className="calendar-header-content">
             <div className="calendar-title">
@@ -361,16 +375,79 @@ export default function AdminCalendar() {
           ) : (
             <div className="calendar-wrapper">
               <div className="calendar-nav">
-                <button onClick={() => changeMonth(-1)} className="nav-btn">
+                <button onClick={() => changeMonth(-1)} className="nav-btn" title="Mes anterior">
                   <ChevronLeft size={20} />
                 </button>
-                <span className="month-title">
-                  {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-                </span>
-                <button onClick={() => changeMonth(1)} className="nav-btn">
+                
+                <div className="month-year-selector">
+                  <button 
+                    className="month-selector-btn"
+                    onClick={() => setShowMonthPicker(!showMonthPicker)}
+                  >
+                    {monthNames[currentDate.getMonth()]}
+                    {showMonthPicker ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+                  
+                  <button 
+                    className="year-selector-btn"
+                    onClick={() => setShowYearPicker(!showYearPicker)}
+                  >
+                    {currentDate.getFullYear()}
+                    {showYearPicker ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  </button>
+                  
+                  <button onClick={goToToday} className="today-btn">
+                    Hoy
+                  </button>
+                </div>
+
+                <button onClick={() => changeMonth(1)} className="nav-btn" title="Mes siguiente">
                   <ChevronRight size={20} />
                 </button>
               </div>
+
+              {showMonthPicker && (
+                <div className="month-picker">
+                  {monthNames.map((month, index) => (
+                    <button
+                      key={index}
+                      className={`month-picker-item ${index === currentDate.getMonth() ? 'active' : ''}`}
+                      onClick={() => {
+                        const newDate = new Date(currentDate);
+                        newDate.setMonth(index);
+                        setCurrentDate(newDate);
+                        setSelectedDate(null);
+                        setShowMonthPicker(false);
+                      }}
+                    >
+                      {month}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {showYearPicker && (
+                <div className="year-picker">
+                  {[-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5].map((offset) => {
+                    const year = new Date().getFullYear() + offset;
+                    return (
+                      <button
+                        key={year}
+                        className={`year-picker-item ${year === currentDate.getFullYear() ? 'active' : ''}`}
+                        onClick={() => {
+                          const newDate = new Date(currentDate);
+                          newDate.setFullYear(year);
+                          setCurrentDate(newDate);
+                          setSelectedDate(null);
+                          setShowYearPicker(false);
+                        }}
+                      >
+                        {year}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               <div className="calendar-grid">
                 {dayNames.map((day, index) => (
@@ -394,13 +471,13 @@ export default function AdminCalendar() {
                     if (priorityInfo.type === 'single') {
                       const color = priorityInfo.color;
                       dayStyle = {
-                        background: color + '30'
+                        background: color + '25'
                       };
                       borderColor = color + '50';
                     } else {
                       const gradientStops = priorityInfo.segments.map((seg, idx) => {
                         const start = idx === 0 ? 0 : priorityInfo.segments.slice(0, idx).reduce((sum, s) => sum + s.percentage, 0);
-                        return `${seg.color}30 ${start}% ${start + seg.percentage}%`;
+                        return `${seg.color}25 ${start}% ${start + seg.percentage}%`;
                       }).join(', ');
                       dayStyle = {
                         background: `linear-gradient(to right, ${gradientStops})`
@@ -437,9 +514,7 @@ export default function AdminCalendar() {
                               key={idx}
                               className="priority-dot"
                               style={{ backgroundColor: seg.color }}
-                              title={`${getPriorityLabel(
-                                ['urgent', 'high', 'medium', 'low'][idx] || 'tarea'
-                              )}: ${seg.count} tarea${seg.count > 1 ? 's' : ''}`}
+                              title={`${Object.keys(getPrioritySolidColor()).find(k => getPrioritySolidColor(k) === seg.color) || 'tarea'}: ${seg.count} tarea${seg.count > 1 ? 's' : ''}`}
                             />
                           ))}
                         </div>
@@ -449,7 +524,6 @@ export default function AdminCalendar() {
                 })}
               </div>
 
-              {/* Tareas del día seleccionado */}
               {selectedDate && (
                 <div className="selected-date-tasks">
                   <div className="selected-date-header">
@@ -464,7 +538,7 @@ export default function AdminCalendar() {
 
                   {tasksOnSelectedDate.length === 0 ? (
                     <div className="empty-tasks">
-                      <FileText size={32} />
+                      <Clock size={32} />
                       <p>No hay tareas para esta fecha</p>
                     </div>
                   ) : (

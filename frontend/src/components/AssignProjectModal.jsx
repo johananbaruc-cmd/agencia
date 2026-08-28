@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Check, FolderOpen, Plus, Clock, CheckCircle, AlertCircle, Trash2, Save, Users, FileText, Calendar } from 'lucide-react';
 import api from '../services/api';
+import './AssignProjectModal.css';
 
 export default function AssignProjectModal({ 
   isOpen, 
@@ -15,7 +16,6 @@ export default function AssignProjectModal({
   const [assignedProjects, setAssignedProjects] = useState([]);
   const [message, setMessage] = useState({ text: '', type: '' });
   
-  // Estado para tareas en proyectos asignados
   const [expandedProject, setExpandedProject] = useState(null);
   const [projectTasks, setProjectTasks] = useState({});
   const [loadingTasks, setLoadingTasks] = useState({});
@@ -27,8 +27,6 @@ export default function AssignProjectModal({
     due_date: ''
   });
   const [creatingTask, setCreatingTask] = useState(false);
-  
-  // Pestaña activa: 'assign' o 'tasks'
   const [activeTab, setActiveTab] = useState('assign');
 
   useEffect(() => {
@@ -79,14 +77,12 @@ export default function AssignProjectModal({
     }
   };
 
-  // ✅ CORREGIDO: Muestra TODAS las tareas del proyecto, no solo las del empleado
   const fetchProjectTasks = async (projectId) => {
     if (projectTasks[projectId]) return;
     
     setLoadingTasks(prev => ({ ...prev, [projectId]: true }));
     try {
       const response = await api.get(`/tasks/projects/${projectId}/tasks`);
-      // ✅ Todas las tareas del proyecto (sin filtrar por empleado)
       setProjectTasks(prev => ({ ...prev, [projectId]: response.data }));
     } catch (error) {
       console.error('Error cargando tareas:', error);
@@ -223,301 +219,135 @@ export default function AssignProjectModal({
     });
   };
 
-  if (!isOpen || !employee) return null;
-
   const getStatusText = (status) => {
-    const map = {
-      pending: 'Pendiente',
-      in_progress: 'En Progreso',
-      completed: 'Completado',
-      cancelled: 'Cancelado'
-    };
+    const map = { pending: 'Pendiente', in_progress: 'En Progreso', completed: 'Completado', cancelled: 'Cancelado' };
     return map[status] || status;
   };
 
   const getStatusColor = (status) => {
-    const map = {
-      pending: '#f59e0b',
-      in_progress: '#3b82f6',
-      completed: '#10b981',
-      cancelled: '#ef4444'
-    };
+    const map = { pending: '#f59e0b', in_progress: '#3b82f6', completed: '#10b981', cancelled: '#ef4444' };
     return map[status] || '#6b7280';
   };
 
   const getTaskStatusIcon = (status) => {
-    if (status === 'completed') {
-      return <CheckCircle size={14} style={{ color: '#10b981' }} />;
-    } else if (status === 'in_progress') {
-      return <Clock size={14} style={{ color: '#3b82f6' }} />;
-    } else {
-      return <AlertCircle size={14} style={{ color: '#f59e0b' }} />;
-    }
+    if (status === 'completed') return <CheckCircle size={14} style={{ color: '#10b981' }} />;
+    if (status === 'in_progress') return <Clock size={14} style={{ color: '#3b82f6' }} />;
+    return <AlertCircle size={14} style={{ color: '#f59e0b' }} />;
   };
 
   const getTaskStatusLabel = (status) => {
-    const map = {
-      pending: 'Pendiente',
-      in_progress: 'En Progreso',
-      completed: 'Finalizado'
-    };
+    const map = { pending: 'Pendiente', in_progress: 'En Progreso', completed: 'Finalizado' };
     return map[status] || status;
   };
 
   const getPriorityColor = (priority) => {
-    const map = {
-      low: '#10b981',
-      medium: '#f59e0b',
-      high: '#ef4444',
-      urgent: '#dc2626'
-    };
+    const map = { low: '#10b981', medium: '#f59e0b', high: '#ef4444', urgent: '#dc2626' };
     return map[priority] || '#6b7280';
   };
 
   const getPriorityLabel = (priority) => {
-    const map = {
-      low: 'Baja',
-      medium: 'Media',
-      high: 'Alta',
-      urgent: 'Urgente'
-    };
+    const map = { low: 'Baja', medium: 'Media', high: 'Alta', urgent: 'Urgente' };
     return map[priority] || priority;
   };
 
+  if (!isOpen || !employee) return null;
+
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px' }}>
-        <div className="modal-header">
-          <h2>Gestionar Proyectos de {employee?.name}</h2>
-          <button className="modal-close" onClick={onClose}>
+    <div className="assign-modal-overlay" onClick={onClose}>
+      <div className="assign-modal-container" onClick={(e) => e.stopPropagation()}>
+
+        <div className="assign-modal-header">
+          <h2>Gestionar Proyectos</h2>
+          <button className="assign-modal-close" onClick={onClose}>
             <X size={18} />
           </button>
         </div>
 
-        <div className="modal-body">
-          {/* Información del empleado */}
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '12px',
-            padding: '12px',
-            background: 'rgba(255,255,255,0.05)',
-            borderRadius: '8px',
-            marginBottom: '16px'
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '10px',
-              background: 'rgba(59,130,246,0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#3b82f6',
-              fontWeight: 'bold',
-              fontSize: '16px'
-            }}>
+        <div className="assign-modal-body">
+          {/* Info del empleado */}
+          <div className="employee-info-card">
+            <div className="employee-avatar-small">
               {employee.name?.charAt(0) || 'E'}
             </div>
-            <div>
-              <div style={{ color: 'white', fontWeight: 600 }}>{employee.name}</div>
-              <div style={{ color: '#94a3b8', fontSize: '0.8rem' }}>{employee.email}</div>
-              <div style={{ color: '#60a5fa', fontSize: '0.7rem' }}>
-                {employee.profession || 'Sin profesión'}
-              </div>
+            <div className="employee-info-text">
+              <div className="employee-name-modal">{employee.name}</div>
+              <div className="employee-email-modal">{employee.email}</div>
+              <div className="employee-profession">{employee.profession || 'Sin profesión'}</div>
             </div>
           </div>
 
           {/* Mensaje */}
           {message.text && (
-            <div className={`message-floating ${message.type}`} style={{ 
-              position: 'relative', 
-              top: 0, 
-              right: 0, 
-              marginBottom: '12px',
-              width: '100%'
-            }}>
+            <div className={`assign-message ${message.type}`}>
               {message.text}
             </div>
           )}
 
           {/* Pestañas */}
-          <div style={{
-            display: 'flex',
-            gap: '4px',
-            marginBottom: '16px',
-            background: 'rgba(255,255,255,0.05)',
-            padding: '4px',
-            borderRadius: '8px',
-            border: '1px solid rgba(255,255,255,0.06)'
-          }}>
+          <div className="assign-tabs">
             <button
               onClick={() => setActiveTab('assign')}
-              style={{
-                flex: 1,
-                padding: '8px 16px',
-                borderRadius: '6px',
-                border: 'none',
-                background: activeTab === 'assign' ? 'rgba(59,130,246,0.2)' : 'transparent',
-                color: activeTab === 'assign' ? '#60a5fa' : '#94a3b8',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                fontSize: '0.85rem',
-                transition: 'all 0.2s'
-              }}
+              className={`assign-tab ${activeTab === 'assign' ? 'active' : ''}`}
             >
               <Users size={16} />
               Asignar Proyectos
-              <span style={{
-                background: 'rgba(255,255,255,0.1)',
-                padding: '1px 8px',
-                borderRadius: '12px',
-                fontSize: '0.7rem'
-              }}>
-                {projects.length}
-              </span>
+              <span className="assign-tab-badge">{projects.length}</span>
             </button>
             <button
               onClick={() => {
                 setActiveTab('tasks');
                 assignedProjects.forEach(p => fetchProjectTasks(p.id));
               }}
-              style={{
-                flex: 1,
-                padding: '8px 16px',
-                borderRadius: '6px',
-                border: 'none',
-                background: activeTab === 'tasks' ? 'rgba(59,130,246,0.2)' : 'transparent',
-                color: activeTab === 'tasks' ? '#60a5fa' : '#94a3b8',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                fontSize: '0.85rem',
-                transition: 'all 0.2s'
-              }}
+              className={`assign-tab ${activeTab === 'tasks' ? 'active' : ''}`}
             >
               <FileText size={16} />
               Gestionar Tareas
-              <span style={{
-                background: 'rgba(255,255,255,0.1)',
-                padding: '1px 8px',
-                borderRadius: '12px',
-                fontSize: '0.7rem'
-              }}>
-                {assignedProjects.length}
-              </span>
+              <span className="assign-tab-badge">{assignedProjects.length}</span>
             </button>
           </div>
 
-          {/* Contenido de la pestaña "Asignar Proyectos" */}
+          {/* Pestaña Asignar */}
           {activeTab === 'assign' && (
             <>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between', 
-                alignItems: 'center',
-                marginBottom: '12px',
-                padding: '0 4px'
-              }}>
-                <span style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
-                  Proyectos disponibles
-                </span>
-                <span style={{ color: '#60a5fa', fontSize: '0.8rem' }}>
-                  Seleccionados: {selectedProjects.length}
-                </span>
+              <div className="assign-header-info">
+                <span>Proyectos disponibles</span>
+                <span>Seleccionados: {selectedProjects.length}</span>
               </div>
 
               {loading ? (
-                <div className="loading-state">
-                  <div className="loading-spinner"></div>
+                <div className="assign-loading">
+                  <div className="loading-spinner-small"></div>
                 </div>
               ) : projects.length === 0 ? (
-                <div style={{ 
-                  textAlign: 'center', 
-                  padding: '40px 0',
-                  color: '#94a3b8'
-                }}>
-                  <FolderOpen size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
+                <div className="assign-empty">
+                  <FolderOpen size={32} />
                   <p>No hay proyectos disponibles</p>
                 </div>
               ) : (
-                <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '4px' }}>
+                <div className="assign-project-list">
                   {projects.map((project) => {
                     const isSelected = selectedProjects.includes(project.id);
-                    
                     return (
                       <div
                         key={project.id}
                         onClick={() => handleToggleProject(project.id)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          padding: '10px 14px',
-                          marginBottom: '6px',
-                          borderRadius: '8px',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          background: isSelected ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.03)',
-                          border: `1px solid ${isSelected ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.06)'}`
-                        }}
+                        className={`assign-project-item ${isSelected ? 'selected' : ''}`}
                       >
-                        <div style={{
-                          width: '36px',
-                          height: '36px',
-                          borderRadius: '8px',
-                          background: 'rgba(59,130,246,0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#3b82f6',
-                          flexShrink: 0
-                        }}>
+                        <div className="assign-project-icon">
                           <FolderOpen size={16} />
                         </div>
-
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ 
-                            color: 'white', 
-                            fontSize: '0.9rem', 
-                            fontWeight: 500
-                          }}>
-                            {project.name}
-                          </div>
-                          <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '8px',
-                            fontSize: '0.7rem',
-                            color: '#94a3b8',
-                            flexWrap: 'wrap'
-                          }}>
+                        <div className="assign-project-info">
+                          <div className="assign-project-name">{project.name}</div>
+                          <div className="assign-project-meta">
                             <span>Cliente: {project.client_name || 'Sin cliente'}</span>
-                            <span>•</span>
+                            <span className="assign-dot">•</span>
                             <span style={{ color: getStatusColor(project.status) }}>
                               {getStatusText(project.status)}
                             </span>
                           </div>
                         </div>
-
-                        <div style={{
-                          width: '22px',
-                          height: '22px',
-                          borderRadius: '4px',
-                          border: `2px solid ${isSelected ? '#3b82f6' : '#94a3b8'}`,
-                          background: isSelected ? '#3b82f6' : 'transparent',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.2s',
-                          flexShrink: 0
-                        }}>
-                          {isSelected && <Check size={14} color="white" />}
+                        <div className={`assign-checkbox ${isSelected ? 'checked' : ''}`}>
+                          {isSelected && <Check size={14} />}
                         </div>
                       </div>
                     );
@@ -527,246 +357,103 @@ export default function AssignProjectModal({
             </>
           )}
 
-          {/* Contenido de la pestaña "Gestionar Tareas" */}
+          {/* Pestaña Tareas */}
           {activeTab === 'tasks' && (
             <>
               {assignedProjects.length === 0 ? (
-                <div style={{ 
-                  textAlign: 'center', 
-                  padding: '40px 0',
-                  color: '#94a3b8'
-                }}>
-                  <FileText size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />
+                <div className="assign-empty">
+                  <FileText size={32} />
                   <p>No hay proyectos asignados</p>
-                  <p style={{ fontSize: '0.8rem', marginTop: '4px' }}>
-                    Asigna proyectos primero en la pestaña "Asignar Proyectos"
-                  </p>
+                  <span>Asigna proyectos primero</span>
                 </div>
               ) : (
-                <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '4px' }}>
+                <div className="assign-task-list">
                   {assignedProjects.map((project) => {
                     const isExpanded = expandedProject === project.id;
                     const tasks = projectTasks[project.id] || [];
-                    const loadingTasksForProject = loadingTasks[project.id];
+                    const isLoadingTasks = loadingTasks[project.id];
                     const isTaskFormVisible = showTaskForm === project.id;
                     
                     return (
-                      <div key={project.id} style={{ marginBottom: '12px' }}>
-                        {/* Proyecto asignado */}
+                      <div key={project.id} className="assign-task-group">
                         <div
                           onClick={() => handleExpandProject(project.id)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '12px',
-                            padding: '10px 14px',
-                            borderRadius: '8px',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            background: isExpanded ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.03)',
-                            border: `1px solid ${isExpanded ? 'rgba(59,130,246,0.3)' : 'rgba(255,255,255,0.06)'}`
-                          }}
+                          className={`assign-task-project ${isExpanded ? 'expanded' : ''}`}
                         >
-                          <div style={{
-                            width: '36px',
-                            height: '36px',
-                            borderRadius: '8px',
-                            background: 'rgba(59,130,246,0.1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: '#3b82f6',
-                            flexShrink: 0
-                          }}>
+                          <div className="assign-project-icon">
                             <FolderOpen size={16} />
                           </div>
-
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ color: 'white', fontSize: '0.9rem', fontWeight: 500 }}>
-                              {project.name}
-                            </div>
-                            <div style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '8px',
-                              fontSize: '0.7rem',
-                              color: '#94a3b8'
-                            }}>
-                              <span>Cliente: {project.client_name || 'Sin cliente'}</span>
-                              <span>•</span>
+                          <div className="assign-project-info">
+                            <div className="assign-project-name">{project.name}</div>
+                            <div className="assign-project-meta">
                               <span>Tareas: {tasks.length}</span>
                             </div>
                           </div>
-
-                          <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                          <div className="assign-expand-icon">
                             {isExpanded ? '▲' : '▼'}
                           </div>
                         </div>
 
-                        {/* Tareas del proyecto */}
                         {isExpanded && (
-                          <div style={{
-                            marginTop: '8px',
-                            padding: '8px 12px',
-                            marginLeft: '48px',
-                            background: 'rgba(255,255,255,0.03)',
-                            borderRadius: '6px',
-                            border: '1px solid rgba(255,255,255,0.06)'
-                          }}>
-                            {/* Botón para crear tarea */}
+                          <div className="assign-task-sub">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setShowTaskForm(isTaskFormVisible ? null : project.id);
                                 setNewTask({ title: '', description: '', priority: 'medium', due_date: '' });
                               }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                padding: '4px 12px',
-                                marginBottom: '8px',
-                                borderRadius: '4px',
-                                border: '1px solid rgba(59,130,246,0.3)',
-                                background: 'rgba(59,130,246,0.15)',
-                                color: '#60a5fa',
-                                fontSize: '0.75rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(59,130,246,0.3)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'rgba(59,130,246,0.15)';
-                              }}
+                              className="assign-add-task-btn"
                             >
                               <Plus size={14} />
                               Nueva Tarea
                             </button>
 
-                            {/* Formulario crear tarea */}
                             {isTaskFormVisible && (
-                              <div style={{
-                                background: 'rgba(255,255,255,0.05)',
-                                padding: '12px',
-                                borderRadius: '6px',
-                                marginBottom: '12px',
-                                border: '1px solid rgba(59,130,246,0.2)'
-                              }}>
+                              <div className="assign-task-form">
                                 <input
                                   type="text"
                                   placeholder="Título de la tarea *"
                                   value={newTask.title}
                                   onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                                  style={{
-                                    width: '100%',
-                                    padding: '6px 10px',
-                                    marginBottom: '6px',
-                                    borderRadius: '4px',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    color: 'white',
-                                    fontSize: '0.85rem'
-                                  }}
+                                  className="assign-task-input"
                                 />
                                 <textarea
                                   placeholder="Descripción (opcional)"
                                   value={newTask.description}
                                   onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                                  style={{
-                                    width: '100%',
-                                    padding: '6px 10px',
-                                    marginBottom: '6px',
-                                    borderRadius: '4px',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                    color: 'white',
-                                    fontSize: '0.85rem',
-                                    resize: 'vertical',
-                                    minHeight: '40px'
-                                  }}
+                                  className="assign-task-textarea"
                                   rows="2"
                                 />
-                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <div className="assign-task-form-row">
                                   <select
                                     value={newTask.priority}
                                     onChange={(e) => setNewTask({ ...newTask, priority: e.target.value })}
-                                    style={{
-                                      padding: '6px 10px',
-                                      borderRadius: '4px',
-                                      background: 'rgba(255,255,255,0.05)',
-                                      border: '1px solid rgba(255,255,255,0.1)',
-                                      color: 'white',
-                                      fontSize: '0.8rem',
-                                      flex: 1,
-                                      minWidth: '100px'
-                                    }}
+                                    className="assign-task-select"
                                   >
                                     <option value="low">🟢 Baja</option>
                                     <option value="medium">🟡 Media</option>
                                     <option value="high">🟠 Alta</option>
                                     <option value="urgent">🔴 Urgente</option>
                                   </select>
-
-                                  <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    flex: 1,
-                                    minWidth: '150px',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    borderRadius: '4px',
-                                    padding: '0 8px',
-                                    border: '1px solid rgba(255,255,255,0.1)'
-                                  }}>
-                                    <Calendar size={16} style={{ color: '#94a3b8' }} />
+                                  <div className="assign-task-date">
+                                    <Calendar size={14} />
                                     <input
                                       type="date"
                                       value={newTask.due_date}
                                       onChange={(e) => setNewTask({ ...newTask, due_date: e.target.value })}
-                                      style={{
-                                        width: '100%',
-                                        padding: '6px 0',
-                                        background: 'transparent',
-                                        border: 'none',
-                                        outline: 'none',
-                                        color: 'white',
-                                        fontSize: '0.85rem'
-                                      }}
+                                      className="assign-task-date-input"
                                     />
                                   </div>
-
-                                  <span style={{ 
-                                    fontSize: '0.7rem', 
-                                    color: '#94a3b8',
-                                    padding: '4px 8px',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    borderRadius: '4px',
-                                    whiteSpace: 'nowrap'
-                                  }}>
-                                    Estado: Pendiente
-                                  </span>
+                                  <span className="assign-task-status-badge">Pendiente</span>
                                 </div>
-                                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                <div className="assign-task-actions">
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleCreateTask(project.id);
                                     }}
                                     disabled={creatingTask}
-                                    style={{
-                                      padding: '6px 16px',
-                                      borderRadius: '4px',
-                                      border: 'none',
-                                      background: '#3b82f6',
-                                      color: 'white',
-                                      fontSize: '0.8rem',
-                                      cursor: 'pointer',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '4px'
-                                    }}
+                                    className="assign-task-save"
                                   >
                                     <Save size={14} />
                                     {creatingTask ? 'Creando...' : 'Crear Tarea'}
@@ -776,15 +463,7 @@ export default function AssignProjectModal({
                                       e.stopPropagation();
                                       setShowTaskForm(null);
                                     }}
-                                    style={{
-                                      padding: '6px 16px',
-                                      borderRadius: '4px',
-                                      border: '1px solid rgba(255,255,255,0.1)',
-                                      background: 'transparent',
-                                      color: '#94a3b8',
-                                      fontSize: '0.8rem',
-                                      cursor: 'pointer'
-                                    }}
+                                    className="assign-task-cancel"
                                   >
                                     Cancelar
                                   </button>
@@ -792,78 +471,32 @@ export default function AssignProjectModal({
                               </div>
                             )}
 
-                            {/* Lista de tareas */}
-                            {loadingTasksForProject ? (
-                              <div style={{ textAlign: 'center', padding: '8px', color: '#94a3b8' }}>
-                                <div className="loading-spinner" style={{ width: '20px', height: '20px' }}></div>
+                            {isLoadingTasks ? (
+                              <div className="assign-loading-tasks">
+                                <div className="loading-spinner-small"></div>
                               </div>
                             ) : tasks.length === 0 ? (
-                              <div style={{ 
-                                textAlign: 'center', 
-                                padding: '12px', 
-                                color: '#64748b',
-                                fontSize: '0.8rem'
-                              }}>
-                                No hay tareas en este proyecto
-                              </div>
+                              <div className="assign-no-tasks">No hay tareas en este proyecto</div>
                             ) : (
                               tasks.map((task) => (
-                                <div
-                                  key={task.id}
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '8px',
-                                    padding: '6px 8px',
-                                    marginBottom: '4px',
-                                    borderRadius: '4px',
-                                    background: task.status === 'completed' ? 'rgba(16,185,129,0.05)' : 'transparent',
-                                    border: '1px solid rgba(255,255,255,0.04)'
-                                  }}
-                                >
+                                <div key={task.id} className="assign-task-item">
                                   {getTaskStatusIcon(task.status)}
-                                  <span style={{
-                                    color: task.status === 'completed' ? '#94a3b8' : 'white',
-                                    textDecoration: task.status === 'completed' ? 'line-through' : 'none',
-                                    fontSize: '0.85rem',
-                                    flex: 1
-                                  }}>
+                                  <span className={`assign-task-title ${task.status === 'completed' ? 'completed' : ''}`}>
                                     {task.title}
                                   </span>
                                   {task.due_date && (
-                                    <span style={{
-                                      fontSize: '0.6rem',
-                                      color: '#94a3b8',
-                                      padding: '1px 6px',
-                                      background: 'rgba(255,255,255,0.05)',
-                                      borderRadius: '3px',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '3px'
-                                    }}>
+                                    <span className="assign-task-date-badge">
                                       <Calendar size={10} />
                                       {formatDate(task.due_date)}
                                     </span>
                                   )}
-                                  <span style={{
-                                    fontSize: '0.6rem',
-                                    color: getPriorityColor(task.priority),
-                                    background: `${getPriorityColor(task.priority)}22`,
-                                    padding: '1px 6px',
-                                    borderRadius: '3px'
-                                  }}>
+                                  <span 
+                                    className="assign-task-priority"
+                                    style={{ color: getPriorityColor(task.priority) }}
+                                  >
                                     {getPriorityLabel(task.priority)}
                                   </span>
-                                  <span style={{
-                                    fontSize: '0.55rem',
-                                    color: task.status === 'completed' ? '#10b981' : 
-                                           task.status === 'in_progress' ? '#3b82f6' : '#f59e0b',
-                                    padding: '1px 6px',
-                                    borderRadius: '3px',
-                                    background: task.status === 'completed' ? 'rgba(16,185,129,0.1)' : 
-                                              task.status === 'in_progress' ? 'rgba(59,130,246,0.1)' : 
-                                              'rgba(245,158,11,0.1)'
-                                  }}>
+                                  <span className={`assign-task-status ${task.status}`}>
                                     {getTaskStatusLabel(task.status)}
                                   </span>
                                   <button
@@ -871,18 +504,7 @@ export default function AssignProjectModal({
                                       e.stopPropagation();
                                       handleDeleteTask(task.id, project.id);
                                     }}
-                                    style={{
-                                      background: 'none',
-                                      border: 'none',
-                                      color: '#94a3b8',
-                                      cursor: 'pointer',
-                                      padding: '4px',
-                                      borderRadius: '4px',
-                                      display: 'flex',
-                                      alignItems: 'center'
-                                    }}
-                                    onMouseEnter={(e) => e.currentTarget.style.color = '#ef4444'}
-                                    onMouseLeave={(e) => e.currentTarget.style.color = '#94a3b8'}
+                                    className="assign-task-delete"
                                   >
                                     <Trash2 size={14} />
                                   </button>
@@ -900,33 +522,26 @@ export default function AssignProjectModal({
           )}
         </div>
 
-        <div className="modal-footer">
+        <div className="assign-modal-footer">
           {activeTab === 'assign' && (
             <button
               onClick={handleSubmit}
               disabled={submitting || loading}
-              className="btn-modal-primary"
-              style={{ flex: 1 }}
+              className="assign-btn-primary"
             >
               {submitting ? 'Guardando...' : 'Guardar Asignaciones'}
             </button>
           )}
           {activeTab === 'tasks' && (
-            <button
-              onClick={onClose}
-              className="btn-modal-primary"
-              style={{ flex: 1 }}
-            >
+            <button onClick={onClose} className="assign-btn-primary">
               Cerrar
             </button>
           )}
-          <button
-            onClick={onClose}
-            className="btn-modal-secondary"
-          >
+          <button onClick={onClose} className="assign-btn-secondary">
             Cancelar
           </button>
         </div>
+
       </div>
     </div>
   );

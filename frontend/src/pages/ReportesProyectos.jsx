@@ -13,7 +13,8 @@ import {
   X,
   DollarSign,
   User,
-  Clock
+  Clock,
+  FolderOpen
 } from 'lucide-react';
 import './ReportesProyectos.css';
 
@@ -34,36 +35,30 @@ const ReportesProyectos = () => {
         const response = await api.get('/projects');
         const proyectosData = response.data;
         
-        // 🔥 Obtener el progreso del último reporte para cada proyecto
         const proyectosConProgreso = await Promise.all(
           proyectosData.map(async (proyecto) => {
             try {
-              // Obtener los reportes del proyecto
               const reportesResponse = await api.get(`/proyectos/${proyecto.id}/reportes`);
               const reportes = reportesResponse.data;
               
-              // Si hay reportes, obtener el último (el más reciente)
               let ultimoProgreso = proyecto.progress || 0;
               
               if (reportes && reportes.length > 0) {
-                // Ordenar por fecha de creación (el más reciente primero)
                 const reportesOrdenados = reportes.sort((a, b) => 
                   new Date(b.created_at) - new Date(a.created_at)
                 );
                 const ultimoReporte = reportesOrdenados[0];
                 
-                // Usar el progreso del último reporte si existe
                 if (ultimoReporte.progreso !== undefined && ultimoReporte.progreso !== null) {
                   ultimoProgreso = ultimoReporte.progreso;
                 }
                 
-                // También guardar el último reporte para mostrarlo
                 proyecto.ultimo_reporte = ultimoReporte;
               }
               
               return {
                 ...proyecto,
-                progress: ultimoProgreso,  // 🔥 Sobrescribir con el progreso del último reporte
+                progress: ultimoProgreso,
                 ultimo_reporte_progreso: ultimoProgreso
               };
             } catch (error) {
@@ -146,6 +141,9 @@ const ReportesProyectos = () => {
     return (
       <>
         <Navbar />
+        <div className="orb orb-blue"></div>
+        <div className="orb orb-cyan"></div>
+        <div className="bg-gradient"></div>
         <div className="reportes-container">
           <div className="reportes-loading">
             <div className="loading-spinner"></div>
@@ -160,6 +158,9 @@ const ReportesProyectos = () => {
     return (
       <>
         <Navbar />
+        <div className="orb orb-blue"></div>
+        <div className="orb orb-cyan"></div>
+        <div className="bg-gradient"></div>
         <div className="reportes-container">
           <div className="reportes-main">
             <div className="error-message">{error}</div>
@@ -172,6 +173,12 @@ const ReportesProyectos = () => {
   return (
     <>
       <Navbar />
+
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
+
       <div className="reportes-container">
         {/* HEADER */}
         <header className="reportes-header">
@@ -219,7 +226,7 @@ const ReportesProyectos = () => {
           {/* GRID */}
           {filteredProyectos.length === 0 ? (
             <div className="reportes-empty">
-              <div className="empty-icon">📂</div>
+              <FolderOpen size={48} className="empty-icon" />
               <h3>No hay proyectos disponibles</h3>
               <p>Crea un nuevo proyecto para comenzar a generar reportes.</p>
               <Link to="/projects/new" className="btn-primary" style={{ display: 'inline-flex' }}>
@@ -269,7 +276,6 @@ const ReportesProyectos = () => {
                       </div>
                     </div>
 
-                    {/* 🔥 Barra de progreso - usa el progreso del último reporte */}
                     <div className="progress-bar">
                       <div
                         className="progress-fill"
@@ -280,7 +286,6 @@ const ReportesProyectos = () => {
                       />
                     </div>
                     
-                    {/* 🔥 Mostrar información del último reporte */}
                     {proyecto.ultimo_reporte && (
                       <div className="ultimo-reporte-info">
                         <span className="ultimo-reporte-label">
@@ -333,12 +338,10 @@ const ReportesProyectos = () => {
 
             {/* BODY */}
             <div className="modal-body">
-              {/* Badge de estado */}
               <div className={`modal-status-badge ${getStatusClass(selectedProject.status)}`}>
                 {getStatusText(selectedProject.status)}
               </div>
 
-              {/* Grid de información */}
               <div className="modal-info-grid">
                 <div className="modal-info-item">
                   <DollarSign size={16} />
@@ -392,7 +395,6 @@ const ReportesProyectos = () => {
                 </div>
               </div>
 
-              {/* Descripción */}
               {selectedProject.description && (
                 <div className="modal-description">
                   <h4>Descripción del proyecto</h4>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
+import { CheckCircle, X } from 'lucide-react';
 import './ProjectsNew.css';
 
 export default function ProjectsNew() {
@@ -24,7 +25,6 @@ export default function ProjectsNew() {
 
   useEffect(() => {
     fetchClients();
-    // Establecer fecha de inicio automática (opcional)
     const today = new Date().toISOString().split('T')[0];
     setFormData(prev => ({
       ...prev,
@@ -46,7 +46,6 @@ export default function ProjectsNew() {
     setLoading(true);
     setError('');
 
-    // Validaciones
     if (!formData.name.trim()) {
       setError('El nombre del proyecto es requerido');
       setLoading(false);
@@ -65,7 +64,6 @@ export default function ProjectsNew() {
       return;
     }
 
-    // Validar fechas
     if (formData.start_date && formData.end_date) {
       const start = new Date(formData.start_date);
       const end = new Date(formData.end_date);
@@ -118,6 +116,11 @@ export default function ProjectsNew() {
   return (
     <>
       <Navbar />
+      
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
 
       <div className="projects-new-container">
         <div className="form-card">
@@ -316,7 +319,7 @@ export default function ProjectsNew() {
               </div>
               <div className="detail-item">
                 <span className="detail-label">Estado</span>
-                <span className="detail-value status-badge">{createdProject.status || 'Pendiente'}</span>
+                <span className="detail-value status-badge-modal">{createdProject.status || 'Pendiente'}</span>
               </div>
               {createdProject.end_date && (
                 <div className="detail-item">

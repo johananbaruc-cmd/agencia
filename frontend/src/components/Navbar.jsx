@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   Home, 
@@ -12,15 +12,16 @@ import {
   ChevronDown, 
   Calendar,
   FileText,
-  Settings
+  Settings,
+  BarChart3
 } from 'lucide-react';
 import { useState } from 'react';
 import './Navbar.css';
 
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEmployeesOpen, setIsEmployeesOpen] = useState(false);
   const [isTasksOpen, setIsTasksOpen] = useState(false);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
@@ -33,200 +34,130 @@ export default function Navbar() {
   const isEmployee = user?.role === 'employee';
   const isAdmin = user?.role === 'admin';
 
-  const toggleEmployeesDropdown = () => {
-    setIsEmployeesOpen(!isEmployeesOpen);
-  };
-
-  const toggleTasksDropdown = () => {
-    setIsTasksOpen(!isTasksOpen);
-  };
-
-  const toggleReportsDropdown = () => {
-    setIsReportsOpen(!isReportsOpen);
+  // Función para verificar si una ruta está activa
+  const isActive = (path) => {
+    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   return (
-    <nav className="navbar">
-      <div className="navbar-inner">
+    <nav className="sidebar">
+      <div className="sidebar-inner">
+        
+        {/* EL LOGO "A" FUE ELIMINADO */}
 
-        <Link to={isEmployee ? "/employee-dashboard" : "/dashboard"} className="navbar-logo">
-          Agencia MX
-        </Link>
-
-        <div className="navbar-links">
+        <div className="sidebar-links">
           {isEmployee && (
             <>
-              <Link to="/employee-dashboard" className="navbar-link">
-                <Home size={16} />
-                Dashboard
+              <Link to="/employee-dashboard" className={`sidebar-link ${isActive('/employee-dashboard') ? 'active' : ''}`} data-tooltip="Dashboard">
+                <Home size={20} />
               </Link>
 
-              <Link to="/employee-calendar" className="navbar-link">
-                <Calendar size={16} />
-                Calendario
+              <Link to="/employee-calendar" className={`sidebar-link ${isActive('/employee-calendar') ? 'active' : ''}`} data-tooltip="Calendario">
+                <Calendar size={20} />
               </Link>
 
-              <div className="navbar-dropdown">
-                <button 
-                  className="navbar-dropdown-btn"
-                  onClick={toggleTasksDropdown}
-                >
-                  <CheckSquare size={16} />
-                  Tareas
-                  <ChevronDown size={14} className={`dropdown-arrow ${isTasksOpen ? 'open' : ''}`} />
-                </button>
-                {isTasksOpen && (
-                  <div className="navbar-dropdown-menu">
-                    <Link to="/employee-tasks" className="dropdown-item">
-                      <CheckSquare size={14} />
-                      Mis Tareas
-                    </Link>
-                    <Link to="/employee-kanban" className="dropdown-item">
-                      <LayoutGrid size={14} />
-                      Kanban
-                    </Link>
-                    <Link to="/employee-evidence" className="dropdown-item">
-                      <FileImage size={14} />
-                      Evidencias
-                    </Link>
-                  </div>
-                )}
-              </div>
+              <button 
+                className={`sidebar-link ${isTasksOpen ? 'active' : ''}`}
+                onClick={() => setIsTasksOpen(!isTasksOpen)}
+                data-tooltip="Tareas"
+              >
+                <CheckSquare size={20} />
+                <ChevronDown size={12} className="sidebar-dropdown-arrow" />
+              </button>
+
+              {isTasksOpen && (
+                <div className="sidebar-dropdown">
+                  <Link to="/employee-tasks" className="sidebar-dropdown-item" data-tooltip="Mis Tareas">
+                    <CheckSquare size={16} />
+                  </Link>
+                  <Link to="/employee-kanban" className="sidebar-dropdown-item" data-tooltip="Kanban">
+                    <LayoutGrid size={16} />
+                  </Link>
+                  <Link to="/employee-evidence" className="sidebar-dropdown-item" data-tooltip="Evidencias">
+                    <FileImage size={16} />
+                  </Link>
+                </div>
+              )}
             </>
           )}
 
           {isAdmin && (
             <>
-              <Link to="/dashboard" className="navbar-link">
-                <Home size={16} />
-                Dashboard
-              </Link>
-              <Link to="/projects/new" className="navbar-link">
-                <FolderPlus size={16} />
-                Nuevo
+              <Link to="/dashboard" className={`sidebar-link ${isActive('/dashboard') ? 'active' : ''}`} data-tooltip="Dashboard">
+                <Home size={20} />
               </Link>
 
-              <Link to="/clients" className="navbar-link">
-                <Users size={16} />
-                Clientes
+              <Link to="/dashboard-analisis" className={`sidebar-link ${isActive('/dashboard-analisis') ? 'active' : ''}`} data-tooltip="Análisis">
+                <BarChart3 size={20} />
               </Link>
 
-              <Link to="/admin-calendar" className="navbar-link">
-                <Calendar size={16} />
-                Calendario
+              <Link to="/projects/new" className={`sidebar-link ${isActive('/projects/new') ? 'active' : ''}`} data-tooltip="Nuevo Proyecto">
+                <FolderPlus size={20} />
               </Link>
 
-              <div className="navbar-dropdown">
-                <button 
-                  className="navbar-dropdown-btn"
-                  onClick={toggleEmployeesDropdown}
-                >
-                  <User size={16} />
-                  Empleados
-                  <ChevronDown size={14} className={`dropdown-arrow ${isEmployeesOpen ? 'open' : ''}`} />
-                </button>
-                {isEmployeesOpen && (
-                  <div className="navbar-dropdown-menu">
-                    <Link to="/employees" className="dropdown-item">
-                      <User size={14} />
-                      Empleados
-                    </Link>
-                    <Link to="/admin-evidence" className="dropdown-item">
-                      <FileImage size={14} />
-                      Evidencias
-                    </Link>
-                  </div>
-                )}
-              </div>
+              <Link to="/clients" className={`sidebar-link ${isActive('/clients') ? 'active' : ''}`} data-tooltip="Clientes">
+                <Users size={20} />
+              </Link>
 
-              {/* Dropdown de Reportes */}
-              <div className="navbar-dropdown">
-                <button 
-                  className="navbar-dropdown-btn"
-                  onClick={toggleReportsDropdown}
-                >
-                  <FileText size={16} />
-                  Reportes
-                  <ChevronDown size={14} className={`dropdown-arrow ${isReportsOpen ? 'open' : ''}`} />
-                </button>
-                {isReportsOpen && (
-                  <div className="navbar-dropdown-menu">
-                    <Link to="/reportes/proyectos" className="dropdown-item">
-                      <FileText size={14} />
-                      Reportes por Proyecto
-                    </Link>
-                    <Link to="/reportes/crear" className="dropdown-item">
-                      <FileText size={14} />
-                      Crear Reporte
-                    </Link>
-                    <Link to="/reportes/gestion" className="dropdown-item">
-                      <Settings size={14} />
-                      Gestionar Reportes
-                    </Link>
-                  </div>
-                )}
-              </div>
+              <Link to="/admin-calendar" className={`sidebar-link ${isActive('/admin-calendar') ? 'active' : ''}`} data-tooltip="Calendario">
+                <Calendar size={20} />
+              </Link>
+
+              <button 
+                className={`sidebar-link ${isEmployeesOpen ? 'active' : ''}`}
+                onClick={() => setIsEmployeesOpen(!isEmployeesOpen)}
+                data-tooltip="Empleados"
+              >
+                <User size={20} />
+                <ChevronDown size={12} className="sidebar-dropdown-arrow" />
+              </button>
+
+              {isEmployeesOpen && (
+                <div className="sidebar-dropdown">
+                  <Link to="/employees" className="sidebar-dropdown-item" data-tooltip="Empleados">
+                    <User size={16} />
+                  </Link>
+                  <Link to="/admin-evidence" className="sidebar-dropdown-item" data-tooltip="Evidencias">
+                    <FileImage size={16} />
+                  </Link>
+                </div>
+              )}
+
+              <button 
+                className={`sidebar-link ${isReportsOpen ? 'active' : ''}`}
+                onClick={() => setIsReportsOpen(!isReportsOpen)}
+                data-tooltip="Reportes"
+              >
+                <FileText size={20} />
+                <ChevronDown size={12} className="sidebar-dropdown-arrow" />
+              </button>
+
+              {isReportsOpen && (
+                <div className="sidebar-dropdown">
+                  <Link to="/reportes/proyectos" className="sidebar-dropdown-item" data-tooltip="Por Proyecto">
+                    <FileText size={16} />
+                  </Link>
+                  <Link to="/reportes/crear" className="sidebar-dropdown-item" data-tooltip="Crear Reporte">
+                    <FileText size={16} />
+                  </Link>
+                  <Link to="/reportes/gestion" className="sidebar-dropdown-item" data-tooltip="Gestionar">
+                    <Settings size={16} />
+                  </Link>
+                </div>
+              )}
             </>
           )}
+        </div>
 
-          <div className="navbar-user">
-            <User size={16} />
-            <span>{user?.name}</span>
-            <button onClick={handleLogout} className="navbar-logout">
-              <LogOut size={16} />
-              Salir
-            </button>
+        <div className="sidebar-bottom">
+          <div className="sidebar-user" data-tooltip={user?.name || 'Usuario'}>
+            <User size={20} />
           </div>
+          <button onClick={handleLogout} className="sidebar-logout" data-tooltip="Salir">
+            <LogOut size={20} />
+          </button>
         </div>
-
-        <button 
-          className="navbar-menu-btn"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          ☰
-        </button>
       </div>
-
-      {isMenuOpen && (
-        <div className="navbar-mobile">
-          {isEmployee && (
-            <>
-              <Link to="/employee-dashboard" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
-              <Link to="/employee-calendar" onClick={() => setIsMenuOpen(false)}>Calendario</Link>
-              <div className="navbar-mobile-submenu">
-                <div className="navbar-mobile-submenu-title">Tareas</div>
-                <Link to="/employee-tasks" onClick={() => setIsMenuOpen(false)}>• Mis Tareas</Link>
-                <Link to="/employee-kanban" onClick={() => setIsMenuOpen(false)}>• Kanban</Link>
-                <Link to="/employee-evidence" onClick={() => setIsMenuOpen(false)}>• Evidencias</Link>
-              </div>
-            </>
-          )}
-
-          {isAdmin && (
-            <>
-              <Link to="/dashboard" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
-              <Link to="/projects/new" onClick={() => setIsMenuOpen(false)}>Nuevo Proyecto</Link>
-              <Link to="/clients" onClick={() => setIsMenuOpen(false)}>Clientes</Link>
-              <Link to="/admin-calendar" onClick={() => setIsMenuOpen(false)}>Calendario</Link>
-              
-              <div className="navbar-mobile-submenu">
-                <div className="navbar-mobile-submenu-title">Empleados</div>
-                <Link to="/employees" onClick={() => setIsMenuOpen(false)}>• Empleados</Link>
-                <Link to="/admin-evidence" onClick={() => setIsMenuOpen(false)}>• Evidencias</Link>
-              </div>
-
-              <div className="navbar-mobile-submenu">
-                <div className="navbar-mobile-submenu-title">Reportes</div>
-                <Link to="/reportes/proyectos" onClick={() => setIsMenuOpen(false)}>• Reportes por Proyecto</Link>
-                <Link to="/reportes/crear" onClick={() => setIsMenuOpen(false)}>• Crear Reporte</Link>
-                <Link to="/reportes/gestion" onClick={() => setIsMenuOpen(false)}>• Gestionar Reportes</Link>
-              </div>
-            </>
-          )}
-
-          <button onClick={handleLogout} className="mobile-logout">Salir</button>
-        </div>
-      )}
     </nav>
   );
 }

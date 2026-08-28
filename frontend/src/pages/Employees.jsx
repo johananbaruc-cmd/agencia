@@ -3,14 +3,17 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import AssignProjectModal from '../components/AssignProjectModal';
-import { Users, Mail, UserPlus, Trash2, Briefcase, X, Edit, Eye, EyeOff, Copy, Check, FolderOpen } from 'lucide-react';
+import { Users, Mail, UserPlus, Trash2, Briefcase, X, Edit, FolderOpen, Search, Eye, EyeOff, Copy, Check } from 'lucide-react';
 import './Employees.css';
 
 export default function Employees() {
   const { user } = useAuth();
   const [employees, setEmployees] = useState([]);
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [isModalClosing, setIsModalClosing] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -24,9 +27,11 @@ export default function Employees() {
   const [showPassword, setShowPassword] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [isPasswordClosing, setIsPasswordClosing] = useState(false);
 
-  // Modal de confirmación personalizado para eliminar
+  // Modal de confirmación
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [isConfirmClosing, setIsConfirmClosing] = useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState(null);
 
   // Modal de asignación de proyectos
@@ -37,12 +42,25 @@ export default function Employees() {
     fetchEmployees();
   }, []);
 
-  // Bloquear scroll cuando modal está abierto
+  // Filtrar empleados en tiempo real
   useEffect(() => {
-    document.body.style.overflow = (showPasswordModal || showConfirmModal || showAssignModal) ? 'hidden' : 'auto';
-  }, [showPasswordModal, showConfirmModal, showAssignModal]);
+    if (searchTerm.trim() === '') {
+      setFilteredEmployees(employees);
+    } else {
+      const term = searchTerm.toLowerCase().trim();
+      const filtered = employees.filter(emp => 
+        emp.name.toLowerCase().includes(term) ||
+        emp.email.toLowerCase().includes(term) ||
+        (emp.profession && emp.profession.toLowerCase().includes(term))
+      );
+      setFilteredEmployees(filtered);
+    }
+  }, [searchTerm, employees]);
 
-  // Ocultar password si cambian de ventana
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'; // Siempre oculto, el scroll es interno
+  }, []);
+
   useEffect(() => {
     const handleBlur = () => setShowPassword(false);
     window.addEventListener('blur', handleBlur);
@@ -54,6 +72,7 @@ export default function Employees() {
       const response = await api.get('/employees/');
       const filtered = response.data.filter(emp => emp.role === 'employee');
       setEmployees(filtered);
+      setFilteredEmployees(filtered);
     } catch (error) {
       console.error(error);
     } finally {
@@ -64,6 +83,7 @@ export default function Employees() {
   const handleOpenCreateModal = () => {
     setEditingEmployee(null);
     setFormData({ name: '', email: '', profession: '' });
+    setIsModalClosing(false);
     setShowModal(true);
   };
 
@@ -74,7 +94,17 @@ export default function Employees() {
       email: emp.email,
       profession: emp.profession || ''
     });
+    setIsModalClosing(false);
     setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalClosing(true);
+    setTimeout(() => {
+      setShowModal(false);
+      setIsModalClosing(false);
+      setEditingEmployee(null);
+    }, 300);
   };
 
   const handleCopyPassword = async () => {
@@ -96,7 +126,7 @@ export default function Employees() {
         });
 
         setMessage({ text: `Empleado actualizado`, type: 'success' });
-        setShowModal(false);
+        handleCloseModal();
       } else {
         const response = await api.post('/employees/', {
           name: formData.name,
@@ -108,6 +138,7 @@ export default function Employees() {
         setTempPassword(response.data.temporary_password);
         setShowPassword(false);
         setShowPasswordModal(true);
+        handleCloseModal();
       }
 
       setFormData({ name: '', email: '', profession: '' });
@@ -121,25 +152,23 @@ export default function Employees() {
     }
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setEditingEmployee(null);
-  };
-
   const handleClosePasswordModal = () => {
-    setShowPasswordModal(false);
-    setTempPassword(null);
-    setShowPassword(false);
-    setCopied(false);
+    setIsPasswordClosing(true);
+    setTimeout(() => {
+      setShowPasswordModal(false);
+      setIsPasswordClosing(false);
+      setTempPassword(null);
+      setShowPassword(false);
+      setCopied(false);
+    }, 300);
   };
 
-  // Abre el modal de confirmación para eliminar
   const handleDeleteClick = (id, name) => {
     setEmployeeToDelete({ id, name });
+    setIsConfirmClosing(false);
     setShowConfirmModal(true);
   };
 
-  // Elimina después de confirmar
   const confirmDelete = async () => {
     if (!employeeToDelete) return;
     
@@ -150,28 +179,48 @@ export default function Employees() {
     } catch (error) {
       setMessage({ text: error.response?.data?.detail || 'Error al eliminar', type: 'error' });
     } finally {
-      setShowConfirmModal(false);
-      setEmployeeToDelete(null);
+      handleCloseConfirmModal();
       setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     }
   };
 
-  // Abrir modal de asignación de proyectos
+  const handleCloseConfirmModal = () => {
+    setIsConfirmClosing(true);
+    setTimeout(() => {
+      setShowConfirmModal(false);
+      setIsConfirmClosing(false);
+      setEmployeeToDelete(null);
+    }, 300);
+  };
+
   const handleAssignProjects = (employee) => {
     setSelectedEmployee(employee);
     setShowAssignModal(true);
   };
 
-  // Manejar asignación exitosa
   const handleAssignSuccess = () => {
     setMessage({ text: `Proyectos asignados exitosamente`, type: 'success' });
     setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     fetchEmployees();
   };
 
+  const getPastelColor = (name) => {
+    const pastelColors = [
+      '#fbbf24', '#f472b6', '#60a5fa', '#34d399', '#f59e0b',
+      '#a78bfa', '#f87171', '#22d3ee', '#f0abfc', '#86efac'
+    ];
+    const index = name.length % pastelColors.length;
+    return pastelColors[index];
+  };
+
   return (
     <>
       <Navbar />
+      
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
 
       <div className="employees-container">
 
@@ -190,6 +239,31 @@ export default function Employees() {
           </div>
         </div>
 
+        {/* BUSCADOR */}
+        <div className="search-container">
+          <div className="search-wrapper">
+            <Search size={18} className="search-icon" />
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Buscar por nombre, email o profesión..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button 
+                className="search-clear"
+                onClick={() => setSearchTerm('')}
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
+          <span className="search-count">
+            {filteredEmployees.length} {filteredEmployees.length === 1 ? 'empleado' : 'empleados'}
+          </span>
+        </div>
+
         {/* MENSAJE */}
         {message.text && (
           <div className={`message-floating ${message.type}`}>
@@ -202,61 +276,76 @@ export default function Employees() {
           {loading ? (
             <div className="loading-state">
               <div className="loading-spinner"></div>
+              <p>Cargando empleados...</p>
             </div>
-          ) : employees.length === 0 ? (
+          ) : filteredEmployees.length === 0 ? (
             <div className="empty-state">
-              <Users size={40} />
-              <p>No hay empleados</p>
+              {searchTerm ? (
+                <>
+                  <Search size={40} />
+                  <p>No hay resultados para "{searchTerm}"</p>
+                  <span>Intenta con otro término de búsqueda</span>
+                </>
+              ) : (
+                <>
+                  <Users size={40} />
+                  <p>No hay empleados</p>
+                  <span>Registra tu primer empleado</span>
+                </>
+              )}
             </div>
           ) : (
             <div className="employees-grid">
-              {employees.map((emp) => (
-                <div key={emp.id} className="employee-card">
+              {filteredEmployees.map((emp) => {
+                const borderColor = getPastelColor(emp.name);
+                return (
+                  <div key={emp.id} className="employee-card" style={{ borderColor: borderColor }}>
 
-                  <div className="employee-card-header">
-                    <div className="employee-avatar">
-                      {emp.name.charAt(0)}
-                    </div>
+                    <div className="employee-card-header">
+                      <div className="employee-avatar" style={{ background: borderColor }}>
+                        {emp.name.charAt(0).toUpperCase()}
+                      </div>
 
-                    <div>
-                      <div className="employee-name">{emp.name}</div>
-                      <div className="employee-email">
-                        <Mail size={12} />
-                        {emp.email}
+                      <div className="employee-info">
+                        <div className="employee-name">{emp.name}</div>
+                        <div className="employee-email">
+                          <Mail size={12} />
+                          {emp.email}
+                        </div>
+                      </div>
+
+                      <div className="employee-actions">
+                        <button 
+                          className="assign-btn"
+                          onClick={() => handleAssignProjects(emp)}
+                          title="Asignar proyectos"
+                        >
+                          <FolderOpen size={14} />
+                        </button>
+                        <button className="edit-btn" onClick={() => handleOpenEditModal(emp)}>
+                          <Edit size={14} />
+                        </button>
+                        <button className="delete-btn" onClick={() => handleDeleteClick(emp.id, emp.name)}>
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
 
-                    <div className="employee-actions">
-                      <button 
-                        className="assign-btn"
-                        onClick={() => handleAssignProjects(emp)}
-                        title="Asignar proyectos"
-                      >
-                        <FolderOpen size={14} />
-                      </button>
-                      <button className="edit-btn" onClick={() => handleOpenEditModal(emp)}>
-                        <Edit size={14} />
-                      </button>
-                      <button className="delete-btn" onClick={() => handleDeleteClick(emp.id, emp.name)}>
-                        <Trash2 size={14} />
-                      </button>
+                    <div className="employee-card-footer">
+                      <div className="role-badge">
+                        <Briefcase size={12} />
+                        {emp.profession || 'Sin profesión'}
+                      </div>
+
+                      <div className="employee-status">
+                        <span className="status-dot active"></span>
+                        Activo
+                      </div>
                     </div>
+
                   </div>
-
-                  <div className="employee-card-footer">
-                    <div className="role-badge">
-                      <Briefcase size={12} />
-                      {emp.profession || 'Sin profesión'}
-                    </div>
-
-                    <div className="employee-status">
-                      <span className="status-dot active"></span>
-                      Activo
-                    </div>
-                  </div>
-
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </main>
@@ -264,12 +353,12 @@ export default function Employees() {
 
       {/* MODAL FORM */}
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-container">
-
+        <div className={`modal-overlay ${isModalClosing ? 'closing' : ''}`}>
+          <div className={`modal-container ${isModalClosing ? 'closing' : ''}`}>
+            
             <div className="modal-header">
-              <h2>{editingEmployee ? 'Editar' : 'Registrar'}</h2>
-              <button onClick={handleCloseModal}>
+              <h2>{editingEmployee ? 'Editar Empleado' : 'Registrar Empleado'}</h2>
+              <button onClick={handleCloseModal} className="modal-close-btn">
                 <X size={18} />
               </button>
             </div>
@@ -277,43 +366,52 @@ export default function Employees() {
             <form onSubmit={handleSubmit}>
               <div className="modal-body">
 
-                <input
-                  type="text"
-                  required
-                  className="modal-form-input"
-                  placeholder="Nombre"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-
-                {!editingEmployee && (
+                <div className="form-group-modal">
+                  <label className="form-label-modal">Nombre completo</label>
                   <input
-                    type="email"
+                    type="text"
                     required
                     className="modal-form-input"
-                    placeholder="Correo"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="Ej: Juan Pérez"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
+                </div>
+
+                {!editingEmployee && (
+                  <div className="form-group-modal">
+                    <label className="form-label-modal">Correo electrónico</label>
+                    <input
+                      type="email"
+                      required
+                      className="modal-form-input"
+                      placeholder="empleado@email.com"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                  </div>
                 )}
 
-                <input
-                  type="text"
-                  required
-                  className="modal-form-input"
-                  placeholder="Profesión"
-                  value={formData.profession}
-                  onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
-                />
+                <div className="form-group-modal">
+                  <label className="form-label-modal">Profesión</label>
+                  <input
+                    type="text"
+                    required
+                    className="modal-form-input"
+                    placeholder="Ej: Desarrollador"
+                    value={formData.profession}
+                    onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                  />
+                </div>
 
               </div>
 
               <div className="modal-footer">
-                <button type="submit" className="btn-modal-primary">
-                  Guardar
-                </button>
                 <button type="button" onClick={handleCloseModal} className="btn-modal-secondary">
                   Cancelar
+                </button>
+                <button type="submit" className="btn-modal-primary">
+                  {editingEmployee ? 'Actualizar' : 'Guardar'}
                 </button>
               </div>
 
@@ -324,16 +422,20 @@ export default function Employees() {
 
       {/* PASSWORD MODAL */}
       {showPasswordModal && (
-        <div className="password-overlay">
-
-          <div className="password-modal">
+        <div className={`password-overlay ${isPasswordClosing ? 'closing' : ''}`}>
+          <div className={`password-modal ${isPasswordClosing ? 'closing' : ''}`}>
 
             <div className="password-modal-header">
               <h3>Empleado creado</h3>
+              <button onClick={handleClosePasswordModal} className="password-modal-close">
+                <X size={18} />
+              </button>
             </div>
 
             <div className="password-modal-body">
-
+              <div className="password-success-icon">
+                <Check size={40} />
+              </div>
               <p>Contraseña temporal:</p>
 
               <div className="password-box">
@@ -345,19 +447,27 @@ export default function Employees() {
                   onCopy={(e) => e.preventDefault()}
                 />
 
-                <button onClick={() => setShowPassword(!showPassword)}>
+                <button 
+                  onClick={() => setShowPassword(!showPassword)} 
+                  className="password-eye-btn"
+                  title={showPassword ? 'Ocultar' : 'Mostrar'}
+                >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
 
-                <button onClick={handleCopyPassword}>
+                <button 
+                  onClick={handleCopyPassword} 
+                  className="password-copy-btn"
+                  title="Copiar"
+                >
                   {copied ? <Check size={16} /> : <Copy size={16} />}
                 </button>
               </div>
 
-              {copied && <span className="copied-text">Copiado</span>}
+              {copied && <span className="copied-text">¡Copiado!</span>}
 
               <p className="password-warning">
-                Guarda esta contraseña
+                Guarda esta contraseña en un lugar seguro
               </p>
 
             </div>
@@ -369,22 +479,32 @@ export default function Employees() {
             </div>
 
           </div>
-
         </div>
       )}
 
-      {/* MODAL DE CONFIRMACIÓN PARA ELIMINAR */}
+      {/* MODAL DE CONFIRMACIÓN */}
       {showConfirmModal && (
-        <div className="confirm-overlay">
-          <div className="confirm-modal">
-            <h3>Confirmar eliminación</h3>
-            <p>¿Estás seguro de que deseas eliminar a <strong>{employeeToDelete?.name}</strong>?</p>
+        <div className={`confirm-overlay ${isConfirmClosing ? 'closing' : ''}`}>
+          <div className={`confirm-modal ${isConfirmClosing ? 'closing' : ''}`}>
+            
+            <div className="confirm-icon">
+              <Trash2 size={40} />
+            </div>
+            
+            <h3>¿Eliminar empleado?</h3>
+            <p>
+              ¿Estás seguro de que deseas eliminar a <strong>{employeeToDelete?.name}</strong>?
+            </p>
+            <p className="confirm-warning">
+              Esta acción no se puede deshacer
+            </p>
+            
             <div className="confirm-buttons">
+              <button className="confirm-btn-cancel" onClick={handleCloseConfirmModal}>
+                Cancelar
+              </button>
               <button className="confirm-btn-delete" onClick={confirmDelete}>
                 Eliminar
-              </button>
-              <button className="confirm-btn-cancel" onClick={() => setShowConfirmModal(false)}>
-                Cancelar
               </button>
             </div>
           </div>

@@ -47,7 +47,6 @@ const CrearReporte = () => {
   const [archivosExistentes, setArchivosExistentes] = useState([]);
   const [archivosExistentesCargando, setArchivosExistentesCargando] = useState(false);
   
-  // 🔥 CONFIGURACIÓN DE ANÁLISIS - TODOS LOS 10 TIPOS
   const [formData, setFormData] = useState({
     titulo: '',
     descripcion: '',
@@ -55,7 +54,6 @@ const CrearReporte = () => {
     pregunta_cliente: '',
     proyecto_seleccionado: projectId || '',
     configuracion_analisis: {
-      // ✅ 10 tipos de análisis
       pca: false,
       regresion: false,
       clustering: false,
@@ -76,13 +74,9 @@ const CrearReporte = () => {
   const [archivosExistentesSeleccionados, setArchivosExistentesSeleccionados] = useState([]);
   const [error, setError] = useState(null);
   const [dragActive, setDragActive] = useState(false);
-  
-  // 🔥 Progreso - SE GUARDA EN BD
   const [progresoVisual, setProgresoVisual] = useState(0);
 
-  // ==========================================
   // CARGAR PROYECTOS
-  // ==========================================
   useEffect(() => {
     const cargarProyectos = async () => {
       setCargandoProyectos(true);
@@ -101,9 +95,7 @@ const CrearReporte = () => {
     }
   }, [mostrarSelector]);
 
-  // ==========================================
   // CARGAR PROYECTO ESPECÍFICO
-  // ==========================================
   useEffect(() => {
     if (projectId) {
       const cargarProyecto = async () => {
@@ -129,9 +121,7 @@ const CrearReporte = () => {
     }
   }, [projectId]);
 
-  // ==========================================
   // CARGAR EVIDENCIAS
-  // ==========================================
   const cargarEvidencias = async (proyectoId) => {
     setEvidenciasCargando(true);
     try {
@@ -169,9 +159,7 @@ const CrearReporte = () => {
     }
   };
 
-  // ==========================================
   // CARGAR ARCHIVOS EXISTENTES
-  // ==========================================
   const cargarArchivosExistentes = async (proyectoId) => {
     setArchivosExistentesCargando(true);
     try {
@@ -209,9 +197,7 @@ const CrearReporte = () => {
     }
   };
 
-  // ==========================================
   // HANDLERS
-  // ==========================================
   const handleSeleccionarProyecto = async (e) => {
     const id = parseInt(e.target.value);
     setFormData(prev => ({ ...prev, proyecto_seleccionado: id }));
@@ -301,7 +287,6 @@ const CrearReporte = () => {
     });
   };
 
-  // 🔥 Manejar cambio de progreso
   const handleProgresoChange = (e) => {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value >= 0 && value <= 100) {
@@ -323,9 +308,7 @@ const CrearReporte = () => {
     return '#10b981';
   };
 
-  // ==========================================
-  // ✅ SUBMIT
-  // ==========================================
+  // SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -343,7 +326,6 @@ const CrearReporte = () => {
         return;
       }
 
-      // ✅ Validar tamaño de archivos (50MB max)
       const MAX_FILE_SIZE = 50 * 1024 * 1024;
       for (const archivo of archivosNuevos) {
         if (archivo.size > MAX_FILE_SIZE) {
@@ -353,7 +335,6 @@ const CrearReporte = () => {
         }
       }
 
-      // 🔥 DATOS DEL REPORTE - INCLUYENDO TODOS LOS ANÁLISIS Y PROGRESO
       const reporteData = {
         project_id: parseInt(projectIdFinal),
         admin_id: user?.id,
@@ -363,31 +344,20 @@ const CrearReporte = () => {
         pregunta_cliente: formData.pregunta_cliente,
         configuracion_analisis: formData.configuracion_analisis,
         horas_expiracion: formData.horas_expiracion,
-        progreso: progresoVisual  // ✅ El progreso se guarda en BD
+        progreso: progresoVisual
       };
 
-      // EVIDENCIAS SELECCIONADAS
       if (formData.incluir_evidencias && evidenciasSeleccionadas.length > 0) {
         reporteData.evidencias_ids = evidenciasSeleccionadas;
       }
 
-      // ARCHIVOS DE TAREAS SELECCIONADOS
       if (formData.incluir_evidencias && archivosExistentesSeleccionados.length > 0) {
         reporteData.archivos_existentes_ids = archivosExistentesSeleccionados;
       }
 
-      // 🔥 LOGS PARA DEPURAR
-      console.log('📤 ===== ENVIANDO REPORTE AL BACKEND =====');
-      console.log('📊 Configuración de análisis:', JSON.stringify(formData.configuracion_analisis, null, 2));
-      console.log('📊 Progreso:', progresoVisual);
-
-      // 1. CREAR EL REPORTE
       const response = await api.post('/reportes', reporteData);
       const reporteId = response.data.id;
-      
-      console.log('✅ Reporte creado:', response.data);
 
-      // 2. SUBIR ARCHIVOS NUEVOS
       if (archivosNuevos.length > 0) {
         for (const archivo of archivosNuevos) {
           const formDataArchivo = new FormData();
@@ -396,22 +366,17 @@ const CrearReporte = () => {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
         }
-        console.log(`✅ ${archivosNuevos.length} archivos subidos`);
       }
 
-      // 3. GUARDAR EN SESSION STORAGE
       sessionStorage.setItem('evidencias_seleccionadas', JSON.stringify(evidenciasSeleccionadas));
       sessionStorage.setItem('archivos_existentes_seleccionados', JSON.stringify(archivosExistentesSeleccionados));
       sessionStorage.setItem('progreso_visual', String(progresoVisual));
       sessionStorage.setItem('reporte_creado_id', String(reporteId));
 
-      // 4. NAVEGAR
       navigate(`/reportes/detalle/${reporteId}`);
       
     } catch (error) {
-      console.error('❌ Error al crear reporte:', error);
-      console.error('❌ Detalles:', error.response?.data);
-      
+      console.error('Error al crear reporte:', error);
       const errorMsg = error.response?.data?.detail || 
                       error.response?.data?.message || 
                       'Error al crear el reporte. Intenta nuevamente.';
@@ -421,9 +386,7 @@ const CrearReporte = () => {
     }
   };
 
-  // ==========================================
   // HANDLERS DE ARCHIVOS
-  // ==========================================
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     const MAX_FILE_SIZE = 50 * 1024 * 1024;
@@ -441,9 +404,7 @@ const CrearReporte = () => {
     setArchivosNuevos(prev => prev.filter((_, i) => i !== index));
   };
 
-  // ==========================================
   // DRAG & DROP
-  // ==========================================
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -471,9 +432,7 @@ const CrearReporte = () => {
     setArchivosNuevos(prev => [...prev, ...files]);
   };
 
-  // ==========================================
   // UTILIDADES
-  // ==========================================
   const getFileIcon = (nombre) => {
     if (!nombre) return '📎';
     const ext = nombre.split('.').pop()?.toLowerCase();
@@ -506,9 +465,7 @@ const CrearReporte = () => {
 
   const evidenciasSeleccionadasCount = evidenciasSeleccionadas.length;
 
-  // ==========================================
   // GRUPOS DE ANÁLISIS
-  // ==========================================
   const analisisGroups = [
     {
       title: 'Análisis Estadísticos',
@@ -540,12 +497,16 @@ const CrearReporte = () => {
     }
   ];
 
-  // ==========================================
   // RENDER
-  // ==========================================
   return (
     <>
       <Navbar />
+
+      {/* ===== FONDO ULTRA LIGERO (ORBES AZULES) ===== */}
+      <div className="orb orb-blue"></div>
+      <div className="orb orb-cyan"></div>
+      <div className="bg-gradient"></div>
+
       <div className="crear-reporte-container">
         <div className="crear-reporte-inner">
           <button onClick={() => navigate(-1)} className="btn-back">
@@ -572,9 +533,7 @@ const CrearReporte = () => {
 
           <form onSubmit={handleSubmit} className="reporte-form">
             
-            {/* ========================================== */}
-            {/* SELECCIONAR PROYECTO */}
-            {/* ========================================== */}
+            {/* PROYECTO */}
             {!projectId && (
               <div className="form-group">
                 <label>
@@ -626,9 +585,7 @@ const CrearReporte = () => {
               </div>
             )}
 
-            {/* ========================================== */}
             {/* TÍTULO */}
-            {/* ========================================== */}
             <div className="form-group">
               <label>
                 Título del Reporte <span className="required">*</span>
@@ -644,9 +601,7 @@ const CrearReporte = () => {
               />
             </div>
 
-            {/* ========================================== */}
             {/* DESCRIPCIÓN */}
-            {/* ========================================== */}
             <div className="form-group">
               <label>Descripción</label>
               <textarea
@@ -659,9 +614,7 @@ const CrearReporte = () => {
               />
             </div>
 
-            {/* ========================================== */}
             {/* TEXTO DE AVANCE */}
-            {/* ========================================== */}
             <div className="form-group">
               <label>Texto de Avance</label>
               <textarea
@@ -674,9 +627,7 @@ const CrearReporte = () => {
               />
             </div>
 
-            {/* ========================================== */}
             {/* PREGUNTA PARA EL CLIENTE */}
-            {/* ========================================== */}
             <div className="form-group">
               <label>Pregunta para el Cliente</label>
               <textarea
@@ -689,9 +640,7 @@ const CrearReporte = () => {
               />
             </div>
 
-            {/* ========================================== */}
-            {/* ⏰ EXPIRACIÓN */}
-            {/* ========================================== */}
+            {/* EXPIRACIÓN */}
             <div className="form-group">
               <div className="expiracion-container">
                 <div className="expiracion-header">
@@ -726,9 +675,7 @@ const CrearReporte = () => {
               </div>
             </div>
 
-            {/* ========================================== */}
-            {/* 🔥 BARRA DE PROGRESO - SE GUARDA EN BD */}
-            {/* ========================================== */}
+            {/* PROGRESO */}
             <div className="form-group">
               <div className="progreso-visual-container">
                 <div className="progreso-visual-header">
@@ -783,9 +730,7 @@ const CrearReporte = () => {
               </div>
             </div>
 
-            {/* ========================================== */}
-            {/* 📊 ANÁLISIS DE DATOS - CON TODOS LOS 10 TIPOS */}
-            {/* ========================================== */}
+            {/* ANÁLISIS DE DATOS */}
             <div className="form-group">
               <div className="analisis-header">
                 <label>Análisis de Datos</label>
@@ -823,19 +768,17 @@ const CrearReporte = () => {
               <div className="analisis-resumen">
                 {Object.values(formData.configuracion_analisis).some(v => v) ? (
                   <span className="analisis-resumen-text">
-                    ✅ {Object.entries(formData.configuracion_analisis).filter(([_, v]) => v).length} análisis seleccionados
+                    <Check size={14} /> {Object.entries(formData.configuracion_analisis).filter(([_, v]) => v).length} análisis seleccionados
                   </span>
                 ) : (
                   <span className="analisis-resumen-text text-muted">
-                    ⚠️ No has seleccionado ningún análisis. El reporte solo incluirá los datos básicos.
+                    <AlertCircle size={14} /> No has seleccionado ningún análisis. El reporte solo incluirá los datos básicos.
                   </span>
                 )}
               </div>
             </div>
 
-            {/* ========================================== */}
-            {/* ✅ EVIDENCIAS DE TAREAS */}
-            {/* ========================================== */}
+            {/* EVIDENCIAS DE TAREAS */}
             {project && (
               <div className="form-group">
                 <div className="seccion-header">
@@ -938,9 +881,7 @@ const CrearReporte = () => {
               </div>
             )}
 
-            {/* ========================================== */}
-            {/* 📎 ARCHIVOS EXISTENTES */}
-            {/* ========================================== */}
+            {/* ARCHIVOS EXISTENTES */}
             {project && formData.incluir_evidencias && archivosExistentes.length > 0 && (
               <div className="form-group">
                 <div className="seccion-header">
@@ -974,7 +915,7 @@ const CrearReporte = () => {
                             <span className="archivo-meta">
                               {archivo.tipo} • {formatFileSize(archivo.tamaño)}
                               {archivo.tarea_nombre && (
-                                <span className="archivo-tarea">📁 {archivo.tarea_nombre}</span>
+                                <span className="archivo-tarea"> {archivo.tarea_nombre}</span>
                               )}
                             </span>
                           </div>
@@ -990,9 +931,7 @@ const CrearReporte = () => {
               </div>
             )}
 
-            {/* ========================================== */}
-            {/* 📤 SUBIR ARCHIVOS NUEVOS */}
-            {/* ========================================== */}
+            {/* SUBIR ARCHIVOS NUEVOS */}
             <div className="form-group">
               <label>Subir Archivos Nuevos</label>
               <p className="field-hint">Sube archivos adicionales para el reporte (opcional)</p>
@@ -1041,9 +980,7 @@ const CrearReporte = () => {
               )}
             </div>
 
-            {/* ========================================== */}
             {/* BOTONES */}
-            {/* ========================================== */}
             <div className="form-actions">
               <button
                 type="submit"
