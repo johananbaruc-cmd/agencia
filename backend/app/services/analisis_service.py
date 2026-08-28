@@ -547,7 +547,7 @@ class AnalisisService:
             Project.progress
         ).filter(
             Project.end_date.isnot(None),
-            Project.status.in_(['active', 'in_progress', 'pending', 'on_hold'])
+            Project.status != 'completed' 
         )
 
         if agencia_id:
@@ -600,8 +600,8 @@ class AnalisisService:
 
         return [{"name": r.name, "presupuesto": r.presupuesto or 0} for r in resultados]
 
-    # ============================================
-    # 11. CLIENTES POR EMPRESA
+        # ============================================
+    # 11. CLIENTES POR EMPRESA (SIN LÍMITE - TODOS LOS CLIENTES)
     # ============================================
     @staticmethod
     def _calcular_clientes_industria(db: Session, agencia_id: Optional[int]) -> List[Dict]:
@@ -616,9 +616,20 @@ class AnalisisService:
         query = query.group_by(Client.company)
         resultados = query.all()
 
-        items = [{"name": r.company or "Sin empresa", "value": r.value} for r in resultados]
-        return AnalisisService._agrupar_top_n(items, n=6)
+        items = []
+        for r in resultados:
+            # Buscar nombres de proyectos asociados a este cliente (por su empresa)
+            proyectos = db.query(Project.name).join(Client, Client.id == Project.client_id).filter(Client.company == r.company).all()
+            
+            items.append({
+                "name": r.company or "Sin empresa",  # Aquí va el nombre real de la empresa
+                "value": r.value,                   # Cuántos clientes tiene
+                "proyectos": [p[0] for p in proyectos]  # Lista de nombres de proyectos
+            })
 
+        # ✅ CAMBIO IMPORTANTE: Devolver TODOS los clientes SIN agrupar en "Otros"
+        return items
+        
     @staticmethod
     def _agrupar_top_n(items: List[Dict], n: int = 6, key: str = "value") -> List[Dict]:
         """Agrupa el top N y el resto en 'Otros'"""

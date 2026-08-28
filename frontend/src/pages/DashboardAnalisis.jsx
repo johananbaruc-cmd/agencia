@@ -218,6 +218,9 @@ export default function DashboardAnalisis() {
   // Estados para el Top 3 de empleados (AGREGADOS)
   const [verTodosEmpleados, setVerTodosEmpleados] = useState(false);
   const [empleadoSeleccionado, setEmpleadoSeleccionado] = useState(null);
+  
+  // Estado para expandir/contraer la fila de clientes
+  const [openCliente, setOpenCliente] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -1037,8 +1040,8 @@ export default function DashboardAnalisis() {
             )}
           </div>
         </div>
-        
-        {/* FILA 5: Proyectos en Riesgo */}
+
+                      {/* FILA 5: Proyectos en Riesgo (Con panel de alertas y recomendaciones) */}
         <div className="chart-row">
           <div className="chart-card full-width">
             <h3>Proyectos en Riesgo</h3>
@@ -1050,66 +1053,157 @@ export default function DashboardAnalisis() {
               <div className="empty-chart">No hay proyectos en riesgo</div>
             ) : (
               <>
-                <ResponsiveContainer width="100%" height={300}>
-                  <ScatterChart margin={{ bottom: 10 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="progreso" 
-                      name="Progreso" 
-                      unit="%" 
-                      domain={[0, 100]} 
-                      stroke="#9ca3af"
-                      tick={{ fill: '#9ca3af', fontSize: 11 }}
-                      label={{ 
-                        value: 'Progreso del Proyecto (%)', 
-                        position: 'bottom',
-                        fill: '#94a3b8',
-                        fontSize: 12,
-                        fontWeight: 500,
-                        offset: 15
-                      }}
-                    />
-                    <YAxis 
-                      dataKey="diasRestantes" 
-                      name="Dias Restantes" 
-                      stroke="#9ca3af"
-                      tick={{ fill: '#9ca3af', fontSize: 11 }}
-                      label={{ 
-                        value: 'Dias Restantes', 
-                        angle: -90, 
-                        position: 'insideLeft',
-                        fill: '#94a3b8',
-                        fontSize: 12,
-                        style: { textAnchor: 'middle' }
-                      }}
-                    />
-                    <ReferenceLine x={70} stroke="#FFBB28" strokeDasharray="4 4" label={{ value: '70%', fill: '#FFBB28', fontSize: 10 }} />
-                    <ReferenceLine y={7} stroke="#FF4444" strokeDasharray="4 4" label={{ value: '7 dias', fill: '#FF4444', fontSize: 10 }} />
-                    <Tooltip
-                      {...tooltipTheme}
-                      formatter={(value, name) => {
-                        if (name === 'Progreso') return `${value}%`;
-                        if (name === 'Dias Restantes') return `${value} dias`;
-                        return value;
-                      }}
-                      labelFormatter={() => ''}
-                    />
-                    <Legend wrapperStyle={{ fontSize: 12, color: '#f0f9ff' }} />
-                    <Scatter name="Proyectos" data={proyectosRiesgo} fill="#8884d8" shape="circle">
-                      {proyectosRiesgo.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={
-                            entry.riesgo === 'critical' ? '#FF4444' :
-                            entry.riesgo === 'warning' ? '#FF8042' : '#00C49F'
+                {/* Contenedor con scroll horizontal */}
+                <div className="scatter-scroll-container">
+                  {/* Ancho fijo calculado: 80px por proyecto, mínimo 700px, máximo 1400px */}
+                  <ResponsiveContainer width={Math.min(Math.max(proyectosRiesgo.length * 80, 700), 1400)} height={300}>
+                    <ScatterChart margin={{ bottom: 10, right: 50, left: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      
+                      {/* EJE X: Ticks personalizados */}
+                      <XAxis 
+                        dataKey="indice" 
+                        type="number" 
+                        domain={[1, 'dataMax']}
+                        allowDecimals={false}
+                        interval={0}
+                        stroke="#9ca3af"
+                        tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 600 }}
+                        label={{ 
+                          value: 'No. de Proyecto', 
+                          position: 'bottom',
+                          offset: 15,
+                          fill: '#94a3b8',
+                          fontSize: 12,
+                          fontWeight: 500,
+                          style: { textAnchor: 'middle' }
+                        }}
+                        tickLine={{ stroke: '#9ca3af' }}
+                      >
+                        {({ x, y, payload }) => (
+                          <g transform={`translate(${x},${y})`}>
+                            <text 
+                              x={0} 
+                              y={0} 
+                              dy={16} 
+                              textAnchor="middle" 
+                              fill="#9ca3af" 
+                              fontSize={12}
+                              fontWeight={600}
+                            >
+                              {payload.value}
+                            </text>
+                          </g>
+                        )}
+                      </XAxis>
+                      
+                      {/* EJE Y: Días restantes */}
+                      <YAxis 
+                        dataKey="diasRestantes" 
+                        name="Días Restantes" 
+                        stroke="#9ca3af"
+                        tick={{ fill: '#9ca3af', fontSize: 11 }}
+                        label={{ 
+                          value: 'Días Restantes', 
+                          angle: -90, 
+                          position: 'insideLeft',
+                          fill: '#94a3b8',
+                          fontSize: 12,
+                          style: { textAnchor: 'middle' }
+                        }}
+                      />
+                      
+                      <ReferenceLine y={7} stroke="#FF4444" strokeDasharray="4 4" label={{ value: '7 días', fill: '#FF4444', fontSize: 10 }} />
+                      
+                      {/* Tooltip personalizado */}
+                      <Tooltip
+                        {...tooltipTheme}
+                        cursor={{ strokeDasharray: '3 3', stroke: '#38bdf8', strokeOpacity: 0.5 }}
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const project = payload[0].payload;
+                            return (
+                              <div className="proyecto-riesgo-tooltip">
+                                <h4>{project.name}</h4>
+                                <p><strong>Días restantes:</strong> {project.diasRestantes} días</p>
+                                <p className={`riesgo-${project.riesgo}`}>
+                                  <strong>Estado:</strong> {
+                                    project.riesgo === 'critical' ? 'Crítico' :
+                                    project.riesgo === 'warning' ? 'Alerta' : 'En ruta'
+                                  }
+                                </p>
+                              </div>
+                            );
                           }
-                        />
-                      ))}
-                    </Scatter>
-                  </ScatterChart>
-                </ResponsiveContainer>
+                          return null;
+                        }}
+                      />
+                      
+                      <Legend wrapperStyle={{ fontSize: 12, color: '#f0f9ff' }} />
+                      <Scatter 
+                        name="Proyectos" 
+                        data={proyectosRiesgo.map((p, index) => ({ 
+                          ...p, 
+                          indice: index + 1 
+                        }))} 
+                        fill="transparent" 
+                        shape="circle"
+                      >
+                        {proyectosRiesgo.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={
+                              entry.riesgo === 'critical' ? '#FF4444' :
+                              entry.riesgo === 'warning' ? '#FF8042' : '#00C49F'
+                            }
+                          />
+                        ))}
+                      </Scatter>
+                    </ScatterChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* ===== PANEL DE ALERTAS Y RECOMENDACIONES ===== */}
+                <div className="alertas-panel">
+                  <h4 className="alertas-titulo">Alertas y Recomendaciones</h4>
+                  
+                  {proyectosRiesgo.length === 0 ? (
+                    <div className="alertas-vacio">Todos los proyectos están en orden. ✅</div>
+                  ) : (
+                    <div className="alertas-lista">
+                      {/* Proyectos críticos o vencidos */}
+                      {proyectosRiesgo
+                        .filter(p => p.diasRestantes <= 7 || p.diasRestantes < 0)
+                        .map((p, index) => (
+                          <div key={index} className="alerta-item alerta-critical">
+                            {p.diasRestantes < 0 ? (
+                              <span className="alerta-texto">
+                                <strong>🔴 Proyecto retrasado:</strong> {p.name} lleva <strong>{Math.abs(p.diasRestantes)} días</strong> de retraso.
+                              </span>
+                            ) : (
+                              <span className="alerta-texto">
+                                <strong>⚠️ Proyecto crítico:</strong> {p.name} solo tiene <strong>{p.diasRestantes} días</strong> restantes.
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      
+                      {/* Proyectos en alerta (entre 8 y 14 días) */}
+                      {proyectosRiesgo
+                        .filter(p => p.diasRestantes > 7 && p.diasRestantes <= 14)
+                        .map((p, index) => (
+                          <div key={index} className="alerta-item alerta-warning">
+                            <span className="alerta-texto">
+                              <strong>🟠 Proyecto en alerta:</strong> {p.name} tiene <strong>{p.diasRestantes} días</strong> restantes, se recomienda acelerar el progreso.
+                            </span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+
                 <div className="riesgo-legend">
-                  <span><span className="dot critical"></span> Critico</span>
+                  <span><span className="dot critical"></span> Crítico</span>
                   <span><span className="dot warning"></span> Alerta</span>
                   <span><span className="dot safe"></span> En Ruta</span>
                 </div>
@@ -1130,7 +1224,12 @@ export default function DashboardAnalisis() {
               <div className="empty-chart">No hay clientes con presupuesto</div>
             ) : (
               <ResponsiveContainer width="100%" height={alturaDinamica(topClientes)}>
-                <BarChart data={topClientes} layout="vertical" margin={{ left: 10 }}>
+                <BarChart 
+                  data={topClientes} 
+                  layout="vertical" 
+                  margin={{ left: 10, bottom: 40 }}
+                  barCategoryGap="35%" 
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis 
                     type="number" 
@@ -1139,10 +1238,11 @@ export default function DashboardAnalisis() {
                     label={{ 
                       value: 'Presupuesto ($)', 
                       position: 'bottom',
+                      offset: 10,
                       fill: '#94a3b8',
                       fontSize: 12,
                       fontWeight: 500,
-                      offset: 15
+                      style: { textAnchor: 'middle' }
                     }}
                   />
                   <YAxis 
@@ -1152,53 +1252,106 @@ export default function DashboardAnalisis() {
                     stroke="#9ca3af"
                     tick={{ fill: '#9ca3af', fontSize: 12 }}
                   />
-                  <Tooltip {...tooltipTheme} formatter={(value) => `$${value.toLocaleString()}`} labelFormatter={(v) => v} />
-                  <Legend wrapperStyle={{ fontSize: 12, color: '#f0f9ff' }} />
-                  <Bar dataKey="presupuesto" fill="#0088FE" name="Presupuesto" />
+                  <Tooltip {...tooltipTheme} formatter={(value) => `💰 $${value.toLocaleString()}`} labelFormatter={(v) => v} />
+                  
+                  {/* Barra con degradado AZUL (todas las barras) */}
+                  <Bar dataKey="presupuesto" name="Presupuesto" radius={[4, 4, 0, 0]} barSize={22}>
+                    <defs>
+                      <linearGradient id="gradienteAzul" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#3B82F6" />
+                        <stop offset="50%" stopColor="#38bdf8" />
+                        <stop offset="100%" stopColor="#0088FE" />
+                      </linearGradient>
+                    </defs>
+                    {topClientes.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill="url(#gradienteAzul)" />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             )}
           </div>
-
+          
           <div className="chart-card">
-            <h3>Clientes por Empresa</h3>
+            <h3>Clientes y sus Proyectos</h3>
             <div className="chart-interpretation">
               <Info size={14} className="interpretacion-icon" />
-              {INTERPRETACIONES.clientesEmpresa}
+              Lista de todos los clientes. Haz clic en una fila para ver los proyectos completos.
             </div>
             {clientesIndustria.length === 0 ? (
               <div className="empty-chart">No hay clientes registrados</div>
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
-                <RePieChart>
-                  <Pie
-                    data={clientesIndustria}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={80}
-                    label={labelPieSiCabe(clientesIndustria)}
-                  >
-                    {clientesIndustria.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS.pie[index % COLORS.pie.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip {...tooltipTheme} />
-                  <Legend 
-                    wrapperStyle={{ fontSize: 11, color: '#f0f9ff' }}
-                    formatter={(value) => <TextoConMarquee texto={value} maxLength={14} />}
-                  />
-                </RePieChart>
-              </ResponsiveContainer>
+              <>
+                {/* CONTADOR TOTAL */}
+                <div className="tabla-total-clientes">
+                  <strong>{clientesIndustria.length}</strong> clientes encontrados
+                </div>
+
+                <div className="tabla-clientes-scroll">
+                  <table className="tabla-clientes">
+                    <thead>
+                      <tr>
+                        <th>Cliente</th>
+                        <th>Proyectos</th>
+                       
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {clientesIndustria.map((cliente, index) => (
+                        <tr 
+                          key={index} 
+                          className={`tabla-fila ${openCliente === index ? 'expandida' : ''}`}
+                          onClick={() => setOpenCliente(openCliente === index ? null : index)}
+                        >
+                          {/* Columna 1: Nombre */}
+                          <td>
+                            <span className="cliente-nombre">
+                              <span className="cliente-icono">
+                                {openCliente === index ? '▼' : '▶'}
+                              </span>
+                              {cliente.name}
+                            </span>
+                          </td>
+                          
+                        
+                          {/* Columna 3: Proyectos (expandible) */}
+                            <td className="celda-proyectos">
+                              {openCliente === index ? (
+                                <ul className="lista-proyectos">
+                                  {cliente.proyectos && cliente.proyectos.length > 0 ? (
+                                    cliente.proyectos.map((proyecto, i) => (
+                                      <li key={i}>{proyecto}</li>
+                                    ))
+                                  ) : (
+                                    <li className="placeholder-proyectos">Sin proyectos registrados</li>
+                                  )}
+                                </ul>
+                              ) : (
+                                <span className="resumen-proyectos">
+                                  {(() => {
+                                    if (cliente.proyectos && cliente.proyectos.length > 0) {
+                                      const primerProyecto = cliente.proyectos[0];
+                                      const numExtra = cliente.proyectos.length - 1;
+                                      return `${primerProyecto}${numExtra > 0 ? ` +${numExtra} más` : ''}`;
+                                    }
+                                    return 'Sin proyectos';
+                                  })()}
+                                </span>
+                              )}
+                            </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </div>
 
         {/* FOOTER */}
         <div className="dashboard-footer">
-          <p>Dashboard actualizado: {new Date().toLocaleString()}</p>
-          <p>Datos obtenidos desde la base de datos en tiempo real</p>
+          <p>Analisis actualizado: {new Date().toLocaleString()}</p>
         </div>
 
       </div>

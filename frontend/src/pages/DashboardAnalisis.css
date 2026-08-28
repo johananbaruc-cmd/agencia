@@ -928,3 +928,228 @@ body {
   font-size: 13px;
   font-weight: 500;
 }
+/* Asegura que el scroll no corte el gráfico */
+.scatter-scroll-container {
+  width: 100%;
+  height: 320px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 10px;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
+  border-right: 2px solid rgba(56, 189, 248, 0.1); /* Sutil indicador de fin */
+}
+/* ===== PANEL DE ALERTAS ===== */
+.alertas-panel {
+  margin-top: 20px;
+  padding: 15px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.alertas-titulo {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f3f4f6;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.2px;
+}
+
+.alertas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alertas-vacio {
+  font-size: 13px;
+  color: #00C49F;
+  font-weight: 500;
+}
+
+.alerta-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.alerta-item.alerta-critical {
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 4px solid #EF4444;
+  color: #fca5a5;
+}
+
+.alerta-item.alerta-warning {
+  background: rgba(249, 115, 22, 0.1);
+  border-left: 4px solid #FF8042;
+  color: #fdba74;
+}
+
+.alerta-texto {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.alerta-texto strong {
+  color: #ffffff;
+  margin-right: 4px;
+}
+
+.alerta-critical strong {
+  color: #EF4444;
+}
+
+.alerta-warning strong {
+  color: #FF8042;
+}
+
+/* ===== TABLA DE CLIENTES (CON EXPANSIÓN) ===== */
+.tabla-total-clientes {
+  font-size: 13px;
+  color: #94a3b8;
+  margin-bottom: 10px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+
+.tabla-total-clientes strong {
+  color: #38bdf8;
+}
+
+.tabla-clientes-scroll {
+  height: 320px;
+  overflow-y: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  padding-bottom: 10px;
+}
+
+.tabla-clientes-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tabla-clientes-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.tabla-clientes-scroll::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.5);
+  border-radius: 10px;
+}
+
+.tabla-clientes {
+  width: 100%;
+  border-collapse: collapse;
+  color: #f3f4f6;
+}
+
+.tabla-clientes thead {
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.tabla-clientes th {
+  padding: 12px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #38bdf8;
+  text-align: left;
+  border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.tabla-clientes td {
+  padding: 10px;
+  font-size: 13px;
+  color: #cbd5e1;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Fila expandible */
+.tabla-fila {
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.tabla-fila:hover {
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.tabla-fila.expandida {
+  background: rgba(56, 189, 248, 0.1);
+  border-left: 3px solid #38bdf8;
+}
+
+.cliente-nombre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: #f3f4f6;
+}
+
+.cliente-icono {
+  font-size: 10px;
+  color: #38bdf8;
+  transition: transform 0.2s;
+}
+
+.lista-proyectos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lista-proyectos li {
+  font-size: 12px;
+  color: #94a3b8;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+}
+
+.lista-proyectos li::before {
+  content: '📁';
+  margin-right: 6px;
+  font-size: 11px;
+}
+
+.resumen-proyectos {
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+  display: inline-block;
+}
+
+.placeholder-proyectos {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 4px 8px;
+}
+
+.badge-proyectos {
+  display: inline-block;
+  background: rgba(0, 196, 159, 0.15);
+  color: #00C49F;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+}
