@@ -11,7 +11,12 @@ import {
   X, 
   AlertTriangle,
   ChevronRight,
-  BarChart3
+  BarChart3,
+  Search,
+  Wallet,
+  CheckCircle2,
+  Clock,
+  TrendingUp
 } from 'lucide-react';
 import './Dashboard.css';
 
@@ -25,6 +30,7 @@ export default function Dashboard() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState(viewParam === 'kanban' ? 'kanban' : 'grid');
+  const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -52,6 +58,21 @@ export default function Dashboard() {
     fetchProjects();
   }, []);
 
+  // ACTUALIZACIÓN AUTOMÁTICA CADA 10 SEGUNDOS
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchProjects();
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // ACTUALIZACIÓN AL VOLVER A LA PÁGINA (focus)
+  useEffect(() => {
+    window.addEventListener('focus', fetchProjects);
+    return () => window.removeEventListener('focus', fetchProjects);
+  }, []);
+
   const fetchProjects = async () => {
     try {
       const response = await api.get('/projects/');
@@ -71,6 +92,17 @@ export default function Dashboard() {
       console.error('Error refrescando proyectos:', error);
     }
   };
+
+  // Filtrar proyectos según el término de búsqueda
+  const filteredProjects = projects.filter((project) => {
+    const term = searchTerm.toLowerCase();
+    return (
+      project.name?.toLowerCase().includes(term) ||
+      project.client_name?.toLowerCase().includes(term) ||
+      project.status?.toLowerCase().includes(term) ||
+      project.description?.toLowerCase().includes(term)
+    );
+  });
 
   const stats = {
     total: projects.length,
@@ -141,6 +173,14 @@ export default function Dashboard() {
     setSearchParams({ view });
   };
 
+  // Función para obtener color del progreso
+  const getProgressColor = (progress) => {
+    if (progress >= 80) return '#22C55E'; // Verde
+    if (progress >= 50) return '#3B82F6'; // Azul
+    if (progress >= 25) return '#F97316'; // Naranja
+    return '#EF4444'; // Rojo
+  };
+
   return (
     <>
       <Navbar />
@@ -155,10 +195,23 @@ export default function Dashboard() {
           {/* HEADER */}
           <div className="dashboard-header">
             <h1 className="dashboard-title">
-              Mis Proyectos <span className="project-count">({projects.length})</span>
+              Mis Proyectos <span className="project-count">({filteredProjects.length})</span>
             </h1>
 
+            {/* dashboard-actions con position: relative para anclar la burbuja */}
             <div className="dashboard-actions">
+              {/* BÚSQUEDA EN TIEMPO REAL */}
+              <div className="search-wrapper">
+                <Search size={16} className="search-icon" />
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Buscar por nombre, cliente, estado..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
               <div className="view-toggle">
                 <button
                   className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
@@ -189,16 +242,16 @@ export default function Dashboard() {
               <div className="loading-spinner"></div>
               <span>Cargando...</span>
             </div>
-          ) : projects.length === 0 ? (
+          ) : filteredProjects.length === 0 ? (
             <div className="empty-state">
               <FolderOpen size={40} />
               <p>Sin proyectos</p>
-              <span>Crea tu primer proyecto</span>
+              <span>{searchTerm ? 'No se encontraron proyectos con ese filtro' : 'Crea tu primer proyecto'}</span>
             </div>
           ) : viewMode === 'kanban' ? (
             <div className="kanban-wrapper">
               <KanbanBoard 
-                projects={projects} 
+                projects={filteredProjects} 
                 onProjectClick={handleProjectClick}
                 onProjectUpdate={refreshProjects}
               />
@@ -206,7 +259,7 @@ export default function Dashboard() {
           ) : (
             <div className="projects-scroll-container">
               <div className="projects-grid">
-                {projects.map((project) => (
+                {filteredProjects.map((project) => (
                   <div 
                     key={project.id} 
                     className="project-card"
@@ -231,6 +284,23 @@ export default function Dashboard() {
                          project.status === 'completed' ? 'Completado' : 
                          'Pendiente'}
                       </div>
+                      
+                      {/* BARRA DE PROGRESO NUEVA */}
+                      <div className="project-progress-container">
+                        <div className="project-progress-header">
+                          <span className="project-progress-label">Progreso</span>
+                          <span className="project-progress-value">{project.progress || 0}%</span>
+                        </div>
+                        <div className="project-progress-track">
+                          <div 
+                            className="project-progress-fill"
+                            style={{ 
+                              width: `${project.progress || 0}%`,
+                              backgroundColor: getProgressColor(project.progress || 0)
+                            }}
+                          />
+                        </div>
+                      </div>
                     </div>
                     <ChevronRight size={18} className="project-arrow" />
                   </div>
@@ -241,11 +311,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* PANEL DE ESTADÍSTICAS */}
+      {/* PANEL DE ESTADÍSTICAS (BURBUJA FLOTANTE ANCLADA AL BOTÓN) */}
       {showStats && (
-        <div className="stats-panel">
+        <div className="stats-panel-left">
           <div className="stats-header">
-            <span className="stats-title">📊 Métricas</span>
+            <span className="stats-title">
+              <BarChart3 size={16} /> Métricas
+            </span>
             <button className="stats-close" onClick={toggleStats}>
               <X size={16} />
             </button>
@@ -254,19 +326,27 @@ export default function Dashboard() {
             <div className="stat-box">
               <span className="stat-number">{stats.total}</span>
               <span className="stat-label">Total</span>
+              <FolderOpen size={16} className="stat-icon" />
             </div>
             <div className="stat-box">
               <span className="stat-number">{stats.inProgress}</span>
               <span className="stat-label">En progreso</span>
+              <Clock size={16} className="stat-icon" />
             </div>
             <div className="stat-box">
               <span className="stat-number">{stats.completed}</span>
               <span className="stat-label">Completados</span>
+              <CheckCircle2 size={16} className="stat-icon" />
             </div>
             <div className="stat-box">
               <span className="stat-number">${stats.totalBudget.toLocaleString('es-MX')}</span>
               <span className="stat-label">Presupuesto</span>
+              <Wallet size={16} className="stat-icon" />
             </div>
+          </div>
+          <div className="stats-footer">
+            <TrendingUp size={14} />
+            <span>Datos actualizados en tiempo real</span>
           </div>
         </div>
       )}
@@ -339,7 +419,10 @@ export default function Dashboard() {
             <p>
               Eliminarás <strong>"{projectToDelete.name}"</strong>
               <br />
-              <span className="warning">⚠️ Esta acción no se puede deshacer</span>
+              <span className="warning">
+                <AlertTriangle size={14} style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                Esta acción no se puede deshacer
+              </span>
             </p>
             <div className="delete-actions">
               <button className="btn-cancel" onClick={closeDeleteModal} disabled={deleting}>

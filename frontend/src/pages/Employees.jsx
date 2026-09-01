@@ -3,13 +3,15 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
 import AssignProjectModal from '../components/AssignProjectModal';
-import { Users, Mail, UserPlus, Trash2, Briefcase, X, Edit, FolderOpen, Search, Eye, EyeOff, Copy, Check } from 'lucide-react';
+import { Users, Mail, UserPlus, Trash2, Briefcase, X, Edit, FolderOpen, Search, Eye, EyeOff, Copy, Check, Filter } from 'lucide-react';
 import './Employees.css';
 
 export default function Employees() {
   const { user } = useAuth();
   const [employees, setEmployees] = useState([]);
   const [filteredEmployees, setFilteredEmployees] = useState([]);
+  const [projects, setProjects] = useState([]); // Lista de proyectos
+  const [selectedProjectId, setSelectedProjectId] = useState(''); // Filtro de proyecto
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -40,22 +42,32 @@ export default function Employees() {
 
   useEffect(() => {
     fetchEmployees();
+    fetchProjects();
   }, []);
 
-  // Filtrar empleados en tiempo real
+  // Filtrar empleados por búsqueda Y por proyecto
   useEffect(() => {
-    if (searchTerm.trim() === '') {
-      setFilteredEmployees(employees);
-    } else {
+    let filtered = employees;
+
+    // Filtrar por proyecto
+    if (selectedProjectId) {
+      filtered = filtered.filter(emp => 
+        emp.projects && emp.projects.some(p => p.id === parseInt(selectedProjectId))
+      );
+    }
+
+    // Filtrar por búsqueda
+    if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase().trim();
-      const filtered = employees.filter(emp => 
+      filtered = filtered.filter(emp => 
         emp.name.toLowerCase().includes(term) ||
         emp.email.toLowerCase().includes(term) ||
         (emp.profession && emp.profession.toLowerCase().includes(term))
       );
-      setFilteredEmployees(filtered);
     }
-  }, [searchTerm, employees]);
+
+    setFilteredEmployees(filtered);
+  }, [searchTerm, employees, selectedProjectId]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'; // Siempre oculto, el scroll es interno
@@ -77,6 +89,15 @@ export default function Employees() {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const response = await api.get('/projects/');
+      setProjects(response.data);
+    } catch (error) {
+      console.error('Error al cargar proyectos:', error);
     }
   };
 
@@ -239,7 +260,7 @@ export default function Employees() {
           </div>
         </div>
 
-        {/* BUSCADOR */}
+        {/* BUSCADOR Y FILTRO POR PROYECTO */}
         <div className="search-container">
           <div className="search-wrapper">
             <Search size={18} className="search-icon" />
@@ -259,6 +280,24 @@ export default function Employees() {
               </button>
             )}
           </div>
+
+          {/* FILTRO POR PROYECTO */}
+          <div className="filter-wrapper">
+            <Filter size={16} className="filter-icon" />
+            <select
+              className="filter-select"
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+            >
+              <option value="">Todos los proyectos</option>
+              {projects.map((proj) => (
+                <option key={proj.id} value={proj.id}>
+                  {proj.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <span className="search-count">
             {filteredEmployees.length} {filteredEmployees.length === 1 ? 'empleado' : 'empleados'}
           </span>
@@ -280,11 +319,11 @@ export default function Employees() {
             </div>
           ) : filteredEmployees.length === 0 ? (
             <div className="empty-state">
-              {searchTerm ? (
+              {searchTerm || selectedProjectId ? (
                 <>
                   <Search size={40} />
-                  <p>No hay resultados para "{searchTerm}"</p>
-                  <span>Intenta con otro término de búsqueda</span>
+                  <p>No hay resultados</p>
+                  <span>Cambia tu búsqueda o selecciona otro proyecto</span>
                 </>
               ) : (
                 <>
@@ -311,6 +350,14 @@ export default function Employees() {
                         <div className="employee-email">
                           <Mail size={12} />
                           {emp.email}
+                        </div>
+                        <div className="employee-projects">
+                          <Briefcase size={12} />
+                          {emp.projects && emp.projects.length > 0 ? (
+                            <span>{emp.projects.length} {emp.projects.length === 1 ? 'proyecto' : 'proyectos'}</span>
+                          ) : (
+                            <span>Sin proyectos</span>
+                          )}
                         </div>
                       </div>
 

@@ -30,9 +30,14 @@ import AccesoReporte from './pages/public/AccesoReporte';
 import VerReporte from './pages/public/VerReporte';
 
 // ==========================================
-// DASHBOARD DE ANÁLISIS - ADMIN 👈 NUEVA IMPORTACIÓN
+// DASHBOARD DE ANÁLISIS - ADMIN
 // ==========================================
 import DashboardAnalisis from './pages/DashboardAnalisis';
+
+// ==========================================
+// ANÁLISIS POR PROYECTO - ADMIN
+// ==========================================
+import AnalisisProyecto from './pages/AnalisisProyecto';
 
 function App() {
   return (
@@ -129,11 +134,20 @@ function App() {
           } />
 
           {/* ========================================== */}
-          {/* DASHBOARD DE ANÁLISIS - ADMIN 👈 NUEVA RUTA */}
+          {/* DASHBOARD DE ANÁLISIS - ADMIN */}
           {/* ========================================== */}
           <Route path="/dashboard-analisis" element={
             <ProtectedRoute allowedRoles={['admin']}>
               <DashboardAnalisis />
+            </ProtectedRoute>
+          } />
+
+          {/* ========================================== */}
+          {/* ANÁLISIS POR PROYECTO - ADMIN (RUTA SIN ID) */}
+          {/* ========================================== */}
+          <Route path="/analisis-proyecto" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AnalisisProyecto />
             </ProtectedRoute>
           } />
 

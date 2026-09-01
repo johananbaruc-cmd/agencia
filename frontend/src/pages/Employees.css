@@ -1020,3 +1020,48 @@ body {
     justify-content: center;
   }
 }
+/* ===== FILTRO POR PROYECTO ===== */
+.filter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 10px;
+  padding: 8px 12px;
+  min-width: 220px;
+}
+
+.filter-icon {
+  color: #38bdf8;
+}
+
+.filter-select {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f3f4f6;
+  font-size: 13px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.filter-select option {
+  background: #0f172a;
+  color: #f3f4f6;
+}
+
+/* ===== CONTADOR DE PROYECTOS EN TARJETA ===== */
+.employee-projects {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 4px;
+}
+
+.employee-projects span {
+  color: #38bdf8;
+  font-weight: 600;
+}

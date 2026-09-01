@@ -7,6 +7,7 @@ from collections import Counter, defaultdict
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case, desc
 import time
+import numpy as np
 from app.models.analisis import AnalisisDashboard
 from app.models.project import Project
 from app.models.task import Task
@@ -600,7 +601,7 @@ class AnalisisService:
 
         return [{"name": r.name, "presupuesto": r.presupuesto or 0} for r in resultados]
 
-        # ============================================
+    # ============================================
     # 11. CLIENTES POR EMPRESA (SIN LÍMITE - TODOS LOS CLIENTES)
     # ============================================
     @staticmethod
@@ -622,29 +623,176 @@ class AnalisisService:
             proyectos = db.query(Project.name).join(Client, Client.id == Project.client_id).filter(Client.company == r.company).all()
             
             items.append({
-                "name": r.company or "Sin empresa",  # Aquí va el nombre real de la empresa
-                "value": r.value,                   # Cuántos clientes tiene
-                "proyectos": [p[0] for p in proyectos]  # Lista de nombres de proyectos
+                "name": r.company or "Sin empresa",
+                "value": r.value,
+                "proyectos": [p[0] for p in proyectos]
             })
 
-        # ✅ CAMBIO IMPORTANTE: Devolver TODOS los clientes SIN agrupar en "Otros"
         return items
-        
-    @staticmethod
-    def _agrupar_top_n(items: List[Dict], n: int = 6, key: str = "value") -> List[Dict]:
-        """Agrupa el top N y el resto en 'Otros'"""
-        if len(items) <= n:
-            return items
-        ordenados = sorted(items, key=lambda x: x[key], reverse=True)
-        top = ordenados[:n]
-        resto = ordenados[n:]
-        suma_resto = sum(i[key] for i in resto)
-        if suma_resto > 0:
-            top.append({"name": "Otros", key: suma_resto})
-        return top
 
     # ============================================
-    # 12. MÉTODOS PARA OBTENER DATOS
+    # 12. ANÁLISIS ESPECÍFICO DE UN PROYECTO
+    # ============================================
+    @staticmethod
+    def _calcular_analisis_proyecto(db: Session, project_id: int, agencia_id: Optional[int] = None) -> Dict:
+        """Calcula el análisis detallado de un solo proyecto"""
+        
+        # 1. Obtener el proyecto
+        query = db.query(Project).filter(Project.id == project_id)
+        if agencia_id:
+            query = query.filter(Project.agency_id == agencia_id)
+        
+        proyecto = query.first()
+        if not proyecto:
+            return {"error": "Proyecto no encontrado"}
+        
+        # 2. Contar tareas
+        tareas = db.query(Task).filter(Task.project_id == project_id).all()
+        total_tasks = len(tareas)
+        completed_tasks = sum(1 for t in tareas if t.status == "completed")
+        in_progress_tasks = sum(1 for t in tareas if t.status == "in_progress")
+        pending_tasks = sum(1 for t in tareas if t.status == "pending")
+        
+        # 3. Contar evidencias
+        evidencias = (
+            db.query(TaskEvidence)
+            .join(Task, Task.id == TaskEvidence.task_id)
+            .filter(Task.project_id == project_id)
+            .all()
+        )
+        approved_evidences = sum(1 for e in evidencias if e.status.lower() == "approved")
+        rejected_evidences = sum(1 for e in evidencias if e.status.lower() == "rejected")
+        
+        # 4. Calcular días restantes
+        hoy = datetime.now().date()
+        dias_restantes = (proyecto.end_date.date() - hoy).days if proyecto.end_date else 0
+        
+               # 5. CALCULAR PROGRESO AUTOMÁTICO (70% TAREAS + 30% EVIDENCIAS)
+        if total_tasks > 0:
+            progreso_tareas = (completed_tasks / total_tasks) * 70
+        else:
+            progreso_tareas = 0
+        
+        if len(evidencias) > 0:
+            progreso_evidencias = (approved_evidences / len(evidencias)) * 30
+        else:
+            progreso_evidencias = 0
+        
+        # PROGRESO REAL (calculado automáticamente)
+        progreso_real = round(progreso_tareas + progreso_evidencias)
+        
+        # 6. CALCULAR FECHAS Y DÍAS
+        if proyecto.start_date:
+            fecha_inicio = proyecto.start_date.date()
+        else:
+            fecha_inicio = proyecto.created_at.date() if proyecto.created_at else datetime.now().date()
+        
+        fecha_fin = proyecto.end_date.date() if proyecto.end_date else datetime.now().date()
+        
+        # Días transcurridos (DEFINIR ANTES DE USAR)
+        dias_transcurridos = max((hoy - fecha_inicio).days, 1)
+        
+        # Días totales del proyecto
+        dias_totales = max((fecha_fin - fecha_inicio).days, 1)
+        
+        # Progreso esperado según el tiempo transcurrido
+        progreso_esperado = min((dias_transcurridos / dias_totales) * 100, 100)
+        
+        # Velocidad diaria (progreso real / días transcurridos)
+        velocidad_diaria = progreso_real / dias_transcurridos if dias_transcurridos > 0 else 0
+        
+        # Velocidad necesaria para terminar a tiempo
+        if dias_restantes > 0:
+            velocidad_necesaria = (100 - progreso_real) / dias_restantes
+        else:
+            velocidad_necesaria = 999
+        
+        # Determinar tendencia
+        if dias_restantes < 0:
+            tendencia = "retrasado"
+        elif velocidad_diaria >= velocidad_necesaria:
+            tendencia = "adelantado"
+        elif velocidad_diaria >= velocidad_necesaria * 0.7:
+            tendencia = "buen_camino"
+        else:
+            tendencia = "riesgo_retraso"
+        
+        # 7. Calcular riesgo
+        if dias_restantes < 0:
+            riesgo = "critical"
+        elif dias_restantes < 7 and (progreso_real or 0) < 80:
+            riesgo = "critical"
+        elif dias_restantes < 14 and (progreso_real or 0) < 60:
+            riesgo = "warning"
+        else:
+            riesgo = "safe"
+        
+        # 8. GENERAR GRÁFICA DE ÁREA (PROGRESO ESPERADO VS PROGRESO REAL)
+        rango_total = dias_totales
+        
+        grafica_tendencia = []
+        
+        for i in range(1, rango_total + 1):
+            progreso_ideal = (i / rango_total) * 100
+            progreso_real_estimado = min(velocidad_diaria * i, 100)
+            
+            if progreso_real_estimado >= progreso_ideal:
+                estado = "bueno"
+            elif progreso_real_estimado >= progreso_ideal * 0.8:
+                estado = "alerta"
+            else:
+                estado = "malo"
+            
+            grafica_tendencia.append({
+                "dia": i,
+                "progreso_ideal": round(progreso_ideal, 1),
+                "progreso_real": round(progreso_real_estimado, 1),
+                "estado": estado
+            })
+        
+        # 9. PUNTOS DE PROYECCIÓN
+        proyeccion = []
+        for i in range(dias_transcurridos + 1, dias_transcurridos + dias_restantes + 1):
+            progreso_estimado = min(velocidad_diaria * i, 100)
+            proyeccion.append({
+                "dia": i,
+                "progreso": round(progreso_estimado, 1),
+                "tipo": "proyeccion"
+            })
+        
+        return {
+            "id": proyecto.id,
+            "name": proyecto.name,
+            "status": proyecto.status,
+            "progress": progreso_real,
+            "endDate": proyecto.end_date.strftime("%d/%m/%Y") if proyecto.end_date else None,
+            "totalTasks": total_tasks,
+            "completedTasks": completed_tasks,
+            "inProgressTasks": in_progress_tasks,
+            "pendingTasks": pending_tasks,
+            "approvedEvidences": approved_evidences,
+            "rejectedEvidences": rejected_evidences,
+            "daysRemaining": dias_restantes,
+            "riskLevel": riesgo,
+            "tendencia": tendencia,
+            "velocidad_diaria": round(velocidad_diaria, 2),
+            "velocidad_necesaria": round(velocidad_necesaria, 2),
+            "grafica_tendencia": grafica_tendencia,
+            "proyeccion": proyeccion,
+            "regresion_lineal": proyeccion
+        }
+    
+    @staticmethod
+    def obtener_analisis_proyecto(
+        db: Session,
+        project_id: int,
+        agencia_id: Optional[int] = None
+    ) -> Dict:
+        """Método público para obtener el análisis de un proyecto"""
+        return AnalisisService._calcular_analisis_proyecto(db, project_id, agencia_id)
+
+    # ============================================
+    # 13. MÉTODOS PARA OBTENER DATOS
     # ============================================
     @staticmethod
     def obtener_dashboard_actual(

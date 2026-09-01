@@ -36,7 +36,8 @@ import {
   LineChart,
   Activity,
   CheckCircle,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Image as ImageIcon
 } from 'lucide-react';
 import './DetalleReporte.css';
 
@@ -71,6 +72,48 @@ const DetalleReporte = () => {
   
   const [archivosSubidos, setArchivosSubidos] = useState([]);
   const [elementosDeTareas, setElementosDeTareas] = useState([]);
+
+  // ==========================================
+  // FUNCIÓN PARA CONSTRUIR LA URL CORRECTA (USA EL BACKEND)
+  // ==========================================
+  const API_URL = 'http://127.0.0.1:8000'; // URL del backend
+
+  const construirUrl = (ruta) => {
+    if (!ruta) return null;
+    
+    // Si ya es URL completa (http o https), úsala tal cual
+    if (ruta.startsWith('http') || ruta.startsWith('https')) {
+      return ruta;
+    }
+    
+    // Si ya empieza con '/uploads', agrega el backend
+    if (ruta.startsWith('/uploads')) {
+      return `${API_URL}${ruta}`;
+    }
+    
+    // Si es solo el nombre del archivo (ej: "7ce85d815beb436d9185c393837e2d64.png")
+    const nombreArchivo = ruta.split('/').pop();
+    if (ruta.includes('/tasks/')) {
+      return `${API_URL}/uploads/tasks/${nombreArchivo}`;
+    }
+    
+    // Para reportes: URL exacta con el ID del reporte
+    if (ruta.includes('/reportes/')) {
+      const partes = ruta.split('/');
+      const idReporte = partes[partes.length - 2]; // Obtiene "30"
+      return `${API_URL}/uploads/reportes/${idReporte}/${nombreArchivo}`;
+    }
+    
+    // Si solo nos dan el nombre del archivo
+    return `${API_URL}/uploads/reportes/${reporteId}/${nombreArchivo}`;
+  };
+
+  // Detectar si se abre en navegador (PDF o imagen)
+  const seAbreEnNavegador = (nombreArchivo) => {
+    if (!nombreArchivo) return false;
+    const ext = nombreArchivo.split('.').pop()?.toLowerCase();
+    return ['pdf', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext);
+  };
 
   useEffect(() => {
     const cargarReporte = async () => {
@@ -186,7 +229,8 @@ const DetalleReporte = () => {
             ...ev,
             tarea_id: task.id,
             tarea_nombre: task.title,
-            tarea_descripcion: task.description || ''
+            tarea_descripcion: task.description || '',
+            file_url: construirUrl(ev.file_url)
           }));
           todasLasEvidencias = [...todasLasEvidencias, ...evidenciasConTarea];
         } catch (error) {
@@ -206,7 +250,14 @@ const DetalleReporte = () => {
       setElementosDeTareas(elementosFiltrados);
 
       const archivosSubidosDirectamente = reporteBase.archivos || [];
-      setArchivosSubidos(archivosSubidosDirectamente);
+      
+      // Limpiar URLs de archivos subidos
+      const archivosLimpiados = archivosSubidosDirectamente.map(archivo => ({
+        ...archivo,
+        url_correcta: construirUrl(archivo.ruta_archivo || archivo.file_url || archivo.ruta)
+      }));
+      
+      setArchivosSubidos(archivosLimpiados);
 
     } catch (error) {
       console.error('Error al cargar archivos y evidencias:', error);
@@ -244,38 +295,6 @@ const DetalleReporte = () => {
     setTimeout(() => setCopiadoCodigo(false), 3000);
   };
 
-  const getAnalisisNombre = (tipo) => {
-    const nombres = {
-      'pca': 'PCA - Reducción de dimensionalidad',
-      'regresion': 'Regresión Lineal - Predicción de tendencias',
-      'clustering': 'Clustering - Agrupación de datos',
-      'estadisticas': 'Estadísticas - Análisis descriptivo',
-      'regresion_gasto_tiempo': 'Gasto vs Tiempo - Desviación presupuestaria',
-      'regresion_rendimiento_empleado': 'Rendimiento del Empleado - Productividad',
-      'regresion_presupuesto_plazo': 'Presupuesto vs Plazo - Eficiencia CPI/SPI',
-      'curva_s': 'Curva S - Avance físico vs financiero',
-      'desviacion_plazos': 'Desviación de Plazos - Tareas críticas',
-      'prediccion_fin': 'Predicción de Fin - Fecha estimada'
-    };
-    return nombres[tipo] || tipo;
-  };
-
-  const getAnalisisIcon = (tipo) => {
-    const iconos = {
-      'pca': <TrendingUp size={16} />,
-      'regresion': <BarChart3 size={16} />,
-      'clustering': <PieChart size={16} />,
-      'estadisticas': <Database size={16} />,
-      'regresion_gasto_tiempo': <Activity size={16} />,
-      'regresion_rendimiento_empleado': <Users size={16} />,
-      'regresion_presupuesto_plazo': <Target size={16} />,
-      'curva_s': <LineChart size={16} />,
-      'desviacion_plazos': <Calendar size={16} />,
-      'prediccion_fin': <CalendarIcon size={16} />
-    };
-    return iconos[tipo] || <FileText size={16} />;
-  };
-
   const getProgressColor = (progreso) => {
     if (progreso < 30) return '#ef4444';
     if (progreso < 60) return '#f59e0b';
@@ -286,7 +305,7 @@ const DetalleReporte = () => {
   const getFileIcon = (fileName) => {
     if (!fileName) return <FileText size={20} />;
     const ext = fileName.split('.').pop()?.toLowerCase();
-    if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) return <FileText size={20} />;
+    if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) return <ImageIcon size={20} />;
     return <FileText size={20} />;
   };
 
@@ -603,32 +622,6 @@ const DetalleReporte = () => {
             </div>
           </div>
 
-          {/* CONFIGURACIÓN DE ANÁLISIS */}
-          {reporte.configuracion_analisis && (
-            <div className="detalle-section">
-              <h3 className="section-title">
-                <BarChart3 size={18} />
-                Configuración de Análisis
-              </h3>
-              <div className="analisis-config-grid">
-                {Object.entries(reporte.configuracion_analisis).map(([key, value]) => {
-                  if (value) {
-                    return (
-                      <div key={key} className="analisis-config-item">
-                        {getAnalisisIcon(key)}
-                        <span>{getAnalisisNombre(key)}</span>
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
-                {!Object.values(reporte.configuracion_analisis).some(v => v) && (
-                  <p className="no-analisis-text">No se seleccionó ningún análisis</p>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* TEXTO DE AVANCE */}
           {reporte.texto_avance && (
             <div className="detalle-section">
@@ -677,11 +670,23 @@ const DetalleReporte = () => {
                         {new Date(item.created_at).toLocaleDateString('es-MX')}
                       </span>
                     </div>
-                    {item.file_url && (
+
+                    {/* ACCIÓN SEGÚN TIPO DE ARCHIVO */}
+                    {seAbreEnNavegador(item.file_name) ? (
                       <a
-                        href={item.file_url.startsWith('http') ? item.file_url : `${window.location.origin}${item.file_url}`}
+                        href={item.file_url}
+                        className="btn-ver"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Eye size={14} />
+                        Ver
+                      </a>
+                    ) : (
+                      <a
+                        href={item.file_url}
                         className="btn-download"
-                        download
+                        download={item.file_name}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -713,111 +718,48 @@ const DetalleReporte = () => {
                                          archivo.ruta_archivo?.split('/').pop() || 
                                          archivo.ruta?.split('/').pop() || 
                                          '';
-                  const urlDescarga = `${window.location.origin}/uploads/reportes/${reporteId}/${nombreGuardado}`;
+                  const urlDescarga = archivo.url_correcta || 
+                                     `${API_URL}/uploads/reportes/${reporteId}/${nombreGuardado}`;
+                  const archivoNombre = archivo.nombre_original || archivo.nombre || '';
                   
                   return (
                     <div key={archivo.id} className="archivo-row">
                       <div className="archivo-info">
-                        <span className="archivo-icon">{getFileIcon(archivo.nombre_original || archivo.nombre)}</span>
-                        <span className="archivo-name">{archivo.nombre_original || archivo.nombre || 'Sin nombre'}</span>
+                        <span className="archivo-icon">{getFileIcon(archivoNombre)}</span>
+                        <span className="archivo-name">{archivoNombre}</span>
                         <span className="archivo-size">{formatFileSize(archivo.tamaño_bytes || archivo.tamaño)}</span>
                         <span className="archivo-origen">Subido en reporte</span>
                       </div>
-                      <a
-                        href={urlDescarga}
-                        className="btn-download"
-                        download
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Download size={14} />
-                        Descargar
-                      </a>
+                      
+                      {/* ACCIÓN SEGÚN TIPO DE ARCHIVO */}
+                      {seAbreEnNavegador(archivoNombre) ? (
+                        <a
+                          href={urlDescarga}
+                          className="btn-ver"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Eye size={14} />
+                          Ver
+                        </a>
+                      ) : (
+                        <a
+                          href={urlDescarga}
+                          className="btn-download"
+                          download={archivoNombre}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Download size={14} />
+                          Descargar
+                        </a>
+                      )}
                     </div>
                   );
                 })}
               </div>
             )}
           </div>
-
-          {/* ANÁLISIS EJECUTADOS */}
-          {reporte.analisis && reporte.analisis.length > 0 && (
-            <div className="detalle-section">
-              <h3 className="section-title">
-                <BarChart3 size={18} />
-                Resultados de Análisis
-                <span className="badge-count">{reporte.analisis.length}</span>
-              </h3>
-              <div className="analisis-resultados">
-                {reporte.analisis.map((analisis) => (
-                  <div key={analisis.id} className="analisis-resultado-card">
-                    <div className="analisis-resultado-header">
-                      {getAnalisisIcon(analisis.tipo_analisis)}
-                      <span className="analisis-resultado-nombre">
-                        {analisis.nombre || getAnalisisNombre(analisis.tipo_analisis)}
-                      </span>
-                      {analisis.nivel_riesgo && (
-                        <span className={`analisis-riesgo-badge riesgo-${analisis.nivel_riesgo}`}>
-                          {analisis.nivel_riesgo.toUpperCase()}
-                        </span>
-                      )}
-                      {analisis.nivel_confianza && (
-                        <span className="analisis-confianza">
-                          <Database size={12} />
-                          {Math.round(analisis.nivel_confianza * 100)}% confianza
-                        </span>
-                      )}
-                      {analisis.tiempo_ejecucion_ms && (
-                        <span className="analisis-tiempo">
-                          <Clock size={12} />
-                          {analisis.tiempo_ejecucion_ms}ms
-                        </span>
-                      )}
-                    </div>
-                    
-                    {analisis.descripcion && (
-                      <p className="analisis-resultado-desc">{analisis.descripcion}</p>
-                    )}
-                    
-                    {analisis.recomendaciones && analisis.recomendaciones.length > 0 && (
-                      <div className="analisis-recomendaciones">
-                        <strong>Recomendaciones:</strong>
-                        <ul>
-                          {analisis.recomendaciones.map((rec, idx) => (
-                            <li key={idx}>{rec}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {analisis.alertas && analisis.alertas.length > 0 && (
-                      <div className="analisis-alertas">
-                        {analisis.alertas.map((alerta, idx) => (
-                          <div key={idx} className={`alerta-item alerta-${alerta.tipo}`}>
-                            <AlertCircle size={14} />
-                            <span>{alerta.mensaje}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    
-                    {analisis.grafica_principal && (
-                      <div className="analisis-grafica">
-                        <img src={analisis.grafica_principal} alt="Gráfica de análisis" />
-                      </div>
-                    )}
-                    
-                    {analisis.resultados && (
-                      <details className="analisis-resultados-json">
-                        <summary>Ver resultados detallados</summary>
-                        <pre>{JSON.stringify(analisis.resultados, null, 2)}</pre>
-                      </details>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* PREGUNTA AL CLIENTE */}
           {reporte.pregunta_cliente && (

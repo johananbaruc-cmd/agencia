@@ -1,5 +1,4 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
 from fastapi import HTTPException, status
 from typing import List, Optional
 from app.models.project import Project
@@ -49,21 +48,48 @@ class ProjectService:
         """Obtener proyectos según el rol del usuario"""
         
         if user.role == "admin":
-            return db.query(Project).filter(Project.agency_id == user.agency_id).all()
+            proyectos = db.query(Project).filter(Project.agency_id == user.agency_id).all()
+        else:
+            proyectos = db.query(Project).join(ProjectMember).filter(
+                ProjectMember.user_id == user.id,
+                Project.agency_id == user.agency_id
+            ).all()
         
-        return db.query(Project).join(ProjectMember).filter(
-            ProjectMember.user_id == user.id,
-            Project.agency_id == user.agency_id
-        ).all()
+        # AUTOMÁTICAMENTE RECALCULAR PROGRESO DE CADA PROYECTO
+        for proyecto in proyectos:
+            ProjectService.recalcular_progreso(db, proyecto.id)
+        
+        # Volver a consultar los proyectos actualizados
+        if user.role == "admin":
+            proyectos = db.query(Project).filter(Project.agency_id == user.agency_id).all()
+        else:
+            proyectos = db.query(Project).join(ProjectMember).filter(
+                ProjectMember.user_id == user.id,
+                Project.agency_id == user.agency_id
+            ).all()
+        
+        return proyectos
     
     @staticmethod
     def get_employee_projects(db: Session, employee_id: int, agency_id: int) -> List[Project]:
         """Obtener todos los proyectos de un empleado específico (para admin)"""
         
-        return db.query(Project).join(ProjectMember).filter(
+        proyectos = db.query(Project).join(ProjectMember).filter(
             ProjectMember.user_id == employee_id,
             Project.agency_id == agency_id
         ).all()
+        
+        # AUTOMÁTICAMENTE RECALCULAR PROGRESO DE CADA PROYECTO
+        for proyecto in proyectos:
+            ProjectService.recalcular_progreso(db, proyecto.id)
+        
+        # Volver a consultar los proyectos actualizados
+        proyectos = db.query(Project).join(ProjectMember).filter(
+            ProjectMember.user_id == employee_id,
+            Project.agency_id == agency_id
+        ).all()
+        
+        return proyectos
     
     @staticmethod
     def get_project(db: Session, project_id: int, user: User) -> Project:
@@ -94,6 +120,12 @@ class ProjectService:
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="No tienes acceso a este proyecto"
                 )
+        
+        # AUTOMÁTICAMENTE RECALCULAR PROGRESO
+        ProjectService.recalcular_progreso(db, project_id)
+        
+        # Volver a consultar el proyecto actualizado
+        project = db.query(Project).filter(Project.id == project_id).first()
         
         return project
     
@@ -258,3 +290,46 @@ class ProjectService:
             }
             for member in members
         ]
+
+    # ==========================================
+    # NUEVO: RECALCULAR PROGRESO AUTOMÁTICAMENTE
+    # ==========================================
+    @staticmethod
+    def recalcular_progreso(db: Session, project_id: int) -> None:
+        """Recalcula el progreso automáticamente según tareas completadas y evidencias aprobadas"""
+        from app.models.task import Task
+        from app.models.task_evidence import TaskEvidence
+        
+        # 1. Contar tareas del proyecto
+        tareas = db.query(Task).filter(Task.project_id == project_id).all()
+        total_tareas = len(tareas)
+        completadas = sum(1 for t in tareas if t.status == "completed")
+        
+        # 2. Contar evidencias aprobadas
+        evidencias = (
+            db.query(TaskEvidence)
+            .join(Task, Task.id == TaskEvidence.task_id)
+            .filter(Task.project_id == project_id)
+            .all()
+        )
+        aprobadas = sum(1 for e in evidencias if e.status.lower() == "approved")
+        total_evidencias = len(evidencias)
+        
+        # 3. Calcular progreso (70% tareas + 30% evidencias)
+        if total_tareas > 0:
+            progreso_tareas = (completadas / total_tareas) * 70
+        else:
+            progreso_tareas = 0
+        
+        if total_evidencias > 0:
+            progreso_evidencias = (aprobadas / total_evidencias) * 30
+        else:
+            progreso_evidencias = 0
+        
+        progreso_calculado = round(progreso_tareas + progreso_evidencias)
+        
+        # 4. Actualizar proyecto en la BD
+        project = db.query(Project).filter(Project.id == project_id).first()
+        if project:
+            project.progress = progreso_calculado
+            db.commit()

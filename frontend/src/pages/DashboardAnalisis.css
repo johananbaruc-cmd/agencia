@@ -1153,3 +1153,46 @@ body {
   border-radius: 12px;
   font-size: 12px;
 }
+
+/* ===== SELECTOR DE PROYECTOS ===== */
+.select-proyecto-container {
+  margin-top: 15px;
+}
+
+.select-proyecto {
+  width: 100%;
+  padding: 12px 15px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+  color: #f3f4f6;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+}
+
+.select-proyecto:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+}
+
+.select-proyecto option {
+  background: #0f172a;
+  color: #f3f4f6;
+}
+
+/* ===== BARRA DE CARGA PEQUEÑA ===== */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+}
+
+/* ===== TENDENCIA DEL PROYECTO ===== */
+.kpi-value {
+  max-width: 180px;
+  white-space: nowrap;
+}

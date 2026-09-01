@@ -3,12 +3,10 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
 }
-*::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
-}
+/* 🔥 ELIMINADO: scrollbar-width: none; */
+/* 🔥 ELIMINADO: -ms-overflow-style: none; */
+/* 🔥 ELIMINADO: *::-webkit-scrollbar { display: none; } */
 
 :root {
   --text-primary: #ffffff;
@@ -22,7 +20,8 @@
 body {
   font-family: 'Inter', sans-serif;
   color: var(--text-primary);
-  overflow-x: hidden;
+  overflow: hidden;
+  height: 100vh;
   background: radial-gradient(circle at center, #0a1a3a 0%, #020817 70%);
 }
 
@@ -30,6 +29,7 @@ body {
 .dashboard-wrapper {
   position: relative;
   min-height: 100vh;
+  height: 100vh;
   padding-left: 72px;
   padding-top: 15px;
   padding-bottom: 15px;
@@ -86,9 +86,11 @@ body {
   max-width: 1400px;
   margin: 0 auto;
   padding: 0 20px;
+  height: calc(100vh - 30px);
+  display: flex;
+  flex-direction: column;
 }
 
-/* ==================== HEADER ==================== */
 /* ==================== HEADER (TRANSPARENTE) ==================== */
 .dashboard-header {
   display: flex;
@@ -98,25 +100,21 @@ body {
   padding: 10px 0;
   flex-wrap: wrap;
   gap: 12px;
+  flex-shrink: 0;
   
-  /* Fondo 100% transparente */
   background: transparent !important;
   background-color: transparent !important;
-  
-  /* Sin bordes ni sombras */
   border: none !important;
   box-shadow: none !important;
-  
-  /* Sin efecto cristal */
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+
 .dashboard-title {
   font-size: 2rem;
   font-weight: 800;
   margin: 0;
   color: #ffffff;
-  /* Sombra suave, sin caja */
   text-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
   letter-spacing: -0.5px;
 }
@@ -129,11 +127,40 @@ body {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+/* ==================== ACCIONES ==================== */
 .dashboard-actions {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* ==================== BÚSQUEDA ==================== */
+.search-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 10px;
+  padding: 8px 12px;
+  min-width: 220px;
+}
+
+.search-icon {
+  color: #38bdf8;
+  flex-shrink: 0;
+}
+
+.search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f3f4f6;
+  font-size: 13px;
+  width: 100%;
 }
 
 /* ==================== BOTONES CON GRADIENTE AZUL ==================== */
@@ -210,6 +237,7 @@ body {
   gap: 12px;
   padding: 60px 20px;
   color: var(--text-secondary);
+  flex: 1;
 }
 
 .loading-spinner {
@@ -232,6 +260,7 @@ body {
   gap: 10px;
   padding: 60px 20px;
   color: var(--text-secondary);
+  flex: 1;
 }
 
 .empty-state p {
@@ -240,18 +269,54 @@ body {
   color: var(--text-primary);
 }
 
-/* ==================== SCROLL OCULTO EN PROYECTOS ==================== */
+/* ==================== SCROLL INTERNO - CORREGIDO ==================== */
 .projects-scroll-container {
-  max-height: calc(100vh - 150px);
+  flex: 1;
   overflow-y: auto;
-  padding-right: 5px;
+  overflow-x: hidden;
+  padding-right: 0;
+  padding-bottom: 0;
+  min-height: 0;
+  margin-bottom: 0;
 }
 
-/* ==================== PROYECTOS (GLASS) ==================== */
+/* Scrollbar flotante - NO ocupa espacio */
+.projects-scroll-container::-webkit-scrollbar {
+  width: 3px;
+  display: block;
+}
+
+.projects-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.projects-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+}
+
+.projects-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Firefox */
+.projects-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.06) transparent;
+}
+
+/* ==================== PROYECTOS (GLASS) - CORREGIDO ==================== */
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+/* 🔥 Última tarjeta sin margen extra */
+.project-card:last-child {
+  margin-bottom: 0;
 }
 
 .project-card {
@@ -362,46 +427,99 @@ body {
   color: #00d9ff;
 }
 
+/* ==================== BARRA DE PROGRESO ==================== */
+.project-progress-container {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.project-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.project-progress-label {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.project-progress-value {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.project-progress-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.project-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
 /* ==================== KANBAN ==================== */
 .kanban-wrapper {
   width: 100%;
   overflow-x: auto;
+  flex: 1;
 }
 
-/* ==================== PANEL ESTADÍSTICAS (GLASS) ==================== */
-.stats-panel {
+/* ==================== PANEL DE MÉTRICAS ==================== */
+.stats-panel-left {
   position: fixed;
-  right: 20px;
-  top: 90px;
-  z-index: 100;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--border);
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 700px;
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.98);
+  border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: 16px;
   padding: 18px;
-  width: 280px;
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .stats-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 10px;
 }
 
 .stats-title {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #f3f4f6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .stats-close {
-  background: none;
+  background: transparent;
   border: none;
-  color: var(--text-secondary);
+  color: #94a3b8;
   cursor: pointer;
-  padding: 4px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
 }
 
 .stats-grid {
@@ -414,27 +532,41 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px;
-  background: rgba(0, 0, 0, 0.2);
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 12px;
 }
 
 .stat-number {
-  font-size: 1.3rem;
-  font-weight: 700;
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -1px;
 }
 
 .stat-label {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
+  font-size: 0.75rem;
+  color: #94a3b8;
   margin-top: 2px;
 }
 
-/* ==================== MODALES (GLASS) ==================== */
+.stat-icon {
+  color: #38bdf8;
+  margin-top: 6px;
+}
+
+.stats-footer {
+  margin-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+/* ==================== MODALES ==================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -560,7 +692,7 @@ body {
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
 }
 
-/* ==================== MODAL ELIMINAR (GLASS) ==================== */
+/* ==================== MODAL ELIMINAR ==================== */
 .modal-delete {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--border);
@@ -660,6 +792,7 @@ body {
 
   .dashboard-content {
     padding: 0 15px;
+    height: calc(100vh - 90px);
   }
 
   .dashboard-header {
@@ -685,11 +818,15 @@ body {
     padding: 14px 16px;
   }
 
-  .stats-panel {
+  .stats-panel-left {
+    top: 100px;
     right: 10px;
-    top: 80px;
     width: calc(100% - 20px);
     max-width: 300px;
+  }
+
+  .stats-panel-left::after {
+    display: none;
   }
 
   .stats-btn span {
@@ -704,6 +841,7 @@ body {
 @media (max-width: 480px) {
   .dashboard-content {
     padding: 0 10px;
+    height: calc(100vh - 80px);
   }
 
   .dashboard-title {
@@ -763,7 +901,7 @@ body {
     max-width: 100%;
   }
 
-  .stats-panel {
+  .stats-panel-left {
     top: 70px;
     padding: 14px;
     width: calc(100% - 20px);

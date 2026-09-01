@@ -12,25 +12,12 @@ import {
   Folder,
   Users,
   BarChart3,
-  TrendingUp,
-  PieChart,
-  Database,
-  Eye,
   Calendar,
   CheckSquare,
   AlertCircle,
   Sliders,
   Clock,
-  Download,
-  File,
-  Image,
-  FileArchive,
-  Trash2,
-  Target,
-  GitBranch,
-  LineChart,
-  Activity,
-  Calendar as CalendarIcon
+  Trash2
 } from 'lucide-react';
 import './CrearReporte.css';
 
@@ -53,18 +40,6 @@ const CrearReporte = () => {
     texto_avance: '',
     pregunta_cliente: '',
     proyecto_seleccionado: projectId || '',
-    configuracion_analisis: {
-      pca: false,
-      regresion: false,
-      clustering: false,
-      estadisticas: false,
-      regresion_gasto_tiempo: false,
-      regresion_rendimiento_empleado: false,
-      regresion_presupuesto_plazo: false,
-      curva_s: false,
-      desviacion_plazos: false,
-      prediccion_fin: false
-    },
     incluir_evidencias: false,
     horas_expiracion: 24
   });
@@ -102,6 +77,8 @@ const CrearReporte = () => {
         try {
           const response = await api.get(`/projects/${projectId}`);
           setProject(response.data);
+          // INICIALIZAR PROGRESO CON EL VALOR DEL PROYECTO
+          setProgresoVisual(response.data.progress || 0);
           setFormData(prev => ({
             ...prev,
             titulo: `Reporte - ${response.data.name}`,
@@ -206,6 +183,8 @@ const CrearReporte = () => {
       try {
         const response = await api.get(`/projects/${id}`);
         setProject(response.data);
+        // INICIALIZAR PROGRESO CON EL VALOR DEL PROYECTO
+        setProgresoVisual(response.data.progress || 0);
         setFormData(prev => ({
           ...prev,
           titulo: `Reporte - ${response.data.name}`
@@ -226,6 +205,7 @@ const CrearReporte = () => {
       setArchivosExistentes([]);
       setEvidenciasSeleccionadas([]);
       setArchivosExistentesSeleccionados([]);
+      setProgresoVisual(0);
       setFormData(prev => ({
         ...prev,
         titulo: ''
@@ -238,16 +218,6 @@ const CrearReporte = () => {
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
-  const handleAnalisisChange = (tipo) => {
-    setFormData(prev => ({
-      ...prev,
-      configuracion_analisis: {
-        ...prev.configuracion_analisis,
-        [tipo]: !prev.configuracion_analisis[tipo]
-      }
     }));
   };
 
@@ -285,20 +255,6 @@ const CrearReporte = () => {
       
       return newSelection;
     });
-  };
-
-  const handleProgresoChange = (e) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value) && value >= 0 && value <= 100) {
-      setProgresoVisual(value);
-    }
-  };
-
-  const handleProgresoInput = (e) => {
-    const value = parseInt(e.target.value);
-    if (!isNaN(value) && value >= 0 && value <= 100) {
-      setProgresoVisual(value);
-    }
   };
 
   const getProgressColor = (progreso) => {
@@ -342,7 +298,6 @@ const CrearReporte = () => {
         descripcion: formData.descripcion,
         texto_avance: formData.texto_avance,
         pregunta_cliente: formData.pregunta_cliente,
-        configuracion_analisis: formData.configuracion_analisis,
         horas_expiracion: formData.horas_expiracion,
         progreso: progresoVisual
       };
@@ -433,27 +388,15 @@ const CrearReporte = () => {
   };
 
   // UTILIDADES
-  const getFileIcon = (nombre) => {
-    if (!nombre) return '📎';
-    const ext = nombre.split('.').pop()?.toLowerCase();
-    if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) return '🖼️';
-    if (['pdf'].includes(ext)) return '📄';
-    if (['doc', 'docx'].includes(ext)) return '📝';
-    if (['xls', 'xlsx'].includes(ext)) return '📊';
-    if (['ppt', 'pptx'].includes(ext)) return '📑';
-    if (['zip', 'rar', '7z'].includes(ext)) return '📦';
-    return '📎';
-  };
-
   const getFileTypeIcon = (nombre) => {
-    if (!nombre) return <File size={20} />;
+    if (!nombre) return <FileText size={20} />;
     const ext = nombre.split('.').pop()?.toLowerCase();
-    if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) return <Image size={20} />;
+    if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) return <FileText size={20} />;
     if (['pdf'].includes(ext)) return <FileText size={20} />;
     if (['doc', 'docx'].includes(ext)) return <FileText size={20} />;
     if (['xls', 'xlsx'].includes(ext)) return <FileText size={20} />;
-    if (['zip', 'rar', '7z'].includes(ext)) return <FileArchive size={20} />;
-    return <File size={20} />;
+    if (['zip', 'rar', '7z'].includes(ext)) return <FileText size={20} />;
+    return <FileText size={20} />;
   };
 
   const formatFileSize = (bytes) => {
@@ -464,38 +407,6 @@ const CrearReporte = () => {
   };
 
   const evidenciasSeleccionadasCount = evidenciasSeleccionadas.length;
-
-  // GRUPOS DE ANÁLISIS
-  const analisisGroups = [
-    {
-      title: 'Análisis Estadísticos',
-      icon: <Database size={16} />,
-      items: [
-        { id: 'estadisticas', label: 'Estadísticas Descriptivas', icon: <Database size={16} />, desc: 'Análisis estadístico completo' },
-        { id: 'pca', label: 'PCA', icon: <TrendingUp size={16} />, desc: 'Reducción de dimensionalidad' },
-        { id: 'clustering', label: 'Clustering', icon: <PieChart size={16} />, desc: 'Agrupación de datos por eficiencia' }
-      ]
-    },
-    {
-      title: 'Análisis Predictivos',
-      icon: <LineChart size={16} />,
-      items: [
-        { id: 'regresion', label: 'Regresión Lineal', icon: <BarChart3 size={16} />, desc: 'Predicción de tendencias generales' },
-        { id: 'regresion_gasto_tiempo', label: 'Gasto vs Tiempo', icon: <Activity size={16} />, desc: 'Desviación presupuestaria' },
-        { id: 'regresion_presupuesto_plazo', label: 'Presupuesto vs Plazo', icon: <Target size={16} />, desc: 'Eficiencia CPI/SPI' },
-        { id: 'prediccion_fin', label: 'Predicción de Fin', icon: <CalendarIcon size={16} />, desc: 'Fecha estimada de finalización' }
-      ]
-    },
-    {
-      title: 'Análisis de Gestión',
-      icon: <GitBranch size={16} />,
-      items: [
-        { id: 'regresion_rendimiento_empleado', label: 'Rendimiento del Empleado', icon: <Users size={16} />, desc: 'Productividad y sobrecarga' },
-        { id: 'curva_s', label: 'Curva S', icon: <LineChart size={16} />, desc: 'Avance físico vs financiero' },
-        { id: 'desviacion_plazos', label: 'Desviación de Plazos', icon: <Calendar size={16} />, desc: 'Tareas críticas y holguras' }
-      ]
-    }
-  ];
 
   // RENDER
   return (
@@ -551,7 +462,7 @@ const CrearReporte = () => {
                     <option value="">Selecciona un proyecto...</option>
                     {proyectos.map(p => (
                       <option key={p.id} value={p.id}>
-                        {p.name} - {p.status === 'completed' ? 'Completado' : p.status === 'in_progress' ? 'En Progreso' : 'Pendiente'}
+                        {p.name}
                       </option>
                     ))}
                   </select>
@@ -675,7 +586,7 @@ const CrearReporte = () => {
               </div>
             </div>
 
-            {/* PROGRESO */}
+            {/* PROGRESO (SOLO VISUAL, NO MODIFICABLE) */}
             <div className="form-group">
               <div className="progreso-visual-container">
                 <div className="progreso-visual-header">
@@ -684,36 +595,11 @@ const CrearReporte = () => {
                     Progreso del Proyecto
                   </label>
                   <span className="progreso-visual-hint">
-                    (Se guarda en el reporte)
+                    Se toma automáticamente del proyecto
                   </span>
                 </div>
                 
                 <div className="progreso-visual-control">
-                  <div className="progreso-slider-container">
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={progresoVisual}
-                      onChange={handleProgresoChange}
-                      className="progreso-slider"
-                      style={{
-                        background: `linear-gradient(to right, ${getProgressColor(progresoVisual)} 0%, ${getProgressColor(progresoVisual)} ${progresoVisual}%, rgba(255,255,255,0.1) ${progresoVisual}%, rgba(255,255,255,0.1) 100%)`
-                      }}
-                    />
-                    <div className="progreso-value-input">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={progresoVisual}
-                        onChange={handleProgresoInput}
-                        className="progreso-number-input"
-                      />
-                      <span className="progreso-percent">%</span>
-                    </div>
-                  </div>
-                  
                   <div className="progreso-barra-visual">
                     <div className="progreso-barra-container">
                       <div 
@@ -727,54 +613,6 @@ const CrearReporte = () => {
                     <span className="progreso-barra-texto">{progresoVisual}%</span>
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* ANÁLISIS DE DATOS */}
-            <div className="form-group">
-              <div className="analisis-header">
-                <label>Análisis de Datos</label>
-                <p className="field-hint">Selecciona los análisis que deseas incluir en el reporte</p>
-              </div>
-              
-              <div className="analisis-groups">
-                {analisisGroups.map((group, idx) => (
-                  <div key={idx} className="analisis-group">
-                    <div className="analisis-group-title">
-                      {group.icon}
-                      <span>{group.title}</span>
-                    </div>
-                    <div className="analisis-grid">
-                      {group.items.map((item) => (
-                        <label 
-                          key={item.id}
-                          className={`analisis-option ${formData.configuracion_analisis[item.id] ? 'active' : ''}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={formData.configuracion_analisis[item.id] || false}
-                            onChange={() => handleAnalisisChange(item.id)}
-                          />
-                          {item.icon}
-                          {item.label}
-                          <span className="analisis-desc">{item.desc}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="analisis-resumen">
-                {Object.values(formData.configuracion_analisis).some(v => v) ? (
-                  <span className="analisis-resumen-text">
-                    <Check size={14} /> {Object.entries(formData.configuracion_analisis).filter(([_, v]) => v).length} análisis seleccionados
-                  </span>
-                ) : (
-                  <span className="analisis-resumen-text text-muted">
-                    <AlertCircle size={14} /> No has seleccionado ningún análisis. El reporte solo incluirá los datos básicos.
-                  </span>
-                )}
               </div>
             </div>
 

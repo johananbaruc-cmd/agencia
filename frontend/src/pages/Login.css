@@ -1,6 +1,16 @@
 /* =========================================
-   OCULTAR BARRA DE SCROLL GLOBAL
+   BLOQUEO TOTAL DE SCROLL GLOBAL
+   Pase lo que pase adentro, la página nunca
+   desborda ni muestra barra de scroll
    ========================================= */
+html, body, #root {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
 * {
     scrollbar-width: none;
     -ms-overflow-style: none;
@@ -10,17 +20,18 @@
 }
 
 /* =========================================
-   FONDO ULTRA LIGERO (2 ORBES + GRADIENTE)
+   FONDO ESTÁTICO (2 ORBES + GRADIENTE)
+   Sin animación de pulso: opacidad fija
    ========================================= */
 .page-wrapper {
     position: relative;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     background: radial-gradient(circle at center, #0a1a3a 0%, #020817 70%);
 }
 
-/* Gradiente base (sin blur, estático y barato) */
 .bg-gradient {
     position: absolute;
     inset: 0;
@@ -28,13 +39,11 @@
     background: linear-gradient(135deg, rgba(0, 100, 255, 0.1), rgba(0, 200, 255, 0.05));
 }
 
-/* Orbes con blur suave (Se mueven solo en opacidad, super barato) */
 .orb {
     position: absolute;
     border-radius: 50%;
     filter: blur(50px);
     mix-blend-mode: screen;
-    animation: pulse 8s ease-in-out infinite;
     pointer-events: none;
     z-index: 1;
 }
@@ -45,7 +54,7 @@
     background: #0066ff;
     top: -150px;
     left: -100px;
-    opacity: 0.5;
+    opacity: 0.35;
 }
 
 .orb-cyan {
@@ -54,14 +63,7 @@
     background: #00d9ff;
     bottom: -100px;
     right: -50px;
-    opacity: 0.4;
-    animation-delay: 2s;
-}
-
-@keyframes pulse {
-    0% { opacity: 0.2; }
-    50% { opacity: 0.5; }
-    100% { opacity: 0.2; }
+    opacity: 0.3;
 }
 
 /* =========================================
@@ -74,6 +76,7 @@
     justify-content: center;
     align-items: center;
     padding: 20px;
+    perspective: 1400px;
 }
 
 .login-no-scroll {
@@ -89,23 +92,102 @@
 }
 
 /* =========================================
-   TARJETA GLASS (Ligera)
+   WRAPPER DE BORDE GLOW ROTATORIO
+   (efecto tipo "andev web" adaptado a tu tema)
+   ========================================= */
+.login-glow-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    border-radius: 26px;
+    padding: 2px;
+    overflow: hidden;
+    isolation: isolate;
+    contain: paint;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    transform-style: preserve-3d;
+    animation: card-spin-in 0.7s cubic-bezier(0.22, 0.8, 0.28, 1) both;
+}
+
+@keyframes card-spin-in {
+    0% {
+        transform: rotateY(-110deg) scale(0.85);
+        opacity: 0;
+    }
+    55% {
+        transform: rotateY(12deg) scale(1.015);
+        opacity: 1;
+    }
+    100% {
+        transform: rotateY(0deg) scale(1);
+        opacity: 1;
+    }
+}
+
+.login-glow-wrap::before {
+    content: "";
+    position: absolute;
+    inset: -60%;
+    z-index: 0;
+    background: conic-gradient(
+        from 0deg,
+        transparent 0%,
+        transparent 55%,
+        #38bdf8 68%,
+        #00d9ff 76%,
+        #7ce9ff 80%,
+        #00d9ff 84%,
+        #2563eb 92%,
+        transparent 100%
+    );
+    animation: glow-rotate 4.5s linear infinite;
+}
+
+/* halo suave detrás del wrapper, fijo (no parpadea), contenido dentro del propio card */
+.login-glow-wrap::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: radial-gradient(circle at center, rgba(0, 217, 255, 0.25), transparent 70%);
+    filter: blur(14px);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+@keyframes glow-rotate {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* la tarjeta real vive por encima del degradado giratorio,
+   dejando ver solo un filo de "luz" alrededor del borde */
+.login-glow-wrap > .login-card {
+    position: relative;
+    z-index: 1;
+    margin: 0;
+}
+
+/* =========================================
+   TARJETA GLASS
    ========================================= */
 .login-card {
     width: 100%;
-    max-width: 420px;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgb(10, 18, 40);
+    background: linear-gradient(180deg, rgba(11, 20, 44, 0.97), rgba(8, 14, 32, 0.97));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 24px;
-    padding: 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    padding: 32px;
     color: #ffffff;
 }
 
 .login-card-scroll {
-    max-height: 90vh;
+    max-height: calc(90vh - 4px);
     overflow-y: auto;
 }
 
@@ -119,10 +201,11 @@
     width: 60px;
     height: 60px;
     margin: 0 auto 15px;
-    background: rgba(255, 255, 255, 0.15);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 217, 255, 0.4);
     border-radius: 50%;
-    color: #ffffff;
+    color: #7ce9ff;
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.25);
 }
 
 .login-title {
@@ -135,67 +218,68 @@
 
 .login-subtitle {
     text-align: center;
-    opacity: 0.8;
+    opacity: 0.75;
     margin-bottom: 20px;
 }
 
 .input-group {
-    margin-bottom: 15px;
+    margin-bottom: 22px;
 }
 
 .input-label {
-    display: block;
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 5px;
+    display: none;
 }
 
 .input-wrapper {
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 12px;
-    padding: 0 15px;
+    padding: 0 16px;
+    min-height: 50px;
     transition: all 0.3s;
 }
 
 .input-wrapper:focus-within {
-    border-color: rgba(255, 255, 255, 0.8);
-    background: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 0 15px rgba(0, 150, 255, 0.2);
+    border-color: rgba(0, 217, 255, 0.7);
+    background: rgba(0, 217, 255, 0.08);
+    box-shadow: 0 0 15px rgba(0, 217, 255, 0.25);
 }
 
 .input-icon {
-    color: rgba(255, 255, 255, 0.8);
-    margin-right: 10px;
+    flex-shrink: 0;
+    color: rgba(124, 233, 255, 0.75);
 }
 
 .input-field {
     flex: 1;
+    min-width: 0;
     background: transparent;
     border: none;
     color: #ffffff;
-    padding: 13px 0;
+    padding: 14px 0;
     outline: none;
     font-size: 1rem;
+    line-height: 1.4;
 }
 
 .input-field::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.45);
 }
 
 .login-eye-btn {
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.7);
     cursor: pointer;
     padding: 5px;
 }
 
 .input-hint {
     font-size: 0.75rem;
-    opacity: 0.8;
+    opacity: 0.75;
     margin-top: 5px;
 }
 
@@ -225,7 +309,7 @@
 
 .btn-liquid:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(56, 189, 248, 0.5);
+    box-shadow: 0 6px 24px rgba(0, 217, 255, 0.5);
 }
 
 .login-links {
@@ -240,7 +324,7 @@
 .login-link-btn {
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.75);
     font-size: 0.85rem;
     display: flex;
     align-items: center;
@@ -251,12 +335,12 @@
 }
 
 .login-link-btn:hover {
-    color: #ffffff;
+    color: #7ce9ff;
 }
 
 .login-back-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     color: white;
     border-radius: 10px;
     padding: 8px 15px;
@@ -270,7 +354,8 @@
 }
 
 .login-back-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(0, 217, 255, 0.15);
+    border-color: rgba(0, 217, 255, 0.4);
 }
 
 .form-divider {
@@ -291,7 +376,7 @@
 
 .form-divider-text {
     position: relative;
-    background: rgba(10, 17, 40, 0.6);
+    background: rgba(9, 15, 34, 0.9);
     padding: 0 15px;
     font-size: 0.9rem;
     font-weight: 600;

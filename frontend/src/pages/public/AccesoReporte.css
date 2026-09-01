@@ -1,161 +1,629 @@
-/* ============================================
-   ACCESO REPORTE - ESTILOS OSCUROS
-   ============================================ */
+/* AccesoReporte.css */
 
+/* ============================================
+   CONTENEDOR PRINCIPAL
+   ============================================ */
 .acceso-container {
   min-height: 100vh;
-  background: linear-gradient(135deg, #020617, #0f172a);
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  background: linear-gradient(135deg, #020617, #0f172a, #1a1a4e);
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Scroll interno del contenedor */
+.acceso-container {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.05) transparent;
+}
+
+.acceso-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.acceso-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.acceso-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+/* Orbes de fondo */
+.acceso-container::before {
+  content: '';
+  position: fixed;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.12), transparent 70%);
+  top: -150px;
+  right: -150px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.acceso-container::after {
+  content: '';
+  position: fixed;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.08), transparent 70%);
+  bottom: -100px;
+  left: -100px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* ============================================
+   CARD PRINCIPAL - GLASS
+   ============================================ */
+.acceso-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 32px;
+  padding: 2.8rem 3rem;
+  max-width: 480px;
+  width: 100%;
+  max-height: 95vh;
+  overflow-y: auto;
+  box-shadow: 
+    0 25px 60px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  animation: fadeInUp 0.5s ease;
+}
+
+/* Scroll interno de la card */
+.acceso-card::-webkit-scrollbar {
+  width: 3px;
+}
+
+.acceso-card::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.acceso-card::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
 }
 
 .acceso-card {
-  width: 100%;
-  max-width: 420px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  border-radius: 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 2rem;
-  animation: slideUp 0.4s ease;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.06) transparent;
 }
 
-.acceso-icon {
-  text-align: center;
-  font-size: 3.5rem;
-  margin-bottom: 0.5rem;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
+/* ============================================
+   CANDADO ANIMADO
+   ============================================ */
+.acceso-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.2rem;
+}
+
+.candado-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.3s ease;
+}
+
+.candado-icon {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.5s ease;
+}
+
+/* Estado: Cerrado */
+.candado-container.locked .lock-icon {
+  color: rgba(255, 255, 255, 0.35);
+  transition: all 0.5s ease;
+}
+
+/* Estado: Desbloqueando */
+.candado-container.unlocking .candado-icon {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.06);
+  animation: pulseGlow 0.8s ease-in-out infinite;
+}
+
+.candado-container.unlocking .lock-icon {
+  color: #60a5fa;
+  animation: shakeLock 0.5s ease infinite;
+}
+
+@keyframes shakeLock {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-12deg); }
+  75% { transform: rotate(12deg); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.08); }
+  50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.15); }
+}
+
+.lock-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.spinning {
+  animation: spin 0.8s linear infinite;
+  color: #60a5fa;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Estado: Desbloqueado */
+.candado-container.unlocked .candado-icon {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.06);
+  animation: unlockPop 0.6s ease;
+}
+
+@keyframes unlockPop {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.15); }
+  60% { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+.candado-container.unlocked .unlock-icon {
+  color: #34d399;
+  animation: unlockFlip 0.6s ease;
+}
+
+@keyframes unlockFlip {
+  0% { transform: rotate(0deg) scale(0.5); opacity: 0; }
+  50% { transform: rotate(180deg) scale(1.2); opacity: 1; }
+  100% { transform: rotate(360deg) scale(1); opacity: 1; }
+}
+
+.lock-success {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: rgba(16, 185, 129, 0.12);
+  border-radius: 50%;
+  padding: 3px;
+  animation: successPop 0.5s ease 0.3s both;
+}
+
+@keyframes successPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.success-check {
+  color: #34d399;
+}
+
+/* Estado: Error */
+.candado-container.error .candado-icon {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.06);
+  animation: errorShake 0.6s ease;
+}
+
+@keyframes errorShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 50%, 90% { transform: translateX(-6px); }
+  30%, 70% { transform: translateX(6px); }
+}
+
+.candado-container.error .lock-error-icon {
+  color: #f87171;
+  animation: errorLock 0.6s ease;
+}
+
+@keyframes errorLock {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.85); }
+  100% { transform: scale(1); }
+}
+
+.lock-error {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: rgba(239, 68, 68, 0.12);
+  border-radius: 50%;
+  padding: 3px;
+  animation: errorPop 0.5s ease 0.3s both;
+}
+
+@keyframes errorPop {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.error-cross {
+  color: #f87171;
+}
+
+.candado-text {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.2);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  transition: all 0.3s ease;
+}
+
+.candado-container.unlocking .candado-text {
+  color: #60a5fa;
+}
+
+.candado-container.unlocked .candado-text {
+  color: #34d399;
+}
+
+.candado-container.error .candado-text {
+  color: #f87171;
+}
+
+/* ============================================
+   TÍTULOS
+   ============================================ */
 .acceso-card h1 {
-  text-align: center;
   font-size: 1.5rem;
   font-weight: 700;
-  color: white;
-  margin-bottom: 0.25rem;
+  color: #ffffff;
+  margin: 0 0 0.4rem 0;
+  letter-spacing: -0.02em;
 }
 
 .acceso-subtitle {
-  text-align: center;
-  color: #94a3b8;
-  font-size: 0.9rem;
-  margin-bottom: 1.5rem;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.85rem;
+  margin: 0 0 1.8rem 0;
+  line-height: 1.6;
 }
 
+/* ============================================
+   FORMULARIO - CORREGIDO
+   ============================================ */
 .acceso-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
-.acceso-form label {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: #e2e8f0;
-  display: block;
-  margin-bottom: 0.25rem;
+.input-group {
+  text-align: left;
+  margin: 0;
+  padding: 0;
+}
+
+/* 🔥 OCULTA EL LABEL - No se usa en el JSX */
+.input-group label {
+  display: none;
+}
+
+.input-wrapper {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 2;
 }
 
 .codigo-input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 0.7rem;
-  padding: 0.8rem 1rem;
-  color: white;
-  font-size: 1.25rem;
-  font-family: monospace;
-  text-align: center;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  transition: 0.2s;
-}
-
-.codigo-input:focus {
+  padding: 0.85rem 1rem 0.85rem 3rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  transition: all 0.3s ease;
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  font-family: 'Courier New', monospace;
+  margin: 0;
 }
 
 .codigo-input::placeholder {
-  color: #475569;
-  font-size: 0.9rem;
-  letter-spacing: normal;
-  text-transform: none;
+  color: rgba(255, 255, 255, 0.08);
+  font-weight: 400;
+  letter-spacing: 0.05em;
+}
+
+.codigo-input:focus {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.05);
+}
+
+.codigo-input.error {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.05);
+}
+
+.codigo-input.success {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.05);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.05);
+}
+
+.input-valid-icon {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #34d399;
+  animation: successPop 0.4s ease;
+  z-index: 2;
 }
 
 .input-hint {
-  font-size: 0.7rem;
-  color: #64748b;
-  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.15);
+  margin: 0.4rem 0 0 0;
+  padding: 0;
 }
 
+.input-hint svg {
+  opacity: 0.4;
+}
+
+/* ============================================
+   ERROR MESSAGE
+   ============================================ */
 .error-message {
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 0.5rem;
-  padding: 0.6rem 0.8rem;
-  color: #fca5a5;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.12);
+  border-radius: 12px;
+  color: #f87171;
   font-size: 0.8rem;
+  text-align: left;
+  animation: fadeInUp 0.3s ease;
 }
 
+.error-message svg {
+  flex-shrink: 0;
+}
+
+/* ============================================
+   BOTÓN
+   ============================================ */
 .btn-acceder {
-  width: 100%;
-  background: linear-gradient(135deg, #3b82f6, #1e40af);
-  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.8rem;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
   border: none;
-  border-radius: 0.7rem;
-  padding: 0.8rem;
-  font-size: 1rem;
+  border-radius: 14px;
+  color: #ffffff;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.25s;
-  margin-top: 0.25rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.2);
+  position: relative;
+  overflow: hidden;
+  margin-top: 0.3rem;
 }
 
-.btn-acceder:hover {
+.btn-acceder::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.btn-acceder:hover:not(:disabled)::before {
+  opacity: 1;
+}
+
+.btn-acceder:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 30px rgba(59, 130, 246, 0.3);
+}
+
+.btn-acceder:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .btn-acceder:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
+  transform: none !important;
 }
 
+.btn-acceder svg {
+  flex-shrink: 0;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
 .acceso-footer {
-  text-align: center;
-  margin-top: 1.5rem;
-  color: #64748b;
-  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1.8rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.03);
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.acceso-footer svg {
+  color: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 }
 
-/* RESPONSIVE */
-@media (max-width: 480px) {
+.acceso-footer p {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.12);
+  margin: 0;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 520px) {
   .acceso-card {
-    padding: 1.5rem;
+    padding: 2rem 1.5rem;
+    max-height: 98vh;
   }
 
   .acceso-card h1 {
-    font-size: 1.25rem;
+    font-size: 1.3rem;
+  }
+
+  .acceso-subtitle {
+    font-size: 0.8rem;
+    margin-bottom: 1.4rem;
+  }
+
+  .acceso-icon-wrapper {
+    margin-bottom: 1rem;
+  }
+
+  .candado-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .candado-container .lock-icon,
+  .candado-container .unlock-icon,
+  .candado-container .lock-error-icon {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .lock-spinner svg,
+  .lock-success svg,
+  .lock-error svg {
+    width: 26px !important;
+    height: 26px !important;
   }
 
   .codigo-input {
-    font-size: 1rem;
+    font-size: 0.95rem;
+    padding: 0.75rem 1rem 0.75rem 2.8rem;
+    letter-spacing: 0.1em;
+  }
+
+  .input-icon {
+    left: 12px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .btn-acceder {
+    padding: 0.75rem 1.2rem;
+    font-size: 0.85rem;
+  }
+
+  .error-message {
+    font-size: 0.75rem;
     padding: 0.6rem 0.8rem;
+  }
+
+  .acceso-footer {
+    margin-top: 1.4rem;
+    padding-top: 1rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .acceso-card {
+    padding: 1.5rem 1rem;
+  }
+
+  .candado-icon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .candado-container .lock-icon,
+  .candado-container .unlock-icon,
+  .candado-container .lock-error-icon {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .lock-spinner svg,
+  .lock-success svg,
+  .lock-error svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .codigo-input {
+    font-size: 0.85rem;
+    padding: 0.65rem 0.8rem 0.65rem 2.4rem;
+    letter-spacing: 0.08em;
+  }
+
+  .input-icon {
+    left: 10px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .btn-acceder {
+    padding: 0.65rem 1rem;
+    font-size: 0.8rem;
   }
 }

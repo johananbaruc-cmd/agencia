@@ -5,12 +5,21 @@
   box-sizing: border-box;
 }
 
-/* ==================== BODY GLOBAL ==================== */
+/* ==================== BODY GLOBAL - SIN SCROLL ==================== */
+html, body, #root {
+  overflow: hidden !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  max-height: 100vh !important;
+  max-width: 100vw !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background: transparent;
   color: #ffffff;
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -29,23 +38,50 @@ button {
   outline: none;
 }
 
-/* ==================== SCROLLBAR ==================== */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* ==================== SCROLLBAR - SOLO PARA CONTENEDORES INTERNOS ==================== */
+.scrollable::-webkit-scrollbar,
+.page-scroll::-webkit-scrollbar,
+.ver-reporte-scroll::-webkit-scrollbar,
+.projects-scroll-container::-webkit-scrollbar,
+.acceso-card::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
 }
 
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
+.scrollable::-webkit-scrollbar-track,
+.page-scroll::-webkit-scrollbar-track,
+.ver-reporte-scroll::-webkit-scrollbar-track,
+.projects-scroll-container::-webkit-scrollbar-track,
+.acceso-card::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
 }
 
-::-webkit-scrollbar-thumb {
+.scrollable::-webkit-scrollbar-thumb,
+.page-scroll::-webkit-scrollbar-thumb,
+.ver-reporte-scroll::-webkit-scrollbar-thumb,
+.projects-scroll-container::-webkit-scrollbar-thumb,
+.acceso-card::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.scrollable::-webkit-scrollbar-thumb:hover,
+.page-scroll::-webkit-scrollbar-thumb:hover,
+.ver-reporte-scroll::-webkit-scrollbar-thumb:hover,
+.projects-scroll-container::-webkit-scrollbar-thumb:hover,
+.acceso-card::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 999px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+/* Firefox */
+.scrollable,
+.page-scroll,
+.ver-reporte-scroll,
+.projects-scroll-container,
+.acceso-card {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
 }
 
 /* ==================== UTILIDADES ==================== */
@@ -61,4 +97,11 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* ==================== CLASE PARA SCROLL INTERNO ==================== */
+.scrollable {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }

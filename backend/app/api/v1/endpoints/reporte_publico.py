@@ -4,10 +4,8 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.schemas.reporte import ReportePublicoResponse, CodigoAccesoValidar
-from app.schemas.analisis import AnalisisReporteResponse
 from app.services.reporte_service import ReporteService
 from app.services.archivo_service import ArchivoService
-from app.models.analisis_reporte import AnalisisReporte
 from app.models.interaccion_cliente import InteraccionCliente
 from app.models.user import User
 from app.models.agency import Agency
@@ -56,7 +54,7 @@ def validar_acceso(
 
 
 # ============================================
-# 2. OBTENER REPORTE PÚBLICO (CON ANÁLISIS)
+# 2. OBTENER REPORTE PÚBLICO
 # ============================================
 @router.get("/public/reportes/{token}", response_model=ReportePublicoResponse)
 def obtener_reporte_publico(
@@ -66,7 +64,7 @@ def obtener_reporte_publico(
 ):
     """
     Obtiene un reporte público (requiere código de acceso en header)
-    ✅ Incluye análisis, archivos, evidencias y todos los detalles
+    ✅ Incluye archivos, evidencias y todos los detalles
     """
     if not codigo_acceso:
         raise HTTPException(
@@ -109,16 +107,7 @@ def obtener_reporte_publico(
     # 6. Obtener archivos del reporte
     archivos = ArchivoService.obtener_archivos_reporte(reporte.id, db)
     
-    # 🔥 7. OBTENER ANÁLISIS DEL REPORTE
-    analisis = db.query(AnalisisReporte).filter(
-        AnalisisReporte.reporte_id == reporte.id,
-        AnalisisReporte.activo == True,
-        AnalisisReporte.eliminado == False
-    ).order_by(AnalisisReporte.fecha_ejecucion.desc()).all()
-    
-    print(f"📊 Análisis encontrados: {len(analisis)}")
-    
-    # 8. Obtener evidencias seleccionadas (desde evidencias_ids)
+    # 7. Obtener evidencias seleccionadas (desde evidencias_ids)
     evidencias_tareas = []
     if reporte.evidencias_ids:
         for ev_id in reporte.evidencias_ids:
@@ -135,7 +124,7 @@ def obtener_reporte_publico(
                     "fecha": evidencia.created_at.isoformat() if evidencia.created_at else None
                 })
     
-    # 9. Obtener archivos existentes seleccionados
+    # 8. Obtener archivos existentes seleccionados
     archivos_existentes = []
     if reporte.archivos_existentes_ids:
         for arch_id in reporte.archivos_existentes_ids:
@@ -153,11 +142,11 @@ def obtener_reporte_publico(
                     "fecha": evidencia.created_at.isoformat() if evidencia.created_at else None
                 })
     
-    # 10. Progreso del reporte
+    # 9. Progreso del reporte
     progreso_reporte = reporte.progreso or 0
     print(f"📊 Progreso del reporte: {progreso_reporte}%")
     
-    # ✅ 11. RETORNAR CON TODOS LOS DATOS INCLUYENDO ANÁLISIS
+    # 10. RETORNAR CON TODOS LOS DATOS
     return ReportePublicoResponse(
         # Información del reporte
         id=reporte.id,
@@ -197,8 +186,8 @@ def obtener_reporte_publico(
         archivos_existentes=archivos_existentes,
         archivos=archivos,
         
-        # 🔥 ANÁLISIS INCLUIDOS
-        analisis=analisis
+        # ✅ ANÁLISIS ELIMINADO - ya no se incluye
+        analisis=[]  # Lista vacía por si el schema lo requiere
     )
 
 
@@ -304,7 +293,7 @@ async def interactuar_cliente(
     ✅ Acepta JSON en el body: { "respuesta_pregunta": "...", "comentarios": "..." }
     ✅ respuesta_pregunta acepta texto libre (no solo Sí/No)
     """
-    # ✅ Leer el body como JSON
+    # Leer el body como JSON
     try:
         data = await request.json()
     except Exception as e:
@@ -354,7 +343,7 @@ async def interactuar_cliente(
     else:
         print(f"📝 Actualizando interacción existente: ID={interaccion.id}")
     
-    # ✅ Guardar la respuesta (texto libre)
+    # Guardar la respuesta (texto libre)
     if respuesta_pregunta is not None and str(respuesta_pregunta).strip():
         interaccion.respuesta_pregunta = str(respuesta_pregunta).strip()
         print(f"✅ Respuesta guardada: '{interaccion.respuesta_pregunta}'")

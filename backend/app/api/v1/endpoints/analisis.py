@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.deps import require_admin, require_employee_or_admin
 from app.models.user import User
+from app.models.project import Project
 from app.services.analisis_service import AnalisisService
 
 router = APIRouter(prefix="/analisis", tags=["analisis"])
@@ -84,3 +85,67 @@ def get_dashboard_estado(
         "total_empleados": dashboard.total_empleados,
         "total_clientes": dashboard.total_clientes
     }
+
+
+# ============================================
+# NUEVO: Análisis por proyecto específico
+# ============================================
+@router.get("/proyecto/{project_id}")
+def get_analisis_proyecto(
+    project_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """
+    Obtiene el análisis detallado de un proyecto específico.
+    
+    - **project_id**: ID del proyecto a analizar.
+    """
+    try:
+        analisis = AnalisisService.obtener_analisis_proyecto(db, project_id)
+        
+        if "error" in analisis:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=analisis["error"]
+            )
+            
+        return analisis
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener análisis del proyecto: {str(e)}"
+        )
+
+
+# ============================================
+# NUEVO: Listar proyectos para el selector
+# ============================================
+@router.get("/proyectos/disponibles")
+def get_proyectos_disponibles(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin)
+):
+    """
+    Lista todos los proyectos disponibles para seleccionar en el análisis.
+    """
+    try:
+        proyectos = db.query(Project).order_by(Project.name).all()
+        return [
+            {
+                "id": p.id,
+                "name": p.name,
+                "status": p.status,
+                "progress": p.progress or 0,
+                "end_date": p.end_date.isoformat() if p.end_date else None
+            }
+            for p in proyectos
+        ]
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al obtener proyectos: {str(e)}"
+        )

@@ -111,10 +111,19 @@ const ReportesProyectos = () => {
     return '#10b981';
   };
 
+  // ✅ FILTRO MODIFICADO - Solo muestra: todos, pendiente, en_progreso, completado
   const filteredProyectos = proyectos.filter(proyecto => {
     const matchSearch = proyecto.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         (proyecto.description && proyecto.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchStatus = filtroStatus === 'todos' || proyecto.status === filtroStatus;
+    
+    // ✅ Filtro de estado (excluye 'cancelled')
+    let matchStatus = false;
+    if (filtroStatus === 'todos') {
+      matchStatus = proyecto.status !== 'cancelled'; // Excluye cancelados
+    } else {
+      matchStatus = proyecto.status === filtroStatus;
+    }
+    
     return matchSearch && matchStatus;
   });
 
@@ -219,7 +228,6 @@ const ReportesProyectos = () => {
               <option value="pending">Pendiente</option>
               <option value="in_progress">En Progreso</option>
               <option value="completed">Completado</option>
-              <option value="cancelled">Cancelado</option>
             </select>
           </div>
 

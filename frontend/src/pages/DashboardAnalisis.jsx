@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
+import { useNavigate } from 'react-router-dom'; // 👈 AGREGADO
 import {
   Users, Briefcase, CheckSquare, Clock, CheckCircle, TrendingUp, Activity,
   BarChart3, Loader2, Info, XCircle
@@ -208,6 +209,7 @@ function calcularTotal(data) {
 // ============================================================
 export default function DashboardAnalisis() {
   const { user } = useAuth();
+  const navigate = useNavigate(); // 👈 AGREGADO
   const [loading, setLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingText, setLoadingText] = useState('Iniciando...');
@@ -450,10 +452,25 @@ export default function DashboardAnalisis() {
               </div>
             </div>
             <div className="dashboard-header-actions">
+              {/* NUEVO BOTÓN PARA VER ANÁLISIS POR PROYECTO */}
+              <button 
+                className="btn-refresh" 
+                style={{ 
+                  background: 'rgba(0, 196, 159, 0.15)', 
+                  color: '#00C49F', 
+                  border: '1px solid rgba(0, 196, 159, 0.3)' 
+                }}
+                onClick={() => navigate('/analisis-proyecto')} // 👈 CORREGIDO
+              >
+                <Briefcase size={16} />
+                Ver Análisis por Proyecto
+              </button>
+
               <button className="btn-refresh" onClick={() => window.location.reload()}>
                 <Activity size={16} />
                 Actualizar
               </button>
+              
               <span className="dashboard-date">
                 {new Date().toLocaleString()}
               </span>

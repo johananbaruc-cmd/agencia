@@ -6,6 +6,8 @@ from app.core.database import get_db
 from app.core.deps import get_current_user, require_admin
 from app.core.security import get_password_hash
 from app.models.user import User
+from app.models.project import Project
+from app.models.project_member import ProjectMember
 from app.schemas.employee import (
     EmployeeCreate, EmployeeUpdate, EmployeeResponse,
     AvailableRolesResponse, ResetPasswordResponse,
@@ -77,15 +79,44 @@ def create_employee(
         "temporary_password": temp_password
     }
 
-@router.get("/", response_model=List[EmployeeResponse])
+@router.get("/")
 def get_employees(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
+    """Obtener todos los empleados con sus proyectos asignados"""
+    
     employees = db.query(User).filter(
         User.agency_id == current_user.agency_id
     ).all()
-    return employees
+    
+    # AGREGAR PROYECTOS A CADA EMPLEADO
+    result = []
+    for emp in employees:
+        # Obtener proyectos del empleado
+        projects = db.query(Project).join(ProjectMember).filter(
+            ProjectMember.user_id == emp.id,
+            Project.agency_id == current_user.agency_id
+        ).all()
+        
+        result.append({
+            "id": emp.id,
+            "name": emp.name,
+            "email": emp.email,
+            "role": emp.role,
+            "profession": emp.profession,
+            "is_active": emp.is_active,
+            "created_at": emp.created_at,
+            "projects": [
+                {
+                    "id": p.id,
+                    "name": p.name
+                }
+                for p in projects
+            ]
+        })
+    
+    return result
 
 @router.get("/{employee_id}", response_model=EmployeeResponse)
 def get_employee(

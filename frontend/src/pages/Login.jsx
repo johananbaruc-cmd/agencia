@@ -157,43 +157,45 @@ export default function Login() {
   if (!showRegister && !showForgotPassword) {
     return (
       <div className="page-wrapper">
-        {/* Fondo ultra ligero */}
+        {/* Fondo ultra ligero, estático */}
         <div className="orb orb-blue"></div>
         <div className="orb orb-cyan"></div>
         <div className="bg-gradient"></div>
 
         <div className="login-container login-no-scroll">
-          <div className="login-card">
-            <div className="login-icon"><LogIn size={24} /></div>
-            <h1 className="login-title">Agencia MX</h1>
-            <p className="login-subtitle">Inicia sesión en tu cuenta</p>
-            <form onSubmit={handleSubmit}>
-              <div className="input-group">
-                <label className="input-label">Correo electrónico</label>
-                <div className="input-wrapper">
-                  <Mail className="input-icon" size={18} />
-                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="input-field" placeholder="example@dominio.com" />
+          <div className="login-glow-wrap" key="login">
+            <div className="login-card">
+              <div className="login-icon"><LogIn size={24} /></div>
+              <h1 className="login-title">Agencia MX</h1>
+              <p className="login-subtitle">Inicia sesión en tu cuenta</p>
+              <form onSubmit={handleSubmit}>
+                <div className="input-group">
+                  <label className="input-label">Correo electrónico</label>
+                  <div className="input-wrapper">
+                    <Mail className="input-icon" size={18} />
+                    <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="input-field"  />
+                  </div>
                 </div>
-              </div>
-              <div className="input-group">
-                <label className="input-label">Contraseña</label>
-                <div className="input-wrapper">
-                  <Lock className="input-icon" size={18} />
-                  <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="input-field" placeholder="••••••" />
+                <div className="input-group">
+                  <label className="input-label">Contraseña</label>
+                  <div className="input-wrapper">
+                    <Lock className="input-icon" size={18} />
+                    <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="input-field"  />
+                  </div>
                 </div>
-              </div>
-              
-              <button type="submit" disabled={loading} className="btn-liquid">
-                <span className="btn-liquid-content">
-                  {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-                </span>
-              </button>
 
-              <div className="login-links">
-                <button type="button" onClick={() => setShowRegister(true)} className="login-link-btn"><UserPlus size={16} /> Crear agencia</button>
-                <button type="button" onClick={() => setShowForgotPassword(true)} className="login-link-btn"><KeyRound size={16} /> ¿Olvidaste tu contraseña?</button>
-              </div>
-            </form>
+                <button type="submit" disabled={loading} className="btn-liquid">
+                  <span className="btn-liquid-content">
+                    {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                  </span>
+                </button>
+
+                <div className="login-links">
+                  <button type="button" onClick={() => setShowRegister(true)} className="login-link-btn"><UserPlus size={16} /> Crear agencia</button>
+                  <button type="button" onClick={() => setShowForgotPassword(true)} className="login-link-btn"><KeyRound size={16} /> ¿Olvidaste tu contraseña?</button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
 
@@ -216,55 +218,57 @@ export default function Login() {
         <div className="bg-gradient"></div>
 
         <div className="login-container login-scroll">
-          <div className="login-card login-card-scroll">
-            <button onClick={goBackToLogin} className="login-back-btn"><ArrowLeft size={18} /> Volver al login</button>
-            <div className="login-icon"><Building2 size={24} /></div>
-            <h1 className="login-title">Crear Agencia</h1>
-            <p className="login-subtitle">Registra tu agencia y administrador</p>
-            {registerSuccess ? (
-              <div className="register-success"><CheckCircle size={48} className="text-green-500" /><p>¡Agencia creada exitosamente!</p><p className="text-sm text-gray-400">Redirigiendo al login...</p></div>
-            ) : (
-              <form onSubmit={handleRegister}>
-                <div className="form-divider"><span className="form-divider-text">Datos de la agencia</span></div>
-                <div className="input-group">
-                  <label className="input-label">Nombre de la agencia</label>
-                  <div className="input-wrapper"><Building2 className="input-icon" size={18} /><input type="text" required value={registerData.agency_name} onChange={(e) => setRegisterData({ ...registerData, agency_name: e.target.value })} className="input-field" placeholder="Nombre de tu agencia" /></div>
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Correo de la agencia</label>
-                  <div className="input-wrapper"><Mail className="input-icon" size={18} /><input type="email" required value={registerData.agency_email} onChange={(e) => setRegisterData({ ...registerData, agency_email: e.target.value })} className="input-field" placeholder="agencia@email.com" /></div>
-                </div>
-                <div className="input-group">
-                  <label className="input-label">RFC</label>
-                  <div className="input-wrapper"><Hash className="input-icon" size={18} /><input type="text" required value={registerData.agency_rfc} onChange={(e) => setRegisterData({ ...registerData, agency_rfc: e.target.value.toUpperCase() })} className="input-field" placeholder="XAXX010101000" maxLength={13} /></div>
-                  <p className="input-hint">RFC de persona física (13 caracteres) o moral (12 caracteres)</p>
-                </div>
-                <div className="form-divider"><span className="form-divider-text">Datos del administrador</span></div>
-                <div className="input-group">
-                  <label className="input-label">Nombre del administrador</label>
-                  <div className="input-wrapper"><User className="input-icon" size={18} /><input type="text" required value={registerData.admin_name} onChange={(e) => setRegisterData({ ...registerData, admin_name: e.target.value })} className="input-field" placeholder="Nombre del administrador" /></div>
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Correo del administrador</label>
-                  <div className="input-wrapper"><Mail className="input-icon" size={18} /><input type="email" required value={registerData.admin_email} onChange={(e) => setRegisterData({ ...registerData, admin_email: e.target.value })} className="input-field" placeholder="admin@email.com" /></div>
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Contraseña</label>
-                  <div className="input-wrapper"><Lock className="input-icon" size={18} /><input type={showRegPassword ? 'text' : 'password'} required value={registerData.admin_password} onChange={(e) => setRegisterData({ ...registerData, admin_password: e.target.value })} className="input-field" placeholder="Mínimo 6 caracteres" /><button type="button" className="login-eye-btn" onClick={() => setShowRegPassword(!showRegPassword)}>{showRegPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
-                </div>
-                <div className="input-group">
-                  <label className="input-label">Confirmar contraseña</label>
-                  <div className="input-wrapper"><Lock className="input-icon" size={18} /><input type={showRegConfirm ? 'text' : 'password'} required value={registerData.confirmPassword} onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })} className="input-field" placeholder="Repite tu contraseña" /><button type="button" className="login-eye-btn" onClick={() => setShowRegConfirm(!showRegConfirm)}>{showRegConfirm ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
-                  {registerData.confirmPassword && registerData.confirmPassword !== registerData.admin_password && (<p className="input-error">Las contraseñas no coinciden</p>)}
-                </div>
+          <div className="login-glow-wrap" key="register">
+            <div className="login-card login-card-scroll">
+              <button onClick={goBackToLogin} className="login-back-btn"><ArrowLeft size={18} /> Volver al login</button>
+              <div className="login-icon"><Building2 size={24} /></div>
+              <h1 className="login-title">Crear Agencia</h1>
+              <p className="login-subtitle">Registra tu agencia y administrador</p>
+              {registerSuccess ? (
+                <div className="register-success"><CheckCircle size={48} className="text-green-500" /><p>¡Agencia creada exitosamente!</p><p className="text-sm text-gray-400">Redirigiendo al login...</p></div>
+              ) : (
+                <form onSubmit={handleRegister}>
+                  <div className="form-divider"><span className="form-divider-text">Datos de la agencia</span></div>
+                  <div className="input-group">
+                    <label className="input-label">Nombre de la agencia</label>
+                    <div className="input-wrapper"><Building2 className="input-icon" size={18} /><input type="text" required value={registerData.agency_name} onChange={(e) => setRegisterData({ ...registerData, agency_name: e.target.value })} className="input-field"  /></div>
+                  </div>
+                  <div className="input-group">
+                    <label className="input-label">Correo de la agencia</label>
+                    <div className="input-wrapper"><Mail className="input-icon" size={18} /><input type="email" required value={registerData.agency_email} onChange={(e) => setRegisterData({ ...registerData, agency_email: e.target.value })} className="input-field"  /></div>
+                  </div>
+                  <div className="input-group">
+                    <label className="input-label">RFC</label>
+                    <div className="input-wrapper"><Hash className="input-icon" size={18} /><input type="text" required value={registerData.agency_rfc} onChange={(e) => setRegisterData({ ...registerData, agency_rfc: e.target.value.toUpperCase() })} className="input-field"  maxLength={13} /></div>
+                    <p className="input-hint">RFC de persona física (13 caracteres) o moral (12 caracteres)</p>
+                  </div>
+                  <div className="form-divider"><span className="form-divider-text">Datos del administrador</span></div>
+                  <div className="input-group">
+                    <label className="input-label">Nombre del administrador</label>
+                    <div className="input-wrapper"><User className="input-icon" size={18} /><input type="text" required value={registerData.admin_name} onChange={(e) => setRegisterData({ ...registerData, admin_name: e.target.value })} className="input-field"  /></div>
+                  </div>
+                  <div className="input-group">
+                    <label className="input-label">Correo del administrador</label>
+                    <div className="input-wrapper"><Mail className="input-icon" size={18} /><input type="email" required value={registerData.admin_email} onChange={(e) => setRegisterData({ ...registerData, admin_email: e.target.value })} className="input-field"  /></div>
+                  </div>
+                  <div className="input-group">
+                    <label className="input-label">Contraseña</label>
+                    <div className="input-wrapper"><Lock className="input-icon" size={18} /><input type={showRegPassword ? 'text' : 'password'} required value={registerData.admin_password} onChange={(e) => setRegisterData({ ...registerData, admin_password: e.target.value })} className="input-field"  /><button type="button" className="login-eye-btn" onClick={() => setShowRegPassword(!showRegPassword)}>{showRegPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
+                  </div>
+                  <div className="input-group">
+                    <label className="input-label">Confirmar contraseña</label>
+                    <div className="input-wrapper"><Lock className="input-icon" size={18} /><input type={showRegConfirm ? 'text' : 'password'} required value={registerData.confirmPassword} onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })} className="input-field"  /><button type="button" className="login-eye-btn" onClick={() => setShowRegConfirm(!showRegConfirm)}>{showRegConfirm ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>
+                    {registerData.confirmPassword && registerData.confirmPassword !== registerData.admin_password && (<p className="input-error">Las contraseñas no coinciden</p>)}
+                  </div>
 
-                <button type="submit" disabled={registerLoading || (registerData.confirmPassword && registerData.confirmPassword !== registerData.admin_password)} className="btn-liquid">
-                  <span className="btn-liquid-content">
-                    {registerLoading ? 'Creando agencia...' : 'Crear agencia'}
-                  </span>
-                </button>
-              </form>
-            )}
+                  <button type="submit" disabled={registerLoading || (registerData.confirmPassword && registerData.confirmPassword !== registerData.admin_password)} className="btn-liquid">
+                    <span className="btn-liquid-content">
+                      {registerLoading ? 'Creando agencia...' : 'Crear agencia'}
+                    </span>
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -280,26 +284,28 @@ export default function Login() {
         <div className="bg-gradient"></div>
 
         <div className="login-container login-no-scroll">
-          <div className="login-card">
-            <button onClick={goBackToLogin} className="login-back-btn"><ArrowLeft size={18} /> Volver al login</button>
-            <div className="login-icon"><KeyRound size={24} /></div>
-            <h1 className="login-title">Recuperar contraseña</h1>
-            <p className="login-subtitle">Te enviaremos un enlace para restablecer tu contraseña</p>
-            {forgotSuccess ? (
-              <div className="register-success"><CheckCircle size={48} className="text-green-500" /><p>¡Revisa tu correo!</p><p className="text-sm text-gray-400">Hemos enviado un enlace para restablecer tu contraseña</p></div>
-            ) : (
-              <form onSubmit={handleForgotPassword}>
-                <div className="input-group">
-                  <label className="input-label">Correo electrónico</label>
-                  <div className="input-wrapper"><Mail className="input-icon" size={18} /><input type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} className="input-field" placeholder="tu@email.com" /></div>
-                </div>
-                <button type="submit" disabled={forgotLoading} className="btn-liquid">
-                  <span className="btn-liquid-content">
-                    {forgotLoading ? 'Enviando...' : 'Enviar enlace de recuperación'}
-                  </span>
-                </button>
-              </form>
-            )}
+          <div className="login-glow-wrap" key="forgot">
+            <div className="login-card">
+              <button onClick={goBackToLogin} className="login-back-btn"><ArrowLeft size={18} /> Volver al login</button>
+              <div className="login-icon"><KeyRound size={24} /></div>
+              <h1 className="login-title">Recuperar contraseña</h1>
+              <p className="login-subtitle">Te enviaremos un enlace para restablecer tu contraseña</p>
+              {forgotSuccess ? (
+                <div className="register-success"><CheckCircle size={48} className="text-green-500" /><p>¡Revisa tu correo!</p><p className="text-sm text-gray-400">Hemos enviado un enlace para restablecer tu contraseña</p></div>
+              ) : (
+                <form onSubmit={handleForgotPassword}>
+                  <div className="input-group">
+                    <label className="input-label">Correo electrónico</label>
+                    <div className="input-wrapper"><Mail className="input-icon" size={18} /><input type="email" required value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)} className="input-field"  /></div>
+                  </div>
+                  <button type="submit" disabled={forgotLoading} className="btn-liquid">
+                    <span className="btn-liquid-content">
+                      {forgotLoading ? 'Enviando...' : 'Enviar enlace de recuperación'}
+                    </span>
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
       </div>
